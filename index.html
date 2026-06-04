@@ -605,9 +605,9 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   <div class="section active" id="sec-dashboard">
     <div class="stats-grid">
       <div class="stat-card blue">
-        <div class="stat-icon">📦</div>
-        <div class="stat-value" id="stat-products">0</div>
-        <div class="stat-label">Total Products</div>
+        <div class="stat-icon">👤</div>
+        <div class="stat-value" id="stat-customers">0</div>
+        <div class="stat-label">Total Customers</div>
       </div>
       <div class="stat-card green">
         <div class="stat-icon">🛒</div>
@@ -643,32 +643,16 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       <div id="dashRecentOrders"></div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Top Products</div>
-      </div>
-      <div id="dashTopProducts"></div>
-    </div>
-  </div>
-
-  <!-- PRODUCTS -->
-  <div class="section" id="sec-products">
-    <div class="section-header">
-      <div class="section-title">Products</div>
-      <button class="btn btn-primary btn-sm" onclick="openProductModal()">+ Add</button>
-    </div>
-    <div class="search-bar">
-      <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Search products..." id="productSearch" oninput="renderProducts()">
-    </div>
-    <div id="productList"></div>
   </div>
 
   <!-- ORDERS -->
   <div class="section" id="sec-orders">
     <div class="section-header">
       <div class="section-title">Orders</div>
-      <button class="btn btn-primary btn-sm" onclick="openOrderModal()">+ New</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm viewer-hide" onclick="openVCOrderModal()">📇 Visiting Card</button>
+        <button class="btn btn-primary btn-sm viewer-hide" onclick="openOrderModal()">+ New</button>
+      </div>
     </div>
     <div class="search-bar">
       <span class="search-icon">🔍</span>
@@ -689,7 +673,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   <div class="section" id="sec-vendors">
     <div class="section-header">
       <div class="section-title">Vendors</div>
-      <button class="btn btn-primary btn-sm" onclick="openVendorModal()">+ Add</button>
+      <button class="btn btn-primary btn-sm viewer-hide" onclick="openVendorModal()">+ Add</button>
     </div>
     <div class="search-bar">
       <span class="search-icon">🔍</span>
@@ -713,9 +697,6 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   <button class="nav-item active" onclick="switchTab('dashboard',this)">
     <span class="nav-icon">📊</span>Dashboard
   </button>
-  <button class="nav-item" onclick="switchTab('products',this)">
-    <span class="nav-icon">📦</span>Products
-  </button>
   <button class="nav-item" onclick="switchTab('orders',this)">
     <span class="nav-icon">🛒</span>Orders
   </button>
@@ -729,82 +710,28 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 <!-- ======================== MODALS ======================== -->
 
-<!-- PRODUCT MODAL -->
-<div class="modal-overlay" id="productModal">
-  <div class="modal">
-    <span class="modal-handle"></span>
-    <div class="modal-title" id="productModalTitle">Add Product</div>
-    <div class="form-group">
-      <label class="form-label">Product Name *</label>
-      <input type="text" class="form-control" id="pName" placeholder="e.g. Smart Watch Pro">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Price (₹) *</label>
-        <input type="number" class="form-control" id="pPrice" placeholder="0.00">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Category</label>
-        <select class="form-control" id="pCategory">
-          <option>Electronics</option>
-          <option>Clothing</option>
-          <option>Food & Beverage</option>
-          <option>Furniture</option>
-          <option>Tools</option>
-          <option>Stationery</option>
-          <option>Other</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Product Image URL</label>
-      <input type="url" class="form-control" id="pImage" placeholder="https://..." oninput="previewProductImg()">
-      <div id="pImgPreview" class="img-preview-placeholder" style="margin-top:8px;">🖼️</div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Description</label>
-      <textarea class="form-control" id="pDesc" placeholder="Product description..."></textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Specifications (Key : Value)</label>
-      <div id="specList" class="spec-list"></div>
-      <button class="btn btn-ghost btn-sm" onclick="addSpecRow()" style="margin-top:6px;">+ Add Spec</button>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Assign Vendors</label>
-      <div class="vendor-selector" id="pVendorSelector"></div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Stock Quantity</label>
-      <input type="number" class="form-control" id="pStock" placeholder="0" value="0">
-    </div>
-    <div style="display:flex;gap:10px;margin-top:4px;">
-      <button class="btn btn-ghost btn-full" onclick="closeModal('productModal')">Cancel</button>
-      <button class="btn btn-primary btn-full" onclick="saveProduct()">Save Product</button>
-    </div>
-  </div>
-</div>
-
 <!-- ORDER MODAL -->
 <div class="modal-overlay" id="orderModal">
   <div class="modal">
     <span class="modal-handle"></span>
     <div class="modal-title" id="orderModalTitle">Create Order</div>
     <div class="form-group">
-      <label class="form-label">Select Product *</label>
-      <select class="form-control" id="oProduct" onchange="onOrderProductChange()">
-        <option value="">-- Select Product --</option>
-      </select>
+      <label class="form-label">Item / Description *</label>
+      <input type="text" class="form-control" id="oItem" placeholder="e.g. Office Chairs, Printer Paper...">
     </div>
     <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Unit Price (₹) *</label>
+        <input type="number" class="form-control" id="oUnitPrice" placeholder="0.00" min="0" oninput="calcOrderTotal()">
+      </div>
       <div class="form-group">
         <label class="form-label">Quantity *</label>
         <input type="number" class="form-control" id="oQty" placeholder="1" value="1" oninput="calcOrderTotal()">
       </div>
-      <div class="form-group">
-        <label class="form-label">Total (₹)</label>
-        <input type="text" class="form-control" id="oTotal" readonly placeholder="Auto">
-      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Total (₹)</label>
+      <input type="text" class="form-control" id="oTotal" readonly placeholder="Auto">
     </div>
     <div class="form-group">
       <label class="form-label">Assign Vendor *</label>
@@ -901,11 +828,184 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   </div>
 </div>
 
-<!-- PRODUCT DETAIL MODAL -->
-<div class="modal-overlay" id="productDetailModal">
+<!-- VISITING CARD ORDER MODAL -->
+<div class="modal-overlay" id="vcOrderModal">
   <div class="modal">
     <span class="modal-handle"></span>
-    <div id="productDetailContent"></div>
+    <div class="modal-title">📇 Visiting Card Order</div>
+
+    <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Customer</div>
+    <div class="form-group">
+      <label class="form-label">Select Customer *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="vcCustomer" onchange="onVCCustomerChange()" style="flex:1">
+          <option value="">-- Select Customer --</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="openCustomerModal()" style="white-space:nowrap">+ New</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Delivery Address *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="vcAddress" style="flex:1">
+          <option value="">-- Select Customer First --</option>
+        </select>
+        <button class="btn btn-outline btn-sm" id="vcAddAddrBtn" onclick="openAddressModal()" style="white-space:nowrap;display:none">+ Add</button>
+      </div>
+    </div>
+
+    <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;border:1px solid #e2e8f0">
+      <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Card Specifications</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Sheet Width (in)</label>
+          <input type="number" class="form-control" id="vcSheetW" value="12" step="0.5" oninput="calcVCCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sheet Height (in)</label>
+          <input type="number" class="form-control" id="vcSheetH" value="18" step="0.5" oninput="calcVCCost()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Card Width (in)</label>
+          <input type="number" class="form-control" id="vcCardW" value="3.5" step="0.25" oninput="calcVCCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Card Height (in)</label>
+          <input type="number" class="form-control" id="vcCardH" value="2" step="0.25" oninput="calcVCCost()">
+        </div>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <label class="form-label" style="margin:0">Paper Type</label>
+          <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openVCSettingsModal('paper')">⚙️ Manage</button>
+        </div>
+        <select class="form-control" id="vcPaper" onchange="calcVCCost()"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Print Sides</label>
+        <select class="form-control" id="vcPrintSides" onchange="calcVCCost()">
+          <option value="0.5">Front Only (+₹0.50 / card)</option>
+          <option value="0.8">Front & Back (+₹0.80 / card)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <label class="form-label" style="margin:0">Add-ons</label>
+          <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openVCSettingsModal('addon')">⚙️ Manage</button>
+        </div>
+        <div id="vcAddonsContainer" style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;min-height:40px"></div>
+      </div>
+      <div id="vcCalcResult" style="background:#e8f4f8;border-radius:6px;padding:10px;font-size:13px;display:none;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Cards per sheet:</span><strong id="vcCardsPerSheet">0</strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Paper cost per card:</span><strong>₹<span id="vcPaperCost">0</span></strong></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #b8d4e0;padding-top:6px;margin-top:4px"><span style="font-weight:700">Cost per card:</span><strong style="color:#1a56db">₹<span id="vcCostPerCard">0</span></strong></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Quantity (cards) *</label>
+        <input type="number" class="form-control" id="vcQty" value="100" min="1" oninput="calcVCTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order Total (₹)</label>
+        <input type="text" class="form-control" id="vcTotal" readonly placeholder="Auto">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Assign Vendor *</label>
+      <select class="form-control" id="vcVendor">
+        <option value="">-- Select Vendor --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-control" id="vcPriority">
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Design Instructions</label>
+      <textarea class="form-control" id="vcNotes" placeholder="Design details, contact info to print, etc." rows="2"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('vcOrderModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" onclick="saveVCOrder()">Create Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- VC SETTINGS MODAL -->
+<div class="modal-overlay" id="vcSettingsModal" style="z-index:250">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">⚙️ Paper & Add-on Settings</div>
+
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button class="filter-tab active" id="vcStTab1" onclick="switchVCSettingsTab('paper')">Paper Types</button>
+      <button class="filter-tab" id="vcStTab2" onclick="switchVCSettingsTab('addon')">Add-ons</button>
+    </div>
+
+    <!-- PAPER TYPES PANEL -->
+    <div id="vcSettingsPaper">
+      <div id="vcPaperList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <input type="text" class="form-control" id="newPaperName" placeholder="Name (e.g. Kraft Paper)">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <input type="number" class="form-control" id="newPaperPrice" placeholder="₹ per sheet" min="1" step="1">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveVCPaperType()" style="margin-top:8px">+ Add Paper Type</button>
+      </div>
+    </div>
+
+    <!-- ADD-ONS PANEL -->
+    <div id="vcSettingsAddon" style="display:none">
+      <div id="vcAddonList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Add-on</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <input type="text" class="form-control" id="newAddonName" placeholder="Name (e.g. Embossing)">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <input type="number" class="form-control" id="newAddonPrice" placeholder="₹ per card" min="0.01" step="0.05">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveVCAddon()" style="margin-top:8px">+ Add Add-on</button>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost btn-full" onclick="closeModal('vcSettingsModal')" style="margin-top:14px">Done</button>
+  </div>
+</div>
+
+<!-- CUSTOMER MODAL -->
+<div class="modal-overlay" id="customerModal" style="z-index:250">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title" id="customerModalTitle">Add Customer</div>
+    <div class="form-group">
+      <label class="form-label">Customer Name *</label>
+      <input type="text" class="form-control" id="custName" placeholder="e.g. Raj Sharma">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Addresses</label>
+      <div id="custAddrList"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addCustAddrRow()" style="margin-top:6px">+ Add Address</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('customerModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" onclick="saveCustomer()">Save Customer</button>
+    </div>
   </div>
 </div>
 
@@ -953,32 +1053,48 @@ const defaultState = {
     { id: 'v3', name: 'QuickMart Wholesale', contact: 'Anil Kumar', phone: '+91 76543 21098', email: 'anil@quickmart.in', city: 'Bengaluru', type: 'Wholesaler', rating: 4 },
     { id: 'v4', name: 'EastEdge Imports', contact: 'Meera Singh', phone: '+91 65432 10987', email: 'meera@eastedge.com', city: 'Chennai', type: 'Importer', rating: 3 }
   ],
-  products: [
-    { id: 'p1', name: 'Smart Watch Pro X1', price: 8999, category: 'Electronics', image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80', desc: 'Advanced smartwatch with health monitoring, GPS, and 7-day battery life.', specs: [['Display','1.4" AMOLED'],['Battery','420mAh / 7 days'],['Water Resistance','5ATM'],['Connectivity','BT 5.0 + GPS']], vendors: ['v1','v2'], stock: 85 },
-    { id: 'p2', name: 'Wireless Earbuds Neo', price: 2499, category: 'Electronics', image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300&q=80', desc: 'True wireless earbuds with ANC and 30hr total playtime.', specs: [['Driver Size','10mm'],['ANC','Yes'],['Playtime','30hrs total'],['Charge Time','1.5 hrs']], vendors: ['v1','v3'], stock: 12 },
-    { id: 'p3', name: 'Ergonomic Office Chair', price: 15999, category: 'Furniture', image: 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=300&q=80', desc: 'Fully adjustable mesh chair with lumbar support.', specs: [['Material','Mesh + Steel'],['Max Load','120 kg'],['Adjustable','Height, Armrest, Tilt'],['Warranty','2 years']], vendors: ['v2','v4'], stock: 23 },
-    { id: 'p4', name: 'Industrial Drill Set', price: 4599, category: 'Tools', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300&q=80', desc: '18V cordless drill with 25-piece accessory kit.', specs: [['Voltage','18V'],['Speed','0-1500 RPM'],['Chuck','13mm Keyless'],['Bits Included','25']], vendors: ['v3','v4'], stock: 6 }
-  ],
   orders: [
-    { id: 'ORD-001', productId: 'p1', vendorId: 'v1', qty: 10, total: 89990, customer: 'IT Department', address: 'Block A, Head Office, Mumbai', priority: 'high', notes: 'Bulk purchase for Q1', status: 'delivered', date: '2026-05-15', statusHistory: ['pending','approved','processing','shipped','delivered'] },
-    { id: 'ORD-002', productId: 'p2', vendorId: 'v3', qty: 25, total: 62475, customer: 'HR Department', address: 'Level 3, South Wing, Delhi', priority: 'normal', notes: '', status: 'shipped', date: '2026-05-28', statusHistory: ['pending','approved','processing','shipped'] },
-    { id: 'ORD-003', productId: 'p3', vendorId: 'v2', qty: 5, total: 79995, customer: 'Admin Dept', address: 'New Office, Bengaluru', priority: 'urgent', notes: 'Need before inauguration', status: 'processing', date: '2026-06-01', statusHistory: ['pending','approved','processing'] },
-    { id: 'ORD-004', productId: 'p4', vendorId: 'v4', qty: 3, total: 13797, customer: 'Maintenance', address: 'Warehouse, Chennai', priority: 'normal', notes: '', status: 'approved', date: '2026-06-02', statusHistory: ['pending','approved'] },
-    { id: 'ORD-005', productId: 'p1', vendorId: 'v2', qty: 2, total: 17998, customer: 'Sales Team', address: 'Sales Office, Pune', priority: 'high', notes: 'For client demo', status: 'pending', date: '2026-06-03', statusHistory: ['pending'] }
+    { id: 'ORD-001', item: 'Smart Watch Pro X1', unitPrice: 8999, vendorId: 'v1', qty: 10, total: 89990, customer: 'IT Department', address: 'Block A, Head Office, Mumbai', priority: 'high', notes: 'Bulk purchase for Q1', status: 'delivered', date: '2026-05-15', statusHistory: ['pending','approved','processing','shipped','delivered'] },
+    { id: 'ORD-002', item: 'Wireless Earbuds Neo', unitPrice: 2499, vendorId: 'v3', qty: 25, total: 62475, customer: 'HR Department', address: 'Level 3, South Wing, Delhi', priority: 'normal', notes: '', status: 'shipped', date: '2026-05-28', statusHistory: ['pending','approved','processing','shipped'] },
+    { id: 'ORD-003', item: 'Ergonomic Office Chair', unitPrice: 15999, vendorId: 'v2', qty: 5, total: 79995, customer: 'Admin Dept', address: 'New Office, Bengaluru', priority: 'urgent', notes: 'Need before inauguration', status: 'processing', date: '2026-06-01', statusHistory: ['pending','approved','processing'] },
+    { id: 'ORD-004', item: 'Industrial Drill Set', unitPrice: 4599, vendorId: 'v4', qty: 3, total: 13797, customer: 'Maintenance', address: 'Warehouse, Chennai', priority: 'normal', notes: '', status: 'approved', date: '2026-06-02', statusHistory: ['pending','approved'] },
+    { id: 'ORD-005', item: 'Smart Watch Pro X1', unitPrice: 8999, vendorId: 'v2', qty: 2, total: 17998, customer: 'Sales Team', address: 'Sales Office, Pune', priority: 'high', notes: 'For client demo', status: 'pending', date: '2026-06-03', statusHistory: ['pending'] }
   ],
   notifications: [
     { id: 'n1', title: 'Low Stock Alert', text: 'Industrial Drill Set has only 6 units left.', time: '2 hrs ago', read: false, type: 'warning' },
     { id: 'n2', title: 'New Order Created', text: 'ORD-005 placed by Sales Team.', time: '1 hr ago', read: false, type: 'info' },
     { id: 'n3', title: 'Order Shipped', text: 'ORD-002 has been shipped by QuickMart.', time: '30 min ago', read: false, type: 'success' }
+  ],
+  customers: [
+    { id: 'cust1', name: 'Raj Sharma', addresses: [
+      { id: 'addr1', label: 'Office', text: 'Block A, 3rd Floor, Nariman Point, Mumbai - 400021' },
+      { id: 'addr2', label: 'Home',   text: '42 MG Road, Bandra West, Mumbai - 400050' }
+    ]},
+    { id: 'cust2', name: 'Priya Nair', addresses: [
+      { id: 'addr3', label: 'Office', text: 'Tech Park, Whitefield, Bengaluru - 560066' }
+    ]},
+    { id: 'cust3', name: 'Anil Kumar', addresses: [
+      { id: 'addr4', label: 'Office',    text: 'Prestige Tower, Banjara Hills, Hyderabad - 500034' },
+      { id: 'addr5', label: 'Warehouse', text: 'Plot 7, Phase II, IDA Uppal, Hyderabad - 500039' }
+    ]}
+  ],
+  vcPaperTypes: [
+    { id: 'vcp1', name: 'Standard Matte',       price: 50  },
+    { id: 'vcp2', name: 'Premium Glossy',        price: 80  },
+    { id: 'vcp3', name: 'Textured / Art Paper',  price: 120 }
+  ],
+  vcAddons: [
+    { id: 'vca1', name: 'Thermal Lamination', price: 0.30 },
+    { id: 'vca2', name: 'Rounded Corners',    price: 0.20 },
+    { id: 'vca3', name: 'Gold / Silver Foil', price: 1.50 },
+    { id: 'vca4', name: 'Spot UV',            price: 1.00 }
   ]
 };
 
 let state = JSON.parse(JSON.stringify(defaultState));
 let currentOrderFilter = 'all';
-let editingProductId = null;
 let editingVendorId = null;
 let editingOrderId = null;
-let specRowCount = 0;
 let unsubscribeSync = null;
 
 function save() {
@@ -995,8 +1111,10 @@ function startRealtimeSync() {
     }
     if (snap.metadata.hasPendingWrites) return;
     try { state = JSON.parse(snap.data().data); } catch(e) { return; }
+    state.customers     = state.customers     || [];
+    state.vcPaperTypes  = state.vcPaperTypes  || defaultState.vcPaperTypes;
+    state.vcAddons      = state.vcAddons      || defaultState.vcAddons;
     renderDashboard();
-    renderProducts();
     renderOrders();
     renderVendors();
     renderReports();
@@ -1013,12 +1131,11 @@ function switchTab(tab, btn) {
   if (btn) btn.classList.add('active');
   else {
     const navs = document.querySelectorAll('.nav-item');
-    const map = ['dashboard','products','orders','vendors','reports'];
+    const map = ['dashboard','orders','vendors','reports'];
     const idx = map.indexOf(tab);
     if (idx !== -1) navs[idx].classList.add('active');
   }
   if (tab === 'dashboard') renderDashboard();
-  if (tab === 'products') renderProducts();
   if (tab === 'orders') renderOrders();
   if (tab === 'vendors') renderVendors();
   if (tab === 'reports') renderReports();
@@ -1065,7 +1182,7 @@ function addNotification(title, text, type='info') {
 
 // ===================== DASHBOARD =====================
 function renderDashboard() {
-  document.getElementById('stat-products').textContent = state.products.length;
+  document.getElementById('stat-customers').textContent = (state.customers || []).length;
   document.getElementById('stat-orders').textContent = state.orders.length;
   document.getElementById('stat-vendors').textContent = state.vendors.length;
   document.getElementById('stat-pending').textContent = state.orders.filter(o => o.status === 'pending').length;
@@ -1073,14 +1190,9 @@ function renderDashboard() {
   // Alerts
   const alerts = document.getElementById('dash-alerts');
   let alertHtml = '';
-  const lowStock = state.products.filter(p => p.stock < 10);
-  lowStock.forEach(p => {
-    alertHtml += `<div class="alert alert-warning"><span class="alert-icon">⚠️</span><div>Low stock: <strong>${p.name}</strong> — only ${p.stock} units remaining.</div></div>`;
-  });
   const urgentOrders = state.orders.filter(o => o.priority === 'urgent' && o.status !== 'delivered');
   urgentOrders.forEach(o => {
-    const prod = state.products.find(p => p.id === o.productId);
-    alertHtml += `<div class="alert alert-danger"><span class="alert-icon">🚨</span><div>Urgent order <strong>${o.id}</strong> for ${prod?.name || 'product'} needs attention.</div></div>`;
+    alertHtml += `<div class="alert alert-danger"><span class="alert-icon">🚨</span><div>Urgent order <strong>${escHtml(o.id)}</strong> for <strong>${escHtml(getOrderItemName(o))}</strong> needs attention.</div></div>`;
   });
   alerts.innerHTML = alertHtml;
 
@@ -1105,224 +1217,19 @@ function renderDashboard() {
   const rod = document.getElementById('dashRecentOrders');
   if (!recent.length) { rod.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-sub">No orders yet</div></div>'; return; }
   rod.innerHTML = recent.map(o => {
-    const prod = state.products.find(p => p.id === o.productId);
     const vendor = state.vendors.find(v => v.id === o.vendorId);
+    const icon = o.productId === 'vc-custom' ? '📇' : '🛒';
     return `<div class="product-item" onclick="viewOrderDetail('${o.id}')">
-      <div class="product-img-placeholder" style="width:44px;height:44px;font-size:18px;">🛒</div>
+      <div class="product-img-placeholder" style="width:44px;height:44px;font-size:18px;">${icon}</div>
       <div class="product-info">
-        <div class="product-name">${o.id} — ${prod?.name||'Product'}</div>
-        <div class="product-meta">${vendor?.name||'Vendor'} · Qty: ${o.qty}</div>
+        <div class="product-name">${escHtml(o.id)} — ${escHtml(getOrderItemName(o))}</div>
+        <div class="product-meta">${escHtml(vendor?.name||'Vendor')} · Qty: ${o.qty}</div>
       </div>
       <span class="badge-status badge-${o.status}">${o.status}</span>
     </div>`;
   }).join('');
-
-  // Top products by orders
-  const prodCount = {};
-  state.orders.forEach(o => { prodCount[o.productId] = (prodCount[o.productId]||0) + o.qty; });
-  const sorted = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,4);
-  const maxQ = Math.max(...sorted.map(x=>x[1]),1);
-  const tp = document.getElementById('dashTopProducts');
-  if (!sorted.length) { tp.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:10px 0;">No order data.</div>'; return; }
-  tp.innerHTML = '<div class="bar-chart">' + sorted.map(([pid, qty]) => {
-    const prod = state.products.find(p => p.id === pid);
-    return `<div class="bar-row">
-      <div class="bar-label">${prod?.name.split(' ')[0]||'?'}</div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:${Math.round(qty/maxQ*100)}%;background:var(--primary)">
-          <span class="bar-value">${qty}</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('') + '</div>';
 }
 
-// ===================== PRODUCTS =====================
-function renderProducts() {
-  const q = (document.getElementById('productSearch')?.value || '').toLowerCase();
-  const filtered = state.products.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-  const el = document.getElementById('productList');
-  if (!filtered.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No Products Found</div><div class="empty-sub">Add your first product</div></div>`;
-    return;
-  }
-  el.innerHTML = filtered.map(p => {
-    const imgEl = p.image ? `<img src="${p.image}" class="product-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="product-img-placeholder" style="display:none">📦</div>` : `<div class="product-img-placeholder">📦</div>`;
-    const vendorNames = (p.vendors||[]).map(vid => state.vendors.find(v=>v.id===vid)?.name||'').filter(Boolean);
-    const stockColor = p.stock < 10 ? 'var(--danger)' : p.stock < 30 ? 'var(--warning)' : 'var(--success)';
-    return `<div class="product-item" onclick="viewProductDetail('${p.id}')">
-      ${imgEl}
-      <div class="product-info">
-        <div class="product-name">${p.name}</div>
-        <div class="product-price">₹${Number(p.price).toLocaleString('en-IN')}</div>
-        <div class="product-meta" style="color:${stockColor}">Stock: ${p.stock}</div>
-        <div class="product-meta">${p.category}</div>
-        ${vendorNames.length ? `<div class="product-meta">🏢 ${vendorNames.join(', ')}</div>` : ''}
-      </div>
-      <div class="product-actions">
-        <button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();editProduct('${p.id}')">✏️</button>
-        <button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteProduct('${p.id}')">🗑️</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function viewProductDetail(pid) {
-  const p = state.products.find(x => x.id === pid);
-  if (!p) return;
-  const vendorNames = (p.vendors||[]).map(vid => state.vendors.find(v=>v.id===vid)?.name||'').filter(Boolean);
-  const imgHtml = p.image ? `<img src="${p.image}" style="width:100%;height:180px;object-fit:cover;border-radius:12px;margin-bottom:14px" onerror="this.style.display='none'">` : '';
-  const specsHtml = (p.specs||[]).length ? `<table class="spec-table">${p.specs.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table>` : 'No specs added.';
-  const stockPct = Math.min(100, Math.round(p.stock/100*100));
-  const stockColor = p.stock<10?'var(--danger)':p.stock<30?'var(--warning)':'var(--success)';
-  document.getElementById('productDetailContent').innerHTML = `
-    ${imgHtml}
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
-      <div>
-        <div style="font-size:18px;font-weight:700">${p.name}</div>
-        <div style="color:var(--text-muted);font-size:13px">${p.category}</div>
-      </div>
-      <div style="font-size:22px;font-weight:800;color:var(--primary)">₹${Number(p.price).toLocaleString('en-IN')}</div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Description</div>
-      <div class="detail-value">${p.desc||'—'}</div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Specifications</div>
-      ${specsHtml}
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Stock Level</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
-        <span style="font-weight:700;color:${stockColor}">${p.stock} units</span>
-        <span style="font-size:12px;color:var(--text-muted)">${p.stock<10?'⚠️ Low Stock':p.stock<30?'📉 Moderate':'✅ In Stock'}</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${stockPct}%;background:${stockColor}"></div></div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Assigned Vendors</div>
-      <div class="vendor-chips">
-        ${vendorNames.length ? vendorNames.map(n=>`<div class="vendor-chip">🏢 ${n}</div>`).join('') : '<span style="color:var(--text-muted);font-size:13px">No vendors assigned</span>'}
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:16px">
-      <button class="btn btn-outline btn-full" onclick="closeModal('productDetailModal');editProduct('${p.id}')">Edit Product</button>
-      <button class="btn btn-ghost btn-full" onclick="closeModal('productDetailModal')">Close</button>
-    </div>`;
-  openModal('productDetailModal');
-}
-
-function openProductModal(id) {
-  editingProductId = id || null;
-  specRowCount = 0;
-  document.getElementById('productModalTitle').textContent = id ? 'Edit Product' : 'Add Product';
-  if (id) {
-    const p = state.products.find(x => x.id === id);
-    document.getElementById('pName').value = p.name;
-    document.getElementById('pPrice').value = p.price;
-    document.getElementById('pCategory').value = p.category;
-    document.getElementById('pImage').value = p.image || '';
-    document.getElementById('pDesc').value = p.desc || '';
-    document.getElementById('pStock').value = p.stock || 0;
-    previewProductImg();
-    const specListEl = document.getElementById('specList');
-    specListEl.innerHTML = '';
-    (p.specs||[]).forEach(([k,v]) => addSpecRow(k,v));
-    renderVendorSelector(p.vendors||[]);
-  } else {
-    document.getElementById('pName').value = '';
-    document.getElementById('pPrice').value = '';
-    document.getElementById('pImage').value = '';
-    document.getElementById('pDesc').value = '';
-    document.getElementById('pStock').value = 0;
-    document.getElementById('pImgPreview').innerHTML = '🖼️';
-    document.getElementById('pImgPreview').className = 'img-preview-placeholder';
-    document.getElementById('specList').innerHTML = '';
-    renderVendorSelector([]);
-  }
-  openModal('productModal');
-}
-
-function editProduct(id) { openProductModal(id); }
-
-function previewProductImg() {
-  const url = document.getElementById('pImage').value;
-  const prev = document.getElementById('pImgPreview');
-  if (url) {
-    prev.outerHTML = `<img id="pImgPreview" src="${url}" class="img-preview" onerror="this.outerHTML='<div id=pImgPreview class=img-preview-placeholder>🖼️</div>'">`;
-  }
-}
-
-function addSpecRow(k='', v='') {
-  specRowCount++;
-  const row = document.createElement('div');
-  row.className = 'spec-pair';
-  row.id = 'specRow' + specRowCount;
-  row.innerHTML = `
-    <input type="text" class="form-control" placeholder="Key (e.g. Color)" value="${k}" data-spec-key>
-    <input type="text" class="form-control" placeholder="Value (e.g. Black)" value="${v}" data-spec-val>
-    <button class="btn btn-ghost btn-icon btn-sm" onclick="this.parentElement.remove()">✕</button>`;
-  document.getElementById('specList').appendChild(row);
-}
-
-function getSpecs() {
-  const specs = [];
-  document.querySelectorAll('#specList .spec-pair').forEach(row => {
-    const k = row.querySelector('[data-spec-key]').value.trim();
-    const v = row.querySelector('[data-spec-val]').value.trim();
-    if (k && v) specs.push([k, v]);
-  });
-  return specs;
-}
-
-function renderVendorSelector(selectedIds) {
-  const el = document.getElementById('pVendorSelector');
-  el.innerHTML = state.vendors.map(v => `
-    <div class="vendor-select-item ${selectedIds.includes(v.id)?'selected':''}" onclick="toggleVendorSelect(this,'${v.id}')">
-      ${v.name}
-    </div>`).join('') || '<span style="color:var(--text-muted);font-size:13px">No vendors available. Add vendors first.</span>';
-}
-
-function toggleVendorSelect(el, vid) { el.classList.toggle('selected'); }
-
-function getSelectedVendors() {
-  return Array.from(document.querySelectorAll('#pVendorSelector .vendor-select-item.selected')).map(el => {
-    return state.vendors.find(v => el.textContent.trim() === v.name)?.id;
-  }).filter(Boolean);
-}
-
-function saveProduct() {
-  const name = document.getElementById('pName').value.trim();
-  const price = parseFloat(document.getElementById('pPrice').value);
-  if (!name || !price) { showToast('Please fill required fields'); return; }
-  const product = {
-    name, price,
-    category: document.getElementById('pCategory').value,
-    image: document.getElementById('pImage').value.trim(),
-    desc: document.getElementById('pDesc').value.trim(),
-    specs: getSpecs(),
-    vendors: getSelectedVendors(),
-    stock: parseInt(document.getElementById('pStock').value) || 0
-  };
-  if (editingProductId) {
-    const idx = state.products.findIndex(p => p.id === editingProductId);
-    state.products[idx] = { ...state.products[idx], ...product };
-    showToast('Product updated');
-  } else {
-    product.id = 'p' + Date.now();
-    state.products.push(product);
-    showToast('Product added');
-    addNotification('New Product Added', `${name} has been added to catalog.`, 'info');
-  }
-  save(); closeModal('productModal'); renderProducts(); renderDashboard();
-}
-
-function deleteProduct(id) {
-  if (!confirm('Delete this product?')) return;
-  state.products = state.products.filter(p => p.id !== id);
-  save(); renderProducts(); renderDashboard(); showToast('Product deleted');
-}
 
 function deleteOrder(id) {
   if (!confirm('Delete this order?')) return;
@@ -1374,9 +1281,8 @@ const NEXT_ACTIONS = {
 function renderOrders() {
   const q = (document.getElementById('orderSearch')?.value || '').toLowerCase();
   let filtered = state.orders.filter(o => {
-    const prod = state.products.find(p => p.id === o.productId);
     const vendor = state.vendors.find(v => v.id === o.vendorId);
-    return o.id.toLowerCase().includes(q) || prod?.name.toLowerCase().includes(q) || vendor?.name.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q);
+    return o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || vendor?.name.toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q);
   });
   if (currentOrderFilter !== 'all') filtered = filtered.filter(o => o.status === currentOrderFilter);
   filtered = filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -1386,35 +1292,35 @@ function renderOrders() {
     return;
   }
   el.innerHTML = filtered.map(o => {
-    const prod = state.products.find(p => p.id === o.productId);
     const vendor = state.vendors.find(v => v.id === o.vendorId);
+    const isVC = o.productId === 'vc-custom';
     const priorityBadge = o.priority === 'urgent' ? '<span style="background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">URGENT</span>' : o.priority === 'high' ? '<span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">HIGH</span>' : '';
-    const imgEl = prod?.image ? `<img src="${prod.image}" class="order-product-img" onerror="this.style.display='none'">` : `<div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>`;
+    const deleteBtn = isReadOnly() ? '' : `<button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteOrder('${o.id}')">🗑️</button>`;
     return `<div class="order-item" onclick="viewOrderDetail('${o.id}')">
       <div class="order-header">
         <div>
-          <div class="order-id">${o.id} ${priorityBadge}</div>
+          <div class="order-id">${escHtml(o.id)} ${priorityBadge}</div>
           <div class="order-date">${formatDate(o.date)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span class="badge-status badge-${o.status}">${o.status}</span>
-          <button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteOrder('${o.id}')">🗑️</button>
+          ${deleteBtn}
         </div>
       </div>
       <div class="order-product">
-        ${imgEl}
+        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : '📦'}</div>
         <div class="order-product-info">
-          <div class="name">${prod?.name || 'Unknown Product'}</div>
+          <div class="name">${escHtml(getOrderItemName(o))}</div>
           <div class="detail">Qty: ${o.qty} · ₹${Number(o.total).toLocaleString('en-IN')}</div>
         </div>
       </div>
       <div class="order-footer">
-        <div class="order-vendor">🏢 ${vendor?.name || 'No Vendor'}</div>
+        <div class="order-vendor">🏢 ${escHtml(vendor?.name || 'No Vendor')}</div>
         <div class="order-amount">₹${Number(o.total).toLocaleString('en-IN')}</div>
       </div>
       <div class="next-action">
         <div class="na-label">Next Action</div>
-        <div class="na-text">${NEXT_ACTIONS[o.status]?.title || '—'}</div>
+        <div class="na-text">${escHtml(NEXT_ACTIONS[o.status]?.title || '—')}</div>
       </div>
     </div>`;
   }).join('');
@@ -1430,11 +1336,9 @@ function setOrderFilter(filter, el) {
 function viewOrderDetail(oid) {
   const o = state.orders.find(x => x.id === oid);
   if (!o) return;
-  const prod = state.products.find(p => p.id === o.productId);
   const vendor = state.vendors.find(v => v.id === o.vendorId);
   const na = NEXT_ACTIONS[o.status];
   const wfIdx = ORDER_WORKFLOW.findIndex(s => s.key === o.status);
-  const imgEl = prod?.image ? `<img src="${prod.image}" style="width:100%;height:160px;object-fit:cover;border-radius:12px;margin-bottom:14px">` : '';
   const priorityColor = o.priority==='urgent'?'var(--danger)':o.priority==='high'?'var(--warning)':'var(--success)';
 
   // Build workflow steps
@@ -1452,27 +1356,29 @@ function viewOrderDetail(oid) {
       </div>`;
   }).join('') + `</div>`;
 
-  // Action buttons based on status
+  // Action buttons based on status — hidden for Viewer role
   let actionBtns = '';
-  if (o.status === 'pending') {
-    actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','approved')">✅ Approve Order</button>
-      <button class="btn btn-danger btn-full" onclick="updateOrderStatus('${o.id}','cancelled')" style="margin-top:8px">❌ Cancel Order</button>`;
-  } else if (o.status === 'approved') {
-    actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','processing')">⚙️ Mark as Processing</button>
-      <button class="btn btn-danger btn-full" onclick="updateOrderStatus('${o.id}','cancelled')" style="margin-top:8px">❌ Cancel Order</button>`;
-  } else if (o.status === 'processing') {
-    actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','shipped')">🚚 Mark as Shipped</button>`;
-  } else if (o.status === 'shipped') {
-    actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','delivered')">📬 Confirm Delivery</button>`;
-  } else if (o.status === 'delivered') {
-    actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','completed')">🎉 Complete Order</button>`;
+  if (!isReadOnly()) {
+    if (o.status === 'pending') {
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','approved')">✅ Approve Order</button>
+        <button class="btn btn-danger btn-full" onclick="updateOrderStatus('${o.id}','cancelled')" style="margin-top:8px">❌ Cancel Order</button>`;
+    } else if (o.status === 'approved') {
+      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','processing')">⚙️ Mark as Processing</button>
+        <button class="btn btn-danger btn-full" onclick="updateOrderStatus('${o.id}','cancelled')" style="margin-top:8px">❌ Cancel Order</button>`;
+    } else if (o.status === 'processing') {
+      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','shipped')">🚚 Mark as Shipped</button>`;
+    } else if (o.status === 'shipped') {
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','delivered')">📬 Confirm Delivery</button>`;
+    } else if (o.status === 'delivered') {
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','completed')">🎉 Complete Order</button>`;
+    }
   }
 
   document.getElementById('orderDetailContent').innerHTML = `
-    ${imgEl}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
       <div>
-        <div style="font-size:18px;font-weight:800">${o.id}</div>
+        <div style="font-size:18px;font-weight:800">${escHtml(o.id)}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">${escHtml(getOrderItemName(o))}</div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${formatDate(o.date)}</div>
       </div>
       <div style="text-align:right">
@@ -1496,9 +1402,8 @@ function viewOrderDetail(oid) {
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div>
-        <div class="detail-label">Product</div>
-        <div class="detail-value" style="font-weight:600">${prod?.name||'—'}</div>
-        <div style="font-size:12px;color:var(--text-muted)">₹${Number(prod?.price||0).toLocaleString('en-IN')} × ${o.qty}</div>
+        <div class="detail-label">Unit Price × Qty</div>
+        <div class="detail-value" style="font-weight:600">₹${Number(o.unitPrice||0).toLocaleString('en-IN')} × ${o.qty}</div>
       </div>
       <div>
         <div class="detail-label">Order Total</div>
@@ -1527,13 +1432,26 @@ function viewOrderDetail(oid) {
         <div class="detail-value">${o.qty} units</div>
       </div>
     </div>
-    ${o.address ? `<div class="detail-section"><div class="detail-label">Delivery Address</div><div class="detail-value">${o.address}</div></div>` : ''}
-    ${o.notes ? `<div class="detail-section"><div class="detail-label">Notes</div><div class="detail-value">${o.notes}</div></div>` : ''}
+    ${o.address ? `<div class="detail-section"><div class="detail-label">Delivery Address</div><div class="detail-value">${escHtml(o.address)}</div></div>` : ''}
+    ${o.notes ? `<div class="detail-section"><div class="detail-label">Notes</div><div class="detail-value">${escHtml(o.notes)}</div></div>` : ''}
+
+    ${o.vcDetails ? `
+    <div class="detail-section">
+      <div class="detail-label">Card Specifications</div>
+      <table class="spec-table" style="margin-top:6px">
+        <tr><td>Card Size</td><td>${o.vcDetails.cardW}" × ${o.vcDetails.cardH}"</td></tr>
+        <tr><td>Sheet Size</td><td>${o.vcDetails.sheetW}" × ${o.vcDetails.sheetH}"</td></tr>
+        <tr><td>Paper</td><td>${escHtml(o.vcDetails.paper)}</td></tr>
+        <tr><td>Printing</td><td>${escHtml(o.vcDetails.printSides)}</td></tr>
+        ${o.vcDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.vcDetails.addons.map(escHtml).join(', ')}</td></tr>` : ''}
+        <tr><td>Cost / Card</td><td style="color:var(--primary);font-weight:700">₹${Number(o.vcDetails.costPerCard).toFixed(2)}</td></tr>
+      </table>
+    </div>` : ''}
 
     <div style="margin-top:16px">
       ${actionBtns}
       <button class="btn btn-ghost btn-full" onclick="closeModal('orderDetailModal')" style="margin-top:8px">Close</button>
-      <button class="btn btn-ghost btn-full" onclick="deleteOrder('${o.id}')" style="margin-top:8px;color:#ef4444">🗑️ Delete Order</button>
+      ${!isReadOnly() ? `<button class="btn btn-ghost btn-full" onclick="deleteOrder('${o.id}')" style="margin-top:8px;color:#ef4444">🗑️ Delete Order</button>` : ''}
     </div>`;
   openModal('orderDetailModal');
 }
@@ -1555,54 +1473,41 @@ function updateOrderStatus(oid, newStatus) {
 function openOrderModal() {
   editingOrderId = null;
   document.getElementById('orderModalTitle').textContent = 'Create Order';
-  // Populate product select
-  const oP = document.getElementById('oProduct');
-  oP.innerHTML = '<option value="">-- Select Product --</option>' + state.products.map(p => `<option value="${p.id}">📦 ${p.name} — ₹${Number(p.price).toLocaleString('en-IN')}</option>`).join('');
-  document.getElementById('oVendor').innerHTML = '<option value="">-- Select Product First --</option>';
+  document.getElementById('oItem').value = '';
+  document.getElementById('oUnitPrice').value = '';
   document.getElementById('oQty').value = 1;
   document.getElementById('oTotal').value = '';
   document.getElementById('oCustomer').value = '';
   document.getElementById('oAddress').value = '';
   document.getElementById('oNotes').value = '';
+  document.getElementById('oPriority').value = 'normal';
+  document.getElementById('oVendor').innerHTML = '<option value="">-- Select Vendor --</option>' +
+    state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
   openModal('orderModal');
 }
 
-function onOrderProductChange() {
-  const pid = document.getElementById('oProduct').value;
-  const prod = state.products.find(p => p.id === pid);
-  const oV = document.getElementById('oVendor');
-  if (prod && prod.vendors && prod.vendors.length) {
-    oV.innerHTML = '<option value="">-- Select Vendor --</option>' + prod.vendors.map(vid => {
-      const v = state.vendors.find(x => x.id === vid);
-      return v ? `<option value="${v.id}">🏢 ${v.name} (${v.city})</option>` : '';
-    }).filter(Boolean).join('');
-  } else {
-    oV.innerHTML = '<option value="">No vendors assigned to this product</option>';
-  }
-  calcOrderTotal();
-}
-
 function calcOrderTotal() {
-  const pid = document.getElementById('oProduct').value;
+  const unitPrice = parseFloat(document.getElementById('oUnitPrice').value) || 0;
   const qty = parseInt(document.getElementById('oQty').value) || 0;
-  const prod = state.products.find(p => p.id === pid);
-  if (prod && qty) {
-    document.getElementById('oTotal').value = '₹' + (prod.price * qty).toLocaleString('en-IN');
-  } else {
-    document.getElementById('oTotal').value = '';
-  }
+  document.getElementById('oTotal').value = (unitPrice > 0 && qty > 0)
+    ? '₹' + (unitPrice * qty).toLocaleString('en-IN')
+    : '';
 }
 
 function saveOrder() {
-  const pid = document.getElementById('oProduct').value;
+  const item = document.getElementById('oItem').value.trim();
+  const unitPrice = parseFloat(document.getElementById('oUnitPrice').value) || 0;
   const vid = document.getElementById('oVendor').value;
-  const qty = parseInt(document.getElementById('oQty').value);
-  if (!pid || !vid || !qty) { showToast('Please fill all required fields'); return; }
-  const prod = state.products.find(p => p.id === pid);
+  const qty = parseInt(document.getElementById('oQty').value) || 0;
+  if (!item)      { showToast('Please enter an item description'); return; }
+  if (!unitPrice) { showToast('Please enter a unit price');        return; }
+  if (!vid)       { showToast('Please select a vendor');           return; }
+  if (!qty)       { showToast('Please enter a valid quantity');    return; }
+  const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-','')) || 0), 0);
   const order = {
-    id: 'ORD-' + String(state.orders.length + 1).padStart(3, '0'),
-    productId: pid, vendorId: vid, qty,
-    total: (prod?.price || 0) * qty,
+    id: 'ORD-' + String(lastNum + 1).padStart(3, '0'),
+    item, unitPrice, vendorId: vid, qty,
+    total: unitPrice * qty,
     customer: document.getElementById('oCustomer').value.trim(),
     address: document.getElementById('oAddress').value.trim(),
     priority: document.getElementById('oPriority').value,
@@ -1627,20 +1532,18 @@ function renderVendors() {
     return;
   }
   el.innerHTML = filtered.map(v => {
-    const assignedProducts = state.products.filter(p => (p.vendors||[]).includes(v.id));
+    const orderCount = state.orders.filter(o => o.vendorId === v.id).length;
     const stars = '⭐'.repeat(v.rating||3);
+    const actionsHtml = isReadOnly() ? '' : `<button class="btn btn-ghost btn-icon btn-sm" onclick="editVendor('${v.id}')">✏️</button><button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVendor('${v.id}')">🗑️</button>`;
     return `<div class="vendor-item">
-      <div class="vendor-avatar">${v.name[0]}</div>
+      <div class="vendor-avatar">${escHtml(v.name[0])}</div>
       <div class="vendor-info">
-        <div class="vendor-name">${v.name}</div>
-        <div class="vendor-meta">${v.type} · ${v.city}</div>
-        <div class="vendor-meta">${v.contact} · ${v.phone}</div>
-        <div class="vendor-products">${assignedProducts.length ? '📦 ' + assignedProducts.map(p=>p.name).join(', ') : 'No products assigned'} · ${stars}</div>
+        <div class="vendor-name">${escHtml(v.name)}</div>
+        <div class="vendor-meta">${escHtml(v.type)} · ${escHtml(v.city)}</div>
+        <div class="vendor-meta">${escHtml(v.contact)} · ${escHtml(v.phone)}</div>
+        <div class="vendor-products">🛒 ${orderCount} order${orderCount !== 1 ? 's' : ''} · ${stars}</div>
       </div>
-      <div class="product-actions">
-        <button class="btn btn-ghost btn-icon btn-sm" onclick="editVendor('${v.id}')">✏️</button>
-        <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVendor('${v.id}')">🗑️</button>
-      </div>
+      <div class="product-actions">${actionsHtml}</div>
     </div>`;
   }).join('');
 }
@@ -1692,10 +1595,11 @@ function saveVendor() {
 }
 
 function deleteVendor(id) {
-  if (!confirm('Delete this vendor?')) return;
+  const hasActive = state.orders.some(o => o.vendorId === id && !['completed','cancelled'].includes(o.status));
+  const msg = hasActive ? 'This vendor has active orders. Deleting will leave those orders without a vendor. Delete anyway?' : 'Delete this vendor?';
+  if (!confirm(msg)) return;
   state.vendors = state.vendors.filter(v => v.id !== id);
-  state.products.forEach(p => { p.vendors = (p.vendors||[]).filter(v => v !== id); });
-  save(); renderVendors(); renderProducts(); showToast('Vendor deleted');
+  save(); renderVendors(); renderDashboard(); showToast('Vendor deleted');
 }
 
 // ===================== REPORTS =====================
@@ -1703,9 +1607,6 @@ function renderReports() {
   const totalRevenue = state.orders.filter(o => ['delivered','completed'].includes(o.status)).reduce((s,o) => s + o.total, 0);
   const avgOrder = state.orders.length ? Math.round(state.orders.reduce((s,o)=>s+o.total,0)/state.orders.length) : 0;
   const topVendor = getTopVendor();
-  const catCount = {};
-  state.products.forEach(p => { catCount[p.category] = (catCount[p.category]||0)+1; });
-  const maxCat = Math.max(...Object.values(catCount),1);
   const vendorOrders = {};
   state.orders.forEach(o => { vendorOrders[o.vendorId] = (vendorOrders[o.vendorId]||0)+1; });
   const maxVO = Math.max(...Object.values(vendorOrders),1);
@@ -1728,20 +1629,9 @@ function renderReports() {
         <div class="stat-value">${state.orders.filter(o=>['delivered','completed'].includes(o.status)).length}</div>
         <div class="stat-label">Fulfilled Orders</div>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><div class="card-title">Products by Category</div></div>
-      <div class="bar-chart">
-        ${Object.entries(catCount).map(([k,v]) => `
-          <div class="bar-row">
-            <div class="bar-label">${k}</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:${Math.round(v/maxCat*100)}%;background:var(--primary)">
-                <span class="bar-value">${v}</span>
-              </div>
-            </div>
-          </div>`).join('')}
+      <div class="stat-card green" style="grid-column:1/-1">
+        <div class="stat-value" style="font-size:16px">${escHtml(topVendor)}</div>
+        <div class="stat-label">Top Vendor by Orders</div>
       </div>
     </div>
 
@@ -1775,23 +1665,7 @@ function renderReports() {
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header"><div class="card-title">Stock Levels</div></div>
-      <div class="bar-chart">
-        ${state.products.map(p => {
-          const maxSt = Math.max(...state.products.map(x=>x.stock||0),1);
-          const color = p.stock<10?'var(--danger)':p.stock<30?'var(--warning)':'var(--success)';
-          return `<div class="bar-row">
-            <div class="bar-label">${p.name.split(' ')[0]}</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:${Math.round((p.stock||0)/maxSt*100)}%;background:${color}">
-                <span class="bar-value">${p.stock}</span>
-              </div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
+    `;
 }
 
 function getTopVendor() {
@@ -1818,8 +1692,19 @@ function showToast(msg) {
 
 // ===================== UTILS =====================
 function formatDate(d) {
-  const dt = new Date(d);
-  return dt.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  const [y, m, day] = d.split('-').map(Number);
+  return new Date(y, m - 1, day).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function isReadOnly() { return currentUser?.role === 'Viewer'; }
+
+function getOrderItemName(o) {
+  if (o.productId === 'vc-custom') return 'Visiting Card';
+  return o.item || 'Order Item';
 }
 
 // ===================== AUTH =====================
@@ -1865,10 +1750,12 @@ function showApp() {
   document.querySelector('.header').style.display = 'flex';
   document.getElementById('mainContent').style.display = 'block';
   document.querySelector('.bottom-nav').style.display = 'flex';
-  // Update header pill
   const av = currentUser.name[0].toUpperCase();
   document.getElementById('headerUserAv').textContent = av;
   document.getElementById('headerUserName').textContent = currentUser.name.split(' ')[0];
+  document.querySelectorAll('.viewer-hide').forEach(el => {
+    el.style.display = isReadOnly() ? 'none' : '';
+  });
   updateNotifBadge();
   renderDashboard();
 }
@@ -1908,6 +1795,8 @@ function doLogout() {
     document.getElementById('loginError').classList.remove('show');
     showLoginScreen();
     showToast('Signed out successfully');
+  }).catch(() => {
+    showToast('Sign out failed. Please try again.');
   });
 }
 
@@ -1937,6 +1826,348 @@ function fillCreds(u, p) {
   document.getElementById('loginUser').value = u;
   document.getElementById('loginPass').value = p;
   document.getElementById('loginError').classList.remove('show');
+}
+
+// ===================== VC PAPER & ADDON SETTINGS =====================
+function renderVCPaperSelect() {
+  const sel = document.getElementById('vcPaper');
+  const types = state.vcPaperTypes || [];
+  sel.innerHTML = types.length
+    ? types.map(p => `<option value="${p.id}">📄 ${escHtml(p.name)} (₹${p.price}/sheet)</option>`).join('')
+    : '<option value="">No paper types — add via ⚙️ Manage</option>';
+  calcVCCost();
+}
+
+function renderVCAddonsContainer() {
+  const container = document.getElementById('vcAddonsContainer');
+  const addons = state.vcAddons || [];
+  if (!addons.length) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No add-ons — add via ⚙️ Manage</div>';
+    return;
+  }
+  container.innerHTML = addons.map((a, i) =>
+    `<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:normal;${i < addons.length-1 ? 'margin-bottom:6px;' : ''}cursor:pointer">
+      <input type="checkbox" class="vc-addon-check" data-id="${a.id}" data-price="${a.price}" onchange="calcVCCost()">
+      ${escHtml(a.name)} (+₹${Number(a.price).toFixed(2)}/card)
+    </label>`
+  ).join('');
+}
+
+function openVCSettingsModal(tab) {
+  switchVCSettingsTab(tab || 'paper');
+  renderVCPaperList();
+  renderVCAddonList();
+  openModal('vcSettingsModal');
+}
+
+function switchVCSettingsTab(tab) {
+  document.getElementById('vcSettingsPaper').style.display  = tab === 'paper' ? 'block' : 'none';
+  document.getElementById('vcSettingsAddon').style.display  = tab === 'addon' ? 'block' : 'none';
+  document.getElementById('vcStTab1').classList.toggle('active', tab === 'paper');
+  document.getElementById('vcStTab2').classList.toggle('active', tab === 'addon');
+}
+
+function renderVCPaperList() {
+  const el = document.getElementById('vcPaperList');
+  const types = state.vcPaperTypes || [];
+  el.innerHTML = types.length
+    ? types.map(p => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+          <div>
+            <div style="font-size:13px;font-weight:600">📄 ${escHtml(p.name)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">₹${p.price} per sheet</div>
+          </div>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVCPaperType('${p.id}')">🗑️</button>
+        </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No paper types added yet.</div>';
+}
+
+function renderVCAddonList() {
+  const el = document.getElementById('vcAddonList');
+  const addons = state.vcAddons || [];
+  el.innerHTML = addons.length
+    ? addons.map(a => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+          <div>
+            <div style="font-size:13px;font-weight:600">✨ ${escHtml(a.name)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">+₹${Number(a.price).toFixed(2)} per card</div>
+          </div>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVCAddon('${a.id}')">🗑️</button>
+        </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No add-ons added yet.</div>';
+}
+
+function saveVCPaperType() {
+  const name  = document.getElementById('newPaperName').value.trim();
+  const price = parseFloat(document.getElementById('newPaperPrice').value) || 0;
+  if (!name)  { showToast('Enter a paper type name'); return; }
+  if (!price) { showToast('Enter a price per sheet');  return; }
+  if (!state.vcPaperTypes) state.vcPaperTypes = [];
+  state.vcPaperTypes.push({ id: 'vcp' + Date.now(), name, price });
+  document.getElementById('newPaperName').value  = '';
+  document.getElementById('newPaperPrice').value = '';
+  save();
+  renderVCPaperList();
+  renderVCPaperSelect();
+  showToast('Paper type added');
+}
+
+function deleteVCPaperType(id) {
+  if ((state.vcPaperTypes || []).length <= 1) { showToast('Keep at least one paper type'); return; }
+  if (!confirm('Delete this paper type?')) return;
+  state.vcPaperTypes = state.vcPaperTypes.filter(p => p.id !== id);
+  save();
+  renderVCPaperList();
+  renderVCPaperSelect();
+}
+
+function saveVCAddon() {
+  const name  = document.getElementById('newAddonName').value.trim();
+  const price = parseFloat(document.getElementById('newAddonPrice').value) || 0;
+  if (!name)  { showToast('Enter an add-on name');   return; }
+  if (!price) { showToast('Enter a price per card'); return; }
+  if (!state.vcAddons) state.vcAddons = [];
+  state.vcAddons.push({ id: 'vca' + Date.now(), name, price });
+  document.getElementById('newAddonName').value  = '';
+  document.getElementById('newAddonPrice').value = '';
+  save();
+  renderVCAddonList();
+  renderVCAddonsContainer();
+  showToast('Add-on added');
+}
+
+function deleteVCAddon(id) {
+  if (!confirm('Delete this add-on?')) return;
+  state.vcAddons = (state.vcAddons || []).filter(a => a.id !== id);
+  save();
+  renderVCAddonList();
+  renderVCAddonsContainer();
+  calcVCCost();
+}
+
+// ===================== VISITING CARD =====================
+let vcCostPerCard = 0;
+let editingCustomerId = null;
+let custAddrRowCount = 0;
+
+function openVCOrderModal() {
+  vcCostPerCard = 0;
+  document.getElementById('vcSheetW').value = '12';
+  document.getElementById('vcSheetH').value = '18';
+  document.getElementById('vcCardW').value = '3.5';
+  document.getElementById('vcCardH').value = '2';
+  document.getElementById('vcPrintSides').value = '0.5';
+  renderVCPaperSelect();
+  renderVCAddonsContainer();
+  document.getElementById('vcQty').value = '100';
+  document.getElementById('vcTotal').value = '';
+  document.getElementById('vcNotes').value = '';
+  document.getElementById('vcPriority').value = 'normal';
+  document.getElementById('vcCalcResult').style.display = 'none';
+  document.getElementById('vcAddress').innerHTML = '<option value="">-- Select Customer First --</option>';
+  document.getElementById('vcAddAddrBtn').style.display = 'none';
+
+  const vcVendorSel = document.getElementById('vcVendor');
+  vcVendorSel.innerHTML = '<option value="">-- Select Vendor --</option>' +
+    state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
+
+  populateVCCustomerDropdown(null);
+  calcVCCost();
+  openModal('vcOrderModal');
+}
+
+function populateVCCustomerDropdown(selectId) {
+  const sel = document.getElementById('vcCustomer');
+  sel.innerHTML = '<option value="">-- Select Customer --</option>' +
+    (state.customers || []).map(c =>
+      `<option value="${c.id}" ${c.id === selectId ? 'selected' : ''}>${escHtml(c.name)}</option>`
+    ).join('');
+  if (selectId) { sel.value = selectId; onVCCustomerChange(); }
+}
+
+function onVCCustomerChange() {
+  const custId = document.getElementById('vcCustomer').value;
+  const addrSel = document.getElementById('vcAddress');
+  const addBtn  = document.getElementById('vcAddAddrBtn');
+  if (!custId) {
+    addrSel.innerHTML = '<option value="">-- Select Customer First --</option>';
+    addBtn.style.display = 'none';
+    return;
+  }
+  const cust = (state.customers || []).find(c => c.id === custId);
+  addrSel.innerHTML = '<option value="">-- Select Address --</option>' +
+    (cust?.addresses || []).map(a =>
+      `<option value="${a.id}">${escHtml(a.label)}: ${escHtml(a.text)}</option>`
+    ).join('');
+  addBtn.style.display = '';
+}
+
+function calcVCCost() {
+  const sW = parseFloat(document.getElementById('vcSheetW').value) || 0;
+  const sH = parseFloat(document.getElementById('vcSheetH').value) || 0;
+  const cW = parseFloat(document.getElementById('vcCardW').value) || 0;
+  const cH = parseFloat(document.getElementById('vcCardH').value) || 0;
+  const selectedPaperId = document.getElementById('vcPaper').value;
+  const paperType = (state.vcPaperTypes || []).find(p => p.id === selectedPaperId);
+  const sheetPrice = paperType?.price || 0;
+  const printCost  = parseFloat(document.getElementById('vcPrintSides').value) || 0;
+  let addonsCost = 0;
+  document.querySelectorAll('.vc-addon-check:checked').forEach(el => {
+    addonsCost += parseFloat(el.dataset.price) || 0;
+  });
+
+  const resultEl = document.getElementById('vcCalcResult');
+  if (sW > 0 && sH > 0 && cW > 0 && cH > 0 && cW <= sW && cH <= sH) {
+    const fit1 = Math.floor(sW / cW) * Math.floor(sH / cH);
+    const fit2 = Math.floor(sW / cH) * Math.floor(sH / cW);
+    const cardsPerSheet = Math.max(fit1, fit2);
+    if (cardsPerSheet > 0) {
+      const paperCost = sheetPrice / cardsPerSheet;
+      vcCostPerCard = paperCost + printCost + addonsCost;
+      document.getElementById('vcCardsPerSheet').textContent = cardsPerSheet;
+      document.getElementById('vcPaperCost').textContent = paperCost.toFixed(2);
+      document.getElementById('vcCostPerCard').textContent = vcCostPerCard.toFixed(2);
+      resultEl.style.display = 'block';
+      calcVCTotal();
+      return;
+    }
+  }
+  vcCostPerCard = 0;
+  resultEl.style.display = 'none';
+  document.getElementById('vcTotal').value = '';
+}
+
+function calcVCTotal() {
+  const qty = parseInt(document.getElementById('vcQty').value) || 0;
+  document.getElementById('vcTotal').value = (vcCostPerCard > 0 && qty > 0)
+    ? '₹' + (vcCostPerCard * qty).toFixed(2)
+    : '';
+}
+
+function saveVCOrder() {
+  const custId = document.getElementById('vcCustomer').value;
+  const addrId = document.getElementById('vcAddress').value;
+  const vid    = document.getElementById('vcVendor').value;
+  const qty    = parseInt(document.getElementById('vcQty').value) || 0;
+  if (!custId)             { showToast('Please select a customer');           return; }
+  if (!addrId)             { showToast('Please select a delivery address');   return; }
+  if (!vid)                { showToast('Please select a vendor');             return; }
+  if (qty < 1)             { showToast('Please enter a valid quantity');      return; }
+  if (vcCostPerCard <= 0)  { showToast('Please enter valid card dimensions'); return; }
+
+  const cust = (state.customers || []).find(c => c.id === custId);
+  const addr = (cust?.addresses || []).find(a => a.id === addrId);
+
+  const vcPrintSidesSel = document.getElementById('vcPrintSides');
+  const selectedPaperId = document.getElementById('vcPaper').value;
+  const paperType = (state.vcPaperTypes || []).find(p => p.id === selectedPaperId);
+  const addonLabels = Array.from(document.querySelectorAll('.vc-addon-check:checked')).map(el => {
+    return (state.vcAddons || []).find(a => a.id === el.dataset.id)?.name || '';
+  }).filter(Boolean);
+
+  const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-','')) || 0), 0);
+  const order = {
+    id:        'ORD-' + String(lastNum + 1).padStart(3, '0'),
+    productId: 'vc-custom',
+    vendorId:  vid,
+    qty,
+    total:     Math.round(vcCostPerCard * qty * 100) / 100,
+    customer:  cust?.name || '',
+    address:   addr ? `${addr.label}: ${addr.text}` : '',
+    priority:  document.getElementById('vcPriority').value,
+    notes:     document.getElementById('vcNotes').value.trim(),
+    status:    'pending',
+    date:      new Date().toISOString().split('T')[0],
+    statusHistory: ['pending'],
+    vcDetails: {
+      sheetW:      parseFloat(document.getElementById('vcSheetW').value),
+      sheetH:      parseFloat(document.getElementById('vcSheetH').value),
+      cardW:       parseFloat(document.getElementById('vcCardW').value),
+      cardH:       parseFloat(document.getElementById('vcCardH').value),
+      paper:       paperType?.name || '—',
+      printSides:  vcPrintSidesSel.options[vcPrintSidesSel.selectedIndex].text,
+      addons:      addonLabels,
+      costPerCard: vcCostPerCard
+    }
+  };
+
+  state.orders.push(order);
+  save();
+  closeModal('vcOrderModal');
+  renderOrders();
+  renderDashboard();
+  showToast('Visiting card order created: ' + order.id);
+  addNotification('New Visiting Card Order', `${order.id} for ${escHtml(cust?.name||'')} — ${qty} cards.`, 'info');
+}
+
+// ===================== CUSTOMER MANAGEMENT =====================
+function openCustomerModal(id) {
+  editingCustomerId = id || null;
+  custAddrRowCount = 0;
+  document.getElementById('customerModalTitle').textContent = id ? 'Edit Customer' : 'Add Customer';
+  document.getElementById('custAddrList').innerHTML = '';
+  if (id) {
+    const cust = (state.customers || []).find(c => c.id === id);
+    if (cust) {
+      document.getElementById('custName').value = cust.name;
+      (cust.addresses || []).forEach(a => addCustAddrRow(a.label, a.text, a.id));
+    }
+  } else {
+    document.getElementById('custName').value = '';
+    addCustAddrRow();
+  }
+  openModal('customerModal');
+}
+
+function openAddressModal() {
+  const custId = document.getElementById('vcCustomer').value;
+  if (!custId) { showToast('Select a customer first'); return; }
+  openCustomerModal(custId);
+}
+
+function addCustAddrRow(label = '', text = '', addrId = null) {
+  custAddrRowCount++;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;margin-bottom:8px;align-items:center';
+  row.id = 'custAddrRow' + custAddrRowCount;
+  if (addrId) row.dataset.addrId = addrId;
+  row.innerHTML = `
+    <input type="text" class="form-control" placeholder="Label (e.g. Office)" value="${escHtml(label)}" data-addr-label style="flex:0 0 100px;font-size:12px;padding:8px">
+    <input type="text" class="form-control" placeholder="Full address" value="${escHtml(text)}" data-addr-text style="flex:1;font-size:12px;padding:8px">
+    <button class="btn btn-ghost btn-icon btn-sm" onclick="this.parentElement.remove()" style="flex-shrink:0">✕</button>`;
+  document.getElementById('custAddrList').appendChild(row);
+}
+
+function saveCustomer() {
+  const name = document.getElementById('custName').value.trim();
+  if (!name) { showToast('Customer name is required'); return; }
+
+  const addresses = [];
+  document.querySelectorAll('#custAddrList > div').forEach(row => {
+    const label = row.querySelector('[data-addr-label]').value.trim();
+    const text  = row.querySelector('[data-addr-text]').value.trim();
+    if (label && text) {
+      addresses.push({ id: row.dataset.addrId || 'addr' + Date.now() + Math.random().toString(36).slice(2,5), label, text });
+    }
+  });
+
+  if (!state.customers) state.customers = [];
+
+  let savedId;
+  if (editingCustomerId) {
+    const idx = state.customers.findIndex(c => c.id === editingCustomerId);
+    state.customers[idx] = { ...state.customers[idx], name, addresses };
+    savedId = editingCustomerId;
+    showToast('Customer updated');
+  } else {
+    savedId = 'cust' + Date.now();
+    state.customers.push({ id: savedId, name, addresses });
+    showToast('Customer added');
+  }
+
+  save();
+  closeModal('customerModal');
+  populateVCCustomerDropdown(savedId);
 }
 
 // ===================== INIT =====================
