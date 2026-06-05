@@ -1940,87 +1940,117 @@ function renderReports() {
   const topVendor = topVendorEntry ? (state.vendors.find(v=>v.id===topVendorEntry[0])?.name || 'N/A') : 'N/A';
 
   const el = document.getElementById('reportsContent');
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isToday  = reportDateFrom === todayStr && reportDateTo === todayStr;
+
+  const statusDisplay = {
+    pending:    { label:'Order Received',        bg:'#fef3c7', color:'#92400e' },
+    approved:   { label:'Given to Vendor',        bg:'#dbeafe', color:'#1e40af' },
+    processing: { label:'Ready to Collect',       bg:'#ede9fe', color:'#5b21b6' },
+    shipped:    { label:'Collected & Dispatched', bg:'#d1fae5', color:'#065f46' },
+    delivered:  { label:'Completed',              bg:'#dcfce7', color:'#14532d' },
+    completed:  { label:'Closed',                 bg:'#f0fdf4', color:'#15803d' },
+    cancelled:  { label:'Cancelled',              bg:'#fee2e2', color:'#7f1d1d' }
+  };
+
   el.innerHTML = `
+    <!-- DATE RANGE CARD -->
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Date Range</div>
-      <div class="filter-tabs" style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📅 Date Range</div>
+
+      <div class="filter-tabs" style="margin-bottom:12px;flex-wrap:wrap">
         <div class="filter-tab ${!isFiltered?'active':''}" onclick="setReportRange('all')">All Time</div>
-        <div class="filter-tab ${reportDateFrom===reportDateTo&&reportDateFrom===new Date().toISOString().split('T')[0]?'active':''}" onclick="setReportRange('today')">Today</div>
+        <div class="filter-tab ${isToday?'active':''}" onclick="setReportRange('today')">Today</div>
         <div class="filter-tab" onclick="setReportRange('week')">This Week</div>
         <div class="filter-tab" onclick="setReportRange('month')">This Month</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:flex-end">
-        <div style="flex:1">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
           <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">FROM</div>
           <input type="date" class="form-control" id="rDateFrom" value="${reportDateFrom}" onchange="applyReportCustomRange()">
         </div>
-        <div style="flex:1">
+        <div>
           <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">TO</div>
           <input type="date" class="form-control" id="rDateTo" value="${reportDateTo}" onchange="applyReportCustomRange()">
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="setReportRange('all')" style="flex-shrink:0;padding:9px 12px">✕ Clear</button>
       </div>
-      ${isFiltered ? `<div style="margin-top:8px;font-size:12px;color:var(--primary);font-weight:600">📅 Showing: ${rangeLabel} · ${filtered.length} order${filtered.length!==1?'s':''}</div>` : `<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">${filtered.length} total order${filtered.length!==1?'s':''}</div>`}
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="btn btn-outline btn-full btn-sm" onclick="downloadReportCSV()">⬇️ Download CSV</button>
-        <button class="btn btn-primary btn-full btn-sm" onclick="printReport()">🖨️ Print / PDF</button>
+
+      ${isFiltered ? `<button class="btn btn-ghost btn-full btn-sm" onclick="setReportRange('all')" style="margin-bottom:8px">✕ Clear Filter</button>` : ''}
+
+      <div style="font-size:12px;font-weight:600;color:${isFiltered?'var(--primary)':'var(--text-muted)'};margin-bottom:10px">
+        ${isFiltered ? `Showing: ${rangeLabel} · ` : ''}${filtered.length} order${filtered.length!==1?'s':''}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-outline btn-full btn-sm" onclick="downloadReportCSV()">⬇️ CSV</button>
+        <button class="btn btn-primary btn-full btn-sm" onclick="printReport()">🖨️ PDF</button>
       </div>
     </div>
 
-    ${filtered.length === 0 ? `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No Orders</div><div class="empty-sub">No orders found for the selected date range</div></div>` : `
+    ${filtered.length === 0
+      ? `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No Orders</div><div class="empty-sub">No orders in this date range</div></div>`
+      : `
+    <!-- SUMMARY STATS -->
     <div class="stats-grid" style="margin-bottom:12px">
       <div class="stat-card green" style="grid-column:1/-1">
         <div class="stat-icon">💰</div>
-        <div class="stat-value">₹${totalRevenue.toLocaleString('en-IN')}</div>
-        <div class="stat-label">Total Revenue (Delivered)</div>
+        <div class="stat-value" style="font-size:22px">₹${totalRevenue.toLocaleString('en-IN')}</div>
+        <div class="stat-label">Total Revenue (Fulfilled)</div>
       </div>
-    </div>
-    <div class="stats-grid">
       <div class="stat-card blue">
-        <div class="stat-value">₹${avgOrder.toLocaleString('en-IN')}</div>
-        <div class="stat-label">Avg Order Value</div>
+        <div class="stat-value" style="font-size:20px">${filtered.length}</div>
+        <div class="stat-label">Total Orders</div>
       </div>
       <div class="stat-card amber">
-        <div class="stat-value">${filtered.filter(o=>['delivered','completed'].includes(o.status)).length}</div>
-        <div class="stat-label">Fulfilled Orders</div>
+        <div class="stat-value" style="font-size:20px">${filtered.filter(o=>['delivered','completed'].includes(o.status)).length}</div>
+        <div class="stat-label">Fulfilled</div>
       </div>
-      <div class="stat-card green" style="grid-column:1/-1">
-        <div class="stat-value" style="font-size:16px">${escHtml(topVendor)}</div>
-        <div class="stat-label">Top Vendor by Orders</div>
+      <div class="stat-card blue">
+        <div class="stat-value" style="font-size:20px">₹${avgOrder.toLocaleString('en-IN')}</div>
+        <div class="stat-label">Avg Order Value</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-value" style="font-size:14px;line-height:1.3">${escHtml(topVendor)}</div>
+        <div class="stat-label">Top Vendor</div>
       </div>
     </div>
 
-    <div class="card">
+    <!-- ORDERS BY VENDOR -->
+    <div class="card" style="margin-bottom:12px">
       <div class="card-header"><div class="card-title">Orders by Vendor</div></div>
       <div class="bar-chart">
-        ${Object.entries(vendorOrders).length ? Object.entries(vendorOrders).map(([vid,cnt]) => {
-          const v = state.vendors.find(x=>x.id===vid);
-          return `<div class="bar-row">
-            <div class="bar-label">${v?.name.split(' ')[0]||'?'}</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:${Math.round(cnt/maxVO*100)}%;background:var(--success)">
-                <span class="bar-value">${cnt}</span>
-              </div>
-            </div>
-          </div>`;
-        }).join('') : '<div style="color:var(--text-muted);font-size:13px;">No data</div>'}
+        ${Object.entries(vendorOrders).length
+          ? Object.entries(vendorOrders).sort((a,b)=>b[1]-a[1]).map(([vid,cnt]) => {
+              const v = state.vendors.find(x=>x.id===vid);
+              return `<div class="bar-row">
+                <div class="bar-label" style="min-width:70px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px">${escHtml(v?.name||'?')}</div>
+                <div class="bar-track" style="flex:1">
+                  <div class="bar-fill" style="width:${Math.round(cnt/maxVO*100)}%;background:var(--success);min-width:24px">
+                    <span class="bar-value">${cnt}</span>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')
+          : '<div style="color:var(--text-muted);font-size:13px">No vendor data</div>'}
       </div>
     </div>
 
+    <!-- STATUS BREAKDOWN -->
     <div class="card">
-      <div class="card-header"><div class="card-title">Order Status Breakdown</div></div>
+      <div class="card-header"><div class="card-title">Status Breakdown</div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        ${['pending','approved','processing','shipped','delivered','completed','cancelled'].map(s => {
+        ${Object.entries(statusDisplay).map(([s, meta]) => {
           const count = filtered.filter(o=>o.status===s).length;
-          return `<div style="background:var(--bg);border-radius:8px;padding:10px">
-            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600">${s}</div>
-            <div style="font-size:20px;font-weight:800;margin-top:4px">${count}</div>
+          return `<div style="background:${meta.bg};border-radius:8px;padding:10px 12px">
+            <div style="font-size:10px;color:${meta.color};font-weight:700;text-transform:uppercase;letter-spacing:.3px;line-height:1.3">${meta.label}</div>
+            <div style="font-size:22px;font-weight:800;color:${meta.color};margin-top:4px">${count}</div>
           </div>`;
         }).join('')}
       </div>
     </div>
     `}
-    `;
+  `;
 }
 
 function getReportFilteredOrders() {
