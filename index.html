@@ -1178,6 +1178,501 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   </div>
 </div>
 
+<!-- FLEX BANNER ORDER MODAL -->
+<div class="modal-overlay" id="flexOrderModal">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">🖼️ Custom Flex Banner</div>
+
+    <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Customer</div>
+    <div class="form-group">
+      <label class="form-label">Select Customer *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="fxCustomer" onchange="onFlexCustomerChange()" style="flex:1">
+          <option value="">-- Select Customer --</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="openCustomerModal()" style="white-space:nowrap">+ New</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Delivery Address *</label>
+      <select class="form-control" id="fxAddress">
+        <option value="">-- Select Customer First --</option>
+      </select>
+    </div>
+
+    <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;border:1px solid #e2e8f0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px">Banner Specifications</div>
+        <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openFlexSettingsModal('paper')">⚙️ Manage</button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Width (ft)</label>
+          <input type="number" class="form-control" id="fxWidth" placeholder="e.g. 4" step="0.5" min="0.5" oninput="calcFlexCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Height (ft)</label>
+          <input type="number" class="form-control" id="fxHeight" placeholder="e.g. 3" step="0.5" min="0.5" oninput="calcFlexCost()">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Paper / Material Type</label>
+        <select class="form-control" id="fxPaper" onchange="calcFlexCost()"></select>
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <label class="form-label" style="margin:0">Add-ons</label>
+          <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openFlexSettingsModal('addon')">⚙️ Manage</button>
+        </div>
+        <div id="fxAddonsContainer" style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;min-height:40px"></div>
+      </div>
+
+      <div id="fxCalcResult" style="background:#e8f4f8;border-radius:6px;padding:10px;font-size:13px;display:none;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Area:</span><strong id="fxArea">0 sq ft</strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Paper cost:</span><strong>₹<span id="fxPaperCost">0</span></strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Add-ons:</span><strong>₹<span id="fxAddonsCost">0</span></strong></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #b8d4e0;padding-top:6px;margin-top:4px"><span style="font-weight:700">Cost per piece:</span><strong style="color:#1a56db">₹<span id="fxCostPerPiece">0</span></strong></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Quantity *</label>
+        <input type="number" class="form-control" id="fxQty" value="1" min="1" oninput="calcFlexTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order Total (₹)</label>
+        <input type="text" class="form-control" id="fxTotal" readonly placeholder="Auto">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Assign Vendor *</label>
+      <select class="form-control" id="fxVendor">
+        <option value="">-- Select Vendor --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-control" id="fxPriority">
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Design Files <span style="font-weight:normal;color:var(--text-muted)">(PDF / Image)</span></label>
+      <div id="fxDesignDropArea"
+           style="border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s"
+           onclick="document.getElementById('fxDesignInput').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
+           ondragleave="this.style.borderColor='var(--border)'"
+           ondrop="handleFlexDesignDrop(event)">
+        <input type="file" id="fxDesignInput" accept=".pdf,image/*" multiple style="display:none"
+               onchange="handleFlexDesignFiles(this.files);this.value=''">
+        <div style="font-size:30px;margin-bottom:6px">📎</div>
+        <div style="font-size:13px;color:var(--text-muted)">Tap to attach or drag & drop</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">PDF, JPG, PNG, WEBP · Max 5 MB each</div>
+      </div>
+      <div id="fxDesignPreview" style="margin-top:8px"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Instructions</label>
+      <textarea class="form-control" id="fxNotes" placeholder="Finishing details, delivery notes, etc." rows="2"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('flexOrderModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" id="fxSaveBtn" onclick="saveFlexOrder()">Create Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- FLEX SETTINGS MODAL -->
+<div class="modal-overlay" id="flexSettingsModal" style="z-index:250">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">⚙️ Flex Banner Settings</div>
+
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button class="filter-tab active" id="fxStTab1" onclick="switchFlexSettingsTab('paper')">Paper Types</button>
+      <button class="filter-tab" id="fxStTab2" onclick="switchFlexSettingsTab('addon')">Add-ons</button>
+    </div>
+
+    <!-- PAPER TYPES PANEL -->
+    <div id="flexSettingsPaper">
+      <div id="fxPaperList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <div class="form-group" style="margin-bottom:8px">
+          <input type="text" class="form-control" id="newFlexPaperName" placeholder="Name (e.g. Star Flex)">
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Pricing</label>
+            <select class="form-control" id="newFlexPaperPricing">
+              <option value="sqft">Per sq ft (₹/sqft)</option>
+              <option value="fixed">Fixed price (₹/piece)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Price (₹)</label>
+            <input type="number" class="form-control" id="newFlexPaperPrice" placeholder="e.g. 15" min="0" step="0.5">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveFlexPaperType()" style="margin-top:8px">+ Add Paper Type</button>
+      </div>
+    </div>
+
+    <!-- ADD-ONS PANEL -->
+    <div id="flexSettingsAddon" style="display:none">
+      <div id="fxAddonList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Add-on</div>
+        <div class="form-group" style="margin-bottom:8px">
+          <input type="text" class="form-control" id="newFlexAddonName" placeholder="Name (e.g. Eyelets)">
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Pricing</label>
+            <select class="form-control" id="newFlexAddonPricing">
+              <option value="sqft">Per sq ft (₹/sqft)</option>
+              <option value="flat">Flat fee (₹ total)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Price (₹)</label>
+            <input type="number" class="form-control" id="newFlexAddonPrice" placeholder="e.g. 30" min="0" step="0.5">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveFlexAddon()" style="margin-top:8px">+ Add Add-on</button>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost btn-full" onclick="closeModal('flexSettingsModal')" style="margin-top:14px">Done</button>
+  </div>
+</div>
+
+<!-- VINYL PRINT ORDER MODAL -->
+<div class="modal-overlay" id="vinylOrderModal">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">🎨 Custom Vinyl Print</div>
+
+    <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Customer</div>
+    <div class="form-group">
+      <label class="form-label">Select Customer *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="vyCustomer" onchange="onVinylCustomerChange()" style="flex:1">
+          <option value="">-- Select Customer --</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="openCustomerModal()" style="white-space:nowrap">+ New</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Delivery Address *</label>
+      <select class="form-control" id="vyAddress">
+        <option value="">-- Select Customer First --</option>
+      </select>
+    </div>
+
+    <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;border:1px solid #e2e8f0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px">Print Specifications</div>
+        <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openVinylSettingsModal('paper')">⚙️ Manage</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Width (ft)</label>
+          <input type="number" class="form-control" id="vyWidth" placeholder="e.g. 4" step="0.5" min="0.5" oninput="calcVinylCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Height (ft)</label>
+          <input type="number" class="form-control" id="vyHeight" placeholder="e.g. 3" step="0.5" min="0.5" oninput="calcVinylCost()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paper / Material Type</label>
+        <select class="form-control" id="vyPaper" onchange="calcVinylCost()"></select>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <label class="form-label" style="margin:0">Add-ons</label>
+          <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openVinylSettingsModal('addon')">⚙️ Manage</button>
+        </div>
+        <div id="vyAddonsContainer" style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;min-height:40px"></div>
+      </div>
+      <div id="vyCalcResult" style="background:#e8f4f8;border-radius:6px;padding:10px;font-size:13px;display:none;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Area:</span><strong id="vyArea">0 sq ft</strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Paper cost:</span><strong>₹<span id="vyPaperCost">0</span></strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Add-ons:</span><strong>₹<span id="vyAddonsCost">0</span></strong></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #b8d4e0;padding-top:6px;margin-top:4px"><span style="font-weight:700">Cost per piece:</span><strong style="color:#1a56db">₹<span id="vyCostPerPiece">0</span></strong></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Quantity *</label>
+        <input type="number" class="form-control" id="vyQty" value="1" min="1" oninput="calcVinylTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order Total (₹)</label>
+        <input type="text" class="form-control" id="vyTotal" readonly placeholder="Auto">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Assign Vendor *</label>
+      <select class="form-control" id="vyVendor"><option value="">-- Select Vendor --</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-control" id="vyPriority">
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Design Files <span style="font-weight:normal;color:var(--text-muted)">(PDF / Image)</span></label>
+      <div id="vyDesignDropArea"
+           style="border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s"
+           onclick="document.getElementById('vyDesignInput').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
+           ondragleave="this.style.borderColor='var(--border)'"
+           ondrop="handleVinylDesignDrop(event)">
+        <input type="file" id="vyDesignInput" accept=".pdf,image/*" multiple style="display:none"
+               onchange="handleVinylDesignFiles(this.files);this.value=''">
+        <div style="font-size:30px;margin-bottom:6px">📎</div>
+        <div style="font-size:13px;color:var(--text-muted)">Tap to attach or drag & drop</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">PDF, JPG, PNG, WEBP · Max 5 MB each</div>
+      </div>
+      <div id="vyDesignPreview" style="margin-top:8px"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Instructions</label>
+      <textarea class="form-control" id="vyNotes" placeholder="Finishing details, application surface, etc." rows="2"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('vinylOrderModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" id="vySaveBtn" onclick="saveVinylOrder()">Create Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- VINYL SETTINGS MODAL -->
+<div class="modal-overlay" id="vinylSettingsModal" style="z-index:250">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">⚙️ Vinyl Print Settings</div>
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button class="filter-tab active" id="vyStTab1" onclick="switchVinylSettingsTab('paper')">Paper Types</button>
+      <button class="filter-tab" id="vyStTab2" onclick="switchVinylSettingsTab('addon')">Add-ons</button>
+    </div>
+    <div id="vinylSettingsPaper">
+      <div id="vyPaperList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <input type="text" class="form-control" id="newVinylPaperName" placeholder="Name (e.g. Gloss Vinyl)">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <input type="number" class="form-control" id="newVinylPaperPrice" placeholder="₹ per sqft" min="0" step="0.5">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveVinylPaperType()" style="margin-top:8px">+ Add Paper Type</button>
+      </div>
+    </div>
+    <div id="vinylSettingsAddon" style="display:none">
+      <div id="vyAddonList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Add-on</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <input type="text" class="form-control" id="newVinylAddonName" placeholder="Name (e.g. UV Coating)">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <input type="number" class="form-control" id="newVinylAddonPrice" placeholder="₹ per sqft" min="0" step="0.5">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveVinylAddon()" style="margin-top:8px">+ Add Add-on</button>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('vinylSettingsModal')" style="margin-top:14px">Done</button>
+  </div>
+</div>
+
+<!-- STICKER ORDER MODAL -->
+<div class="modal-overlay" id="stickerOrderModal">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">🏷️ Custom Sticker Print</div>
+
+    <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Customer</div>
+    <div class="form-group">
+      <label class="form-label">Select Customer *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="stCustomer" onchange="onStickerCustomerChange()" style="flex:1">
+          <option value="">-- Select Customer --</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="openCustomerModal()" style="white-space:nowrap">+ New</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Delivery Address *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="stAddress" style="flex:1">
+          <option value="">-- Select Customer First --</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;border:1px solid #e2e8f0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px">Sticker Specifications</div>
+        <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openStickerSettingsModal()">⚙️ Manage</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Sheet Width (in)</label>
+          <input type="number" class="form-control" id="stSheetW" value="12" step="0.5" oninput="calcStickerCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sheet Height (in)</label>
+          <input type="number" class="form-control" id="stSheetH" value="18" step="0.5" oninput="calcStickerCost()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Sticker Width (in)</label>
+          <input type="number" class="form-control" id="stStickerW" value="2" step="0.25" oninput="calcStickerCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sticker Height (in)</label>
+          <input type="number" class="form-control" id="stStickerH" value="2" step="0.25" oninput="calcStickerCost()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paper Type</label>
+        <select class="form-control" id="stPaper" onchange="calcStickerCost()"></select>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <label class="form-label" style="margin:0">Add-ons</label>
+          <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openStickerSettingsModal('addon')">⚙️ Manage</button>
+        </div>
+        <div id="stAddonsContainer" style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;min-height:40px"></div>
+      </div>
+      <div id="stCalcResult" style="background:#e8f4f8;border-radius:6px;padding:10px;font-size:13px;display:none;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Stickers per sheet:</span><strong id="stStickersPerSheet">0</strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Paper cost per sticker:</span><strong>₹<span id="stPaperCost">0</span></strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Add-ons:</span><strong>₹<span id="stAddonsCostDisplay">0.00</span>/sticker</strong></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #b8d4e0;padding-top:6px;margin-top:4px"><span style="font-weight:700">Cost per sticker:</span><strong style="color:#1a56db">₹<span id="stCostPerSticker">0</span></strong></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Quantity (stickers) *</label>
+        <input type="number" class="form-control" id="stQty" value="100" min="1" oninput="calcStickerTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order Total (₹)</label>
+        <input type="text" class="form-control" id="stTotal" readonly placeholder="Auto">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Assign Vendor *</label>
+      <select class="form-control" id="stVendor">
+        <option value="">-- Select Vendor --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-control" id="stPriority">
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Design Files <span style="font-weight:normal;color:var(--text-muted)">(PDF / Image)</span></label>
+      <div id="stDesignDropArea"
+           style="border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s"
+           onclick="document.getElementById('stDesignInput').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
+           ondragleave="this.style.borderColor='var(--border)'"
+           ondrop="handleStickerDesignDrop(event)">
+        <input type="file" id="stDesignInput" accept=".pdf,image/*" multiple style="display:none"
+               onchange="handleStickerDesignFiles(this.files);this.value=''">
+        <div style="font-size:30px;margin-bottom:6px">📎</div>
+        <div style="font-size:13px;color:var(--text-muted)">Tap to attach or drag & drop</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">PDF, JPG, PNG, WEBP · Max 5 MB each</div>
+      </div>
+      <div id="stDesignPreview" style="margin-top:8px"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Design Instructions</label>
+      <textarea class="form-control" id="stNotes" placeholder="Design details, cut lines, bleed area, etc." rows="2"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('stickerOrderModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" id="stSaveBtn" onclick="saveStickerOrder()">Create Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- STICKER SETTINGS MODAL -->
+<div class="modal-overlay" id="stickerSettingsModal" style="z-index:250">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">⚙️ Sticker Settings</div>
+
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button class="filter-tab active" id="stStTab1" onclick="switchStickerSettingsTab('paper')">Paper Types</button>
+      <button class="filter-tab" id="stStTab2" onclick="switchStickerSettingsTab('addon')">Add-ons</button>
+    </div>
+
+    <!-- PAPER TYPES PANEL -->
+    <div id="stickerSettingsPaper">
+      <div id="stPaperList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <input type="text" class="form-control" id="newStickerPaperName" placeholder="Name (e.g. Matte)">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <input type="number" class="form-control" id="newStickerPaperPrice" placeholder="₹ per sheet" min="1" step="1">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveStickerPaperType()" style="margin-top:8px">+ Add Paper Type</button>
+      </div>
+    </div>
+
+    <!-- ADD-ONS PANEL -->
+    <div id="stickerSettingsAddon" style="display:none">
+      <div id="stAddonList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Add-on</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <input type="text" class="form-control" id="newStickerAddonName" placeholder="Name (e.g. Die Cut)">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <input type="number" class="form-control" id="newStickerAddonPrice" placeholder="₹ per sticker" min="0.01" step="0.05">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveStickerAddon()" style="margin-top:8px">+ Add Add-on</button>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost btn-full" onclick="closeModal('stickerSettingsModal')" style="margin-top:14px">Done</button>
+  </div>
+</div>
+
 <!-- CUSTOM TYPE MANAGER MODAL -->
 <div class="modal-overlay" id="customTypeManagerModal">
   <div class="modal">
@@ -1190,6 +1685,9 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">📇 Visiting Card</div>
       <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🟦 PVC Sunboard</div>
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🏷️ Sticker</div>
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🖼️ Flex/Banner</div>
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🎨 Vinyl Print</div>
     </div>
     <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Custom Categories</div>
     <div id="customTypeList"></div>
@@ -1347,7 +1845,48 @@ const defaultState = {
     { id: 'pvct2', name: '5mm', priceWithout: 55, priceWith: 75 },
     { id: 'pvct3', name: '8mm', priceWithout: 70, priceWith: 90 }
   ],
-  customOrderTypes: []
+  customOrderTypes: [],
+  vinylPaperTypes: [
+    { id: 'vyp1', name: 'Normal',       pricing: 'sqft', price: 50  },
+    { id: 'vyp2', name: 'Eco Vinyl',    pricing: 'sqft', price: 80  },
+    { id: 'vyp3', name: 'Sunboard 3mm', pricing: 'sqft', price: 100 },
+    { id: 'vyp4', name: 'Sunboard 5mm', pricing: 'sqft', price: 125 }
+  ],
+  vinylAddons: [
+    { id: 'vya1', name: 'Matte Lamination',       pricing: 'sqft', price: 20 },
+    { id: 'vya2', name: 'Gloss Lamination',       pricing: 'sqft', price: 20 },
+    { id: 'vya3', name: 'Anti-tearable Adhesive', pricing: 'sqft', price: 30 },
+    { id: 'vya4', name: 'Pasting Services',       pricing: 'sqft', price: 40 }
+  ],
+  flexPaperTypes: [
+    { id: 'fxp1', name: 'Normal',                pricing: 'sqft',  price: 15   },
+    { id: 'fxp2', name: 'Eco',                   pricing: 'sqft',  price: 18   },
+    { id: 'fxp3', name: 'Roll-On Standee (6x3)', pricing: 'fixed', price: 1200 }
+  ],
+  flexAddons: [
+    { id: 'fxa1', name: 'Hanging Holes',        pricing: 'flat', price: 0.5 },
+    { id: 'fxa2', name: 'With Frame',           pricing: 'sqft', price: 30  },
+    { id: 'fxa3', name: 'With Frame + Fitting', pricing: 'sqft', price: 50  },
+    { id: 'fxa4', name: 'CMYK-4 Color',         pricing: 'sqft', price: 0   },
+    { id: 'fxa5', name: 'CMYK-7 Color',         pricing: 'sqft', price: 10  }
+  ],
+  stickerAddons: [
+    { id: 'sta1', name: 'Die Cut',        price: 0.50 },
+    { id: 'sta2', name: 'Lamination',     price: 0.30 },
+    { id: 'sta3', name: 'Kiss Cut',       price: 0.40 },
+    { id: 'sta4', name: 'Gloss Coating',  price: 0.25 }
+  ],
+  stickerPaperTypes: [
+    { id: 'stp1', name: 'Normal',                 price: 90  },
+    { id: 'stp2', name: 'Transparent',            price: 100 },
+    { id: 'stp3', name: 'Opaque Eco Background',  price: 120 },
+    { id: 'stp4', name: 'Opaque Eco Transparent', price: 140 },
+    { id: 'stp5', name: 'Industrial High-Bond',   price: 210 },
+    { id: 'stp6', name: 'Paper-based',            price: 170 },
+    { id: 'stp7', name: 'Polymer Based',          price: 210 },
+    { id: 'stp8', name: 'DTF Normal',             price: 800 },
+    { id: 'stp9', name: 'DTF Eco',                price: 850 }
+  ]
 };
 
 let state = JSON.parse(JSON.stringify(defaultState));
@@ -1376,7 +1915,13 @@ function startRealtimeSync() {
     state.vcPaperTypes     = state.vcPaperTypes     || defaultState.vcPaperTypes;
     state.vcAddons         = state.vcAddons         || defaultState.vcAddons;
     state.pvcThicknesses   = state.pvcThicknesses   || defaultState.pvcThicknesses;
-    state.customOrderTypes = state.customOrderTypes || [];
+    state.customOrderTypes  = state.customOrderTypes  || [];
+    state.vinylPaperTypes   = state.vinylPaperTypes   || defaultState.vinylPaperTypes;
+    state.vinylAddons       = state.vinylAddons       || defaultState.vinylAddons;
+    state.flexPaperTypes    = state.flexPaperTypes    || defaultState.flexPaperTypes;
+    state.flexAddons        = state.flexAddons        || defaultState.flexAddons;
+    state.stickerPaperTypes = state.stickerPaperTypes || defaultState.stickerPaperTypes;
+    state.stickerAddons     = state.stickerAddons     || defaultState.stickerAddons;
     renderDashboard();
     renderOrders();
     renderVendors();
@@ -1481,7 +2026,7 @@ function renderDashboard() {
   if (!recent.length) { rod.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-sub">No orders yet</div></div>'; return; }
   rod.innerHTML = recent.map(o => {
     const vendor = state.vendors.find(v => v.id === o.vendorId);
-    const icon = o.productId === 'vc-custom' ? '📇' : o.productId === 'pvc-sunboard' ? '🟦' : '🛒';
+    const icon = o.productId === 'vc-custom' ? '📇' : o.productId === 'pvc-sunboard' ? '🟦' : o.productId === 'sticker-custom' ? '🏷️' : o.productId === 'flex-banner' ? '🖼️' : o.productId === 'vinyl-print' ? '🎨' : '🛒';
     return `<div class="product-item" onclick="viewOrderDetail('${o.id}')">
       <div class="product-img-placeholder" style="width:44px;height:44px;font-size:18px;">${icon}</div>
       <div class="product-info">
@@ -1556,9 +2101,12 @@ function renderOrders() {
   }
   el.innerHTML = filtered.map(o => {
     const vendor = state.vendors.find(v => v.id === o.vendorId);
-    const isVC     = o.productId === 'vc-custom';
-    const isPVC    = o.productId === 'pvc-sunboard';
-    const isCustom = o.productId?.startsWith('custom-');
+    const isVC       = o.productId === 'vc-custom';
+    const isPVC      = o.productId === 'pvc-sunboard';
+    const isSticker  = o.productId === 'sticker-custom';
+    const isFlex     = o.productId === 'flex-banner';
+    const isVinyl    = o.productId === 'vinyl-print';
+    const isCustom   = o.productId?.startsWith('custom-');
     const priorityBadge = o.priority === 'urgent' ? '<span style="background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">URGENT</span>' : o.priority === 'high' ? '<span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">HIGH</span>' : '';
     const deleteBtn = isReadOnly() ? '' : `<button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteOrder('${o.id}')">🗑️</button>`;
     let actionBtns = '';
@@ -1617,7 +2165,7 @@ function renderOrders() {
         </div>
       </div>
       <div class="order-product">
-        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : isPVC ? '🟦' : isCustom ? (o.customDetails?.icon||'📦') : '📦'}</div>
+        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : isPVC ? '🟦' : isSticker ? '🏷️' : isFlex ? '🖼️' : isVinyl ? '🎨' : isCustom ? (o.customDetails?.icon||'📦') : '📦'}</div>
         <div class="order-product-info">
           <div class="name">${escHtml(getOrderItemName(o))}</div>
           <div class="detail">Qty: ${o.qty} · ₹${Number(o.total).toLocaleString('en-IN')}</div>
@@ -1803,6 +2351,105 @@ function viewOrderDetail(oid) {
                   <div style="flex:1;min-width:0">
                     <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image' : 'PDF'} · Tap to view / download</div>
+                  </div>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                </a>`;
+      }).join('')}
+    </div>` : ''}
+    ` : ''}
+
+    ${o.vinylDetails ? `
+    <div class="detail-section">
+      <div class="detail-label">Vinyl Print Specifications</div>
+      <table class="spec-table" style="margin-top:6px">
+        <tr><td>Size</td><td>${o.vinylDetails.width} ft × ${o.vinylDetails.height} ft</td></tr>
+        <tr><td>Area</td><td>${o.vinylDetails.area.toFixed(2)} sq ft</td></tr>
+        <tr><td>Paper Type</td><td>${escHtml(o.vinylDetails.paper)}</td></tr>
+        <tr><td>Paper Cost</td><td>₹${Number(o.vinylDetails.paperCost).toFixed(2)}</td></tr>
+        ${o.vinylDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.vinylDetails.addons.map(escHtml).join(', ')}</td></tr>` : ''}
+        <tr><td>Cost/piece</td><td style="color:var(--primary);font-weight:700">₹${Number(o.vinylDetails.costPerPiece).toFixed(2)}</td></tr>
+      </table>
+    </div>
+    ${o.vinylDetails.designFiles?.length ? `
+    <div class="detail-section">
+      <div class="detail-label">Design Files (${o.vinylDetails.designFiles.length})</div>
+      ${o.vinylDetails.designFiles.map(f => {
+        const isImg = f.type?.startsWith('image/');
+        const thumb = isImg && f.url
+          ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
+          : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg?'var(--primary-light)':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg?'🖼️':'📄'}</div>`;
+        return `<a href="${escHtml(f.url||'#')}" target="_blank" rel="noopener"
+                   style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
+                  ${thumb}
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · Tap to view</div>
+                  </div>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                </a>`;
+      }).join('')}
+    </div>` : ''}
+    ` : ''}
+
+    ${o.flexDetails ? `
+    <div class="detail-section">
+      <div class="detail-label">Banner Specifications</div>
+      <table class="spec-table" style="margin-top:6px">
+        <tr><td>Size</td><td>${o.flexDetails.width} ft × ${o.flexDetails.height} ft</td></tr>
+        <tr><td>Area</td><td>${o.flexDetails.area.toFixed(2)} sq ft</td></tr>
+        <tr><td>Paper Type</td><td>${escHtml(o.flexDetails.paper)}</td></tr>
+        <tr><td>Paper Cost</td><td>₹${Number(o.flexDetails.paperCost).toFixed(2)}</td></tr>
+        ${o.flexDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.flexDetails.addons.map(escHtml).join(', ')}</td></tr>` : ''}
+        <tr><td>Cost/piece</td><td style="color:var(--primary);font-weight:700">₹${Number(o.flexDetails.costPerPiece).toFixed(2)}</td></tr>
+      </table>
+    </div>
+    ${o.flexDetails.designFiles?.length ? `
+    <div class="detail-section">
+      <div class="detail-label">Design Files (${o.flexDetails.designFiles.length})</div>
+      ${o.flexDetails.designFiles.map(f => {
+        const isImg = f.type?.startsWith('image/');
+        const thumb = isImg && f.url
+          ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
+          : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg?'var(--primary-light)':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg?'🖼️':'📄'}</div>`;
+        return `<a href="${escHtml(f.url||'#')}" target="_blank" rel="noopener"
+                   style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
+                  ${thumb}
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · Tap to view</div>
+                  </div>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                </a>`;
+      }).join('')}
+    </div>` : ''}
+    ` : ''}
+
+    ${o.stickerDetails ? `
+    <div class="detail-section">
+      <div class="detail-label">Sticker Specifications</div>
+      <table class="spec-table" style="margin-top:6px">
+        <tr><td>Sticker Size</td><td>${o.stickerDetails.stickerW}" × ${o.stickerDetails.stickerH}"</td></tr>
+        <tr><td>Sheet Size</td><td>${o.stickerDetails.sheetW}" × ${o.stickerDetails.sheetH}"</td></tr>
+        <tr><td>Paper Type</td><td>${escHtml(o.stickerDetails.paper)}</td></tr>
+        <tr><td>Stickers/Sheet</td><td>${o.stickerDetails.stickersPerSheet}</td></tr>
+        ${o.stickerDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.stickerDetails.addons.map(escHtml).join(', ')}</td></tr>` : ''}
+        <tr><td>Cost/Sticker</td><td style="color:var(--primary);font-weight:700">₹${Number(o.stickerDetails.costPerSticker).toFixed(2)}</td></tr>
+      </table>
+    </div>
+    ${o.stickerDetails.designFiles?.length ? `
+    <div class="detail-section">
+      <div class="detail-label">Design Files (${o.stickerDetails.designFiles.length})</div>
+      ${o.stickerDetails.designFiles.map(f => {
+        const isImg = f.type?.startsWith('image/');
+        const thumb = isImg && f.url
+          ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
+          : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg?'var(--primary-light)':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg?'🖼️':'📄'}</div>`;
+        return `<a href="${escHtml(f.url||'#')}" target="_blank" rel="noopener"
+                   style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
+                  ${thumb}
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · Tap to view</div>
                   </div>
                   <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
                 </a>`;
@@ -2410,13 +3057,41 @@ function printOrder(oid) {
       <tr><td>Price / piece</td><td>₹${o.pvcDetails.pricePerSqFt}</td></tr>
     </table>` : '';
 
+  const vinylSpecsHtml = (o.vinylDetails) ? `
+    <h3 class="sec-title">Vinyl Print Specifications</h3>
+    <table class="spec-tbl">
+      <tr><td>Size</td><td>${o.vinylDetails.width} ft × ${o.vinylDetails.height} ft</td></tr>
+      <tr><td>Area</td><td>${o.vinylDetails.area.toFixed(2)} sq ft</td></tr>
+      <tr><td>Paper Type</td><td>${esc(o.vinylDetails.paper)}</td></tr>
+      ${o.vinylDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.vinylDetails.addons.map(esc).join(', ')}</td></tr>` : ''}
+    </table>` : '';
+
+  const flexSpecsHtml = (o.flexDetails) ? `
+    <h3 class="sec-title">Banner Specifications</h3>
+    <table class="spec-tbl">
+      <tr><td>Size</td><td>${o.flexDetails.width} ft × ${o.flexDetails.height} ft</td></tr>
+      <tr><td>Area</td><td>${o.flexDetails.area.toFixed(2)} sq ft</td></tr>
+      <tr><td>Paper Type</td><td>${esc(o.flexDetails.paper)}</td></tr>
+      ${o.flexDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.flexDetails.addons.map(esc).join(', ')}</td></tr>` : ''}
+    </table>` : '';
+
+  const stickerSpecsHtml = (o.stickerDetails) ? `
+    <h3 class="sec-title">Sticker Specifications</h3>
+    <table class="spec-tbl">
+      <tr><td>Sticker Size</td><td>${o.stickerDetails.stickerW}" × ${o.stickerDetails.stickerH}"</td></tr>
+      <tr><td>Sheet Size</td><td>${o.stickerDetails.sheetW}" × ${o.stickerDetails.sheetH}"</td></tr>
+      <tr><td>Paper Type</td><td>${esc(o.stickerDetails.paper)}</td></tr>
+      <tr><td>Stickers / Sheet</td><td>${o.stickerDetails.stickersPerSheet}</td></tr>
+      ${o.stickerDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.stickerDetails.addons.map(esc).join(', ')}</td></tr>` : ''}
+    </table>` : '';
+
   const customSpecsHtml = (o.customDetails?.fieldValues?.length) ? `
     <h3 class="sec-title">${esc(o.customDetails.typeName||'Custom')} Specifications</h3>
     <table class="spec-tbl">
       ${o.customDetails.fieldValues.map(fv=>`<tr><td>${esc(fv.label)}</td><td>${esc(fv.value)}${fv.unit?' '+esc(fv.unit):''}</td></tr>`).join('')}
     </table>` : '';
 
-  const _designFiles = o.vcDetails?.designFiles || o.pvcDetails?.designFiles || o.customDetails?.designFiles || [];
+  const _designFiles = o.vcDetails?.designFiles || o.pvcDetails?.designFiles || o.stickerDetails?.designFiles || o.flexDetails?.designFiles || o.vinylDetails?.designFiles || o.customDetails?.designFiles || [];
   const designFilesHtml = _designFiles.length ? `
     <h3 class="sec-title">Design Files</h3>
     ${_designFiles.map(f => `
@@ -2519,6 +3194,9 @@ function printOrder(oid) {
 
   ${vcSpecsHtml}
   ${pvcSpecsHtml}
+  ${flexSpecsHtml}
+  ${vinylSpecsHtml}
+  ${stickerSpecsHtml}
   ${customSpecsHtml}
   ${designFilesHtml}
 
@@ -2566,8 +3244,11 @@ function escHtml(s) {
 function isReadOnly() { return currentUser?.role === 'Viewer'; }
 
 function getOrderItemName(o) {
-  if (o.productId === 'vc-custom')  return 'Visiting Card';
-  if (o.productId === 'pvc-sunboard') return 'PVC Sunboard';
+  if (o.productId === 'vc-custom')      return 'Visiting Card';
+  if (o.productId === 'pvc-sunboard')   return 'PVC Sunboard';
+  if (o.productId === 'sticker-custom') return 'Custom Sticker';
+  if (o.productId === 'flex-banner')    return 'Flex/Banner';
+  if (o.productId === 'vinyl-print')   return 'Custom Vinyl';
   return o.item || 'Order Item';
 }
 
@@ -3355,6 +4036,928 @@ function deletePVCThickness(id) {
   showToast('Thickness option removed');
 }
 
+// ===================== CUSTOM VINYL PRINTS =====================
+let vinylCostPerPiece = 0;
+let vinylDesignFiles  = [];
+
+function openVinylOrderModal() {
+  vinylCostPerPiece = 0; vinylDesignFiles = [];
+  ['vyWidth','vyHeight','vyNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('vyQty').value = '1';
+  document.getElementById('vyTotal').value = '';
+  document.getElementById('vyPriority').value = 'normal';
+  document.getElementById('vyCalcResult').style.display = 'none';
+  document.getElementById('vyAddress').innerHTML = '<option value="">-- Select Customer First --</option>';
+  document.getElementById('vyDesignPreview').innerHTML = '';
+  document.getElementById('vyDesignDropArea').style.borderColor = 'var(--border)';
+  renderVinylPaperSelect();
+  renderVinylAddonsContainer();
+  document.getElementById('vyVendor').innerHTML = '<option value="">-- Select Vendor --</option>' +
+    state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
+  document.getElementById('vyCustomer').innerHTML = '<option value="">-- Select Customer --</option>' +
+    (state.customers||[]).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+  openModal('vinylOrderModal');
+}
+
+function renderVinylPaperSelect() {
+  const sel = document.getElementById('vyPaper');
+  const types = state.vinylPaperTypes || [];
+  sel.innerHTML = types.length
+    ? types.map(p => `<option value="${p.id}">🎨 ${escHtml(p.name)} (₹${p.price}/sqft)</option>`).join('')
+    : '<option value="">No paper types — add via ⚙️ Manage</option>';
+  calcVinylCost();
+}
+
+function renderVinylAddonsContainer() {
+  const container = document.getElementById('vyAddonsContainer');
+  if (!container) return;
+  const addons = state.vinylAddons || [];
+  if (!addons.length) { container.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No add-ons — add via ⚙️ Manage</div>'; return; }
+  container.innerHTML = addons.map((a, i) =>
+    `<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:normal;${i<addons.length-1?'margin-bottom:6px;':''}cursor:pointer">
+      <input type="checkbox" class="vy-addon-check" data-id="${a.id}" data-price="${a.price}" onchange="calcVinylCost()">
+      ${escHtml(a.name)} (+₹${Number(a.price).toFixed(2)}/sqft)
+    </label>`
+  ).join('');
+}
+
+function onVinylCustomerChange() {
+  const custId = document.getElementById('vyCustomer').value;
+  const addrSel = document.getElementById('vyAddress');
+  if (!custId) { addrSel.innerHTML = '<option value="">-- Select Customer First --</option>'; return; }
+  const cust = (state.customers||[]).find(c => c.id === custId);
+  addrSel.innerHTML = '<option value="">-- Select Address --</option>' +
+    (cust?.addresses||[]).map(a => `<option value="${a.id}">${escHtml(a.label)}: ${escHtml(a.text)}</option>`).join('');
+}
+
+function calcVinylCost() {
+  const w = parseFloat(document.getElementById('vyWidth').value)  || 0;
+  const h = parseFloat(document.getElementById('vyHeight').value) || 0;
+  const paperId   = document.getElementById('vyPaper').value;
+  const paperType = (state.vinylPaperTypes||[]).find(p => p.id === paperId);
+  const resultEl  = document.getElementById('vyCalcResult');
+  if (!paperType || w <= 0 || h <= 0) {
+    vinylCostPerPiece = 0; resultEl.style.display = 'none';
+    document.getElementById('vyTotal').value = ''; return;
+  }
+  const area = w * h;
+  const paperCost = paperType.price * area;
+  let addonsCost = 0;
+  document.querySelectorAll('.vy-addon-check:checked').forEach(el => {
+    addonsCost += (parseFloat(el.dataset.price) || 0) * area;
+  });
+  vinylCostPerPiece = paperCost + addonsCost;
+  document.getElementById('vyArea').textContent         = area.toFixed(2) + ' sq ft';
+  document.getElementById('vyPaperCost').textContent    = paperCost.toFixed(2);
+  document.getElementById('vyAddonsCost').textContent   = addonsCost.toFixed(2);
+  document.getElementById('vyCostPerPiece').textContent = vinylCostPerPiece.toFixed(2);
+  resultEl.style.display = 'block';
+  calcVinylTotal();
+}
+
+function calcVinylTotal() {
+  const qty = parseInt(document.getElementById('vyQty').value) || 0;
+  document.getElementById('vyTotal').value = (vinylCostPerPiece > 0 && qty > 0)
+    ? '₹' + (vinylCostPerPiece * qty).toFixed(2) : '';
+}
+
+function handleVinylDesignDrop(e) {
+  e.preventDefault();
+  document.getElementById('vyDesignDropArea').style.borderColor = 'var(--border)';
+  handleVinylDesignFiles(e.dataTransfer.files);
+}
+
+function handleVinylDesignFiles(files) {
+  const MAX = 5 * 1024 * 1024;
+  Array.from(files).forEach(f => {
+    if (f.size > MAX) { showToast(`${f.name} is too large (max 5 MB)`); return; }
+    if (vinylDesignFiles.find(x => x.name === f.name && x.size === f.size)) return;
+    vinylDesignFiles.push(f);
+  });
+  const preview = document.getElementById('vyDesignPreview');
+  preview.innerHTML = vinylDesignFiles.map((f, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8f9fa;border-radius:6px;margin-bottom:4px">
+       <span style="font-size:16px">${f.type?.startsWith('image/')?'🖼️':'📄'}</span>
+       <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span>
+       <span style="font-size:11px;color:var(--text-muted)">${(f.size/1024).toFixed(1)} KB</span>
+       <button onclick="vinylDesignFiles.splice(${i},1);handleVinylDesignFiles([])"
+               style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:14px;padding:0">✕</button>
+     </div>`
+  ).join('');
+}
+
+async function uploadVinylDesignFiles(orderId) {
+  if (!vinylDesignFiles.length) return [];
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+  const results  = [];
+  for (let i = 0; i < vinylDesignFiles.length; i++) {
+    const file = vinylDesignFiles[i];
+    const saveBtn = document.getElementById('vySaveBtn');
+    if (saveBtn) saveBtn.textContent = `Uploading ${i+1}/${vinylDesignFiles.length}…`;
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder    = `vinyl-designs/${orderId}`;
+    const sigStr    = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    const signature = await _cloudinarySHA1(sigStr);
+    const form = new FormData();
+    form.append('file', file); form.append('folder', folder);
+    form.append('timestamp', timestamp); form.append('api_key', CLOUDINARY_API_KEY);
+    form.append('signature', signature);
+    const res  = await fetch(endpoint, { method:'POST', body:form });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error?.message || 'Upload failed');
+    results.push({ name:file.name, url:data.secure_url, type:file.type, size:file.size });
+  }
+  return results;
+}
+
+async function saveVinylOrder() {
+  const custId  = document.getElementById('vyCustomer').value;
+  const addrId  = document.getElementById('vyAddress').value;
+  const vid     = document.getElementById('vyVendor').value;
+  const qty     = parseInt(document.getElementById('vyQty').value) || 0;
+  const paperId = document.getElementById('vyPaper').value;
+  const paperType = (state.vinylPaperTypes||[]).find(p => p.id === paperId);
+  const w = parseFloat(document.getElementById('vyWidth').value)  || 0;
+  const h = parseFloat(document.getElementById('vyHeight').value) || 0;
+
+  if (!custId)              { showToast('Please select a customer');        return; }
+  if (!addrId)              { showToast('Please select a delivery address'); return; }
+  if (!vid)                 { showToast('Please select a vendor');          return; }
+  if (!paperType)           { showToast('Please select a paper type');      return; }
+  if (w <= 0 || h <= 0)    { showToast('Please enter valid dimensions');    return; }
+  if (qty < 1)              { showToast('Please enter a valid quantity');    return; }
+  if (vinylCostPerPiece<=0) { showToast('Cost could not be calculated');    return; }
+
+  const cust = (state.customers||[]).find(c => c.id === custId);
+  const addr = (cust?.addresses||[]).find(a => a.id === addrId);
+  const area = w * h;
+  const paperCost = paperType.price * area;
+  const addonLabels = [];
+  let addonsCost = 0;
+  document.querySelectorAll('.vy-addon-check:checked').forEach(el => {
+    addonsCost += (parseFloat(el.dataset.price)||0) * area;
+    const addon = (state.vinylAddons||[]).find(a => a.id === el.dataset.id);
+    if (addon) addonLabels.push(addon.name);
+  });
+
+  const lastNum = state.orders.reduce((max,o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0);
+  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
+  const saveBtn = document.getElementById('vySaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = vinylDesignFiles.length ? `Uploading ${vinylDesignFiles.length} file(s)…` : 'Creating order…';
+
+  let designFiles = [];
+  try { designFiles = await uploadVinylDesignFiles(orderId); }
+  catch(e) { showToast('File upload failed — saved without design files'); }
+
+  const order = {
+    id: orderId, productId: 'vinyl-print', vendorId: vid, qty,
+    total: Math.round(vinylCostPerPiece * qty * 100) / 100,
+    customer: cust?.name || '', address: addr ? `${addr.label}: ${addr.text}` : '',
+    priority: document.getElementById('vyPriority').value,
+    notes: document.getElementById('vyNotes').value.trim(),
+    status: 'pending', date: new Date().toISOString().split('T')[0],
+    statusHistory: ['pending'],
+    vinylDetails: {
+      width: w, height: h, area, paper: paperType.name,
+      paperCost, addonsCost, addons: addonLabels,
+      costPerPiece: vinylCostPerPiece, designFiles
+    }
+  };
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Create Order';
+  vinylDesignFiles = [];
+  state.orders.push(order); save();
+  closeModal('vinylOrderModal'); renderOrders(); renderDashboard();
+  showToast('Vinyl Print order created: ' + order.id);
+  addNotification('New Vinyl Print Order', `${order.id} for ${escHtml(cust?.name||'')} — ${qty} pcs.`, 'info');
+  setTimeout(() => viewOrderDetail(order.id), 300);
+}
+
+function openVinylSettingsModal(tab) {
+  switchVinylSettingsTab(tab || 'paper');
+  renderVinylPaperList(); renderVinylAddonList();
+  ['newVinylPaperName','newVinylPaperPrice','newVinylAddonName','newVinylAddonPrice'].forEach(id => document.getElementById(id).value = '');
+  openModal('vinylSettingsModal');
+}
+
+function switchVinylSettingsTab(tab) {
+  document.getElementById('vinylSettingsPaper').style.display = tab === 'paper' ? 'block' : 'none';
+  document.getElementById('vinylSettingsAddon').style.display = tab === 'addon' ? 'block' : 'none';
+  document.getElementById('vyStTab1').classList.toggle('active', tab === 'paper');
+  document.getElementById('vyStTab2').classList.toggle('active', tab === 'addon');
+}
+
+function renderVinylPaperList() {
+  const el = document.getElementById('vyPaperList');
+  const types = state.vinylPaperTypes || [];
+  el.innerHTML = types.length
+    ? types.map(p => `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+        <div><div style="font-size:13px;font-weight:600">🎨 ${escHtml(p.name)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">₹${p.price}/sqft</div></div>
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVinylPaperType('${p.id}')">🗑️</button>
+      </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No paper types added yet.</div>';
+}
+
+function renderVinylAddonList() {
+  const el = document.getElementById('vyAddonList');
+  const addons = state.vinylAddons || [];
+  el.innerHTML = addons.length
+    ? addons.map(a => `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+        <div><div style="font-size:13px;font-weight:600">✨ ${escHtml(a.name)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">+₹${Number(a.price).toFixed(2)}/sqft</div></div>
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVinylAddon('${a.id}')">🗑️</button>
+      </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No add-ons added yet.</div>';
+}
+
+function saveVinylPaperType() {
+  const name  = document.getElementById('newVinylPaperName').value.trim();
+  const price = parseFloat(document.getElementById('newVinylPaperPrice').value);
+  if (!name)           { showToast('Enter a paper type name'); return; }
+  if (isNaN(price) || price < 0) { showToast('Enter a valid price'); return; }
+  if (!state.vinylPaperTypes) state.vinylPaperTypes = [];
+  state.vinylPaperTypes.push({ id:'vyp'+Date.now(), name, pricing:'sqft', price });
+  document.getElementById('newVinylPaperName').value = '';
+  document.getElementById('newVinylPaperPrice').value = '';
+  save(); renderVinylPaperList(); renderVinylPaperSelect();
+  showToast('Paper type added');
+}
+
+function deleteVinylPaperType(id) {
+  if ((state.vinylPaperTypes||[]).length <= 1) { showToast('Keep at least one paper type'); return; }
+  if (!confirm('Delete this paper type?')) return;
+  state.vinylPaperTypes = state.vinylPaperTypes.filter(p => p.id !== id);
+  save(); renderVinylPaperList(); renderVinylPaperSelect();
+}
+
+function saveVinylAddon() {
+  const name  = document.getElementById('newVinylAddonName').value.trim();
+  const price = parseFloat(document.getElementById('newVinylAddonPrice').value);
+  if (!name)           { showToast('Enter an add-on name'); return; }
+  if (isNaN(price) || price < 0) { showToast('Enter a valid price'); return; }
+  if (!state.vinylAddons) state.vinylAddons = [];
+  state.vinylAddons.push({ id:'vya'+Date.now(), name, pricing:'sqft', price });
+  document.getElementById('newVinylAddonName').value = '';
+  document.getElementById('newVinylAddonPrice').value = '';
+  save(); renderVinylAddonList(); renderVinylAddonsContainer();
+  showToast('Add-on added');
+}
+
+function deleteVinylAddon(id) {
+  if (!confirm('Delete this add-on?')) return;
+  state.vinylAddons = (state.vinylAddons||[]).filter(a => a.id !== id);
+  save(); renderVinylAddonList(); renderVinylAddonsContainer(); calcVinylCost();
+}
+
+// ===================== CUSTOM FLEX BANNER =====================
+let flexCostPerPiece = 0;
+let flexDesignFiles  = [];
+
+function openFlexOrderModal() {
+  flexCostPerPiece = 0;
+  flexDesignFiles  = [];
+  document.getElementById('fxWidth').value   = '';
+  document.getElementById('fxHeight').value  = '';
+  document.getElementById('fxQty').value     = '1';
+  document.getElementById('fxTotal').value   = '';
+  document.getElementById('fxNotes').value   = '';
+  document.getElementById('fxPriority').value = 'normal';
+  document.getElementById('fxCalcResult').style.display = 'none';
+  document.getElementById('fxAddress').innerHTML = '<option value="">-- Select Customer First --</option>';
+  document.getElementById('fxDesignPreview').innerHTML = '';
+  document.getElementById('fxDesignDropArea').style.borderColor = 'var(--border)';
+
+  renderFlexPaperSelect();
+  renderFlexAddonsContainer();
+
+  document.getElementById('fxVendor').innerHTML = '<option value="">-- Select Vendor --</option>' +
+    state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
+  document.getElementById('fxCustomer').innerHTML = '<option value="">-- Select Customer --</option>' +
+    (state.customers||[]).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+
+  openModal('flexOrderModal');
+}
+
+function renderFlexPaperSelect() {
+  const sel   = document.getElementById('fxPaper');
+  const types = state.flexPaperTypes || [];
+  sel.innerHTML = types.length
+    ? types.map(p => {
+        const priceLabel = p.pricing === 'fixed' ? `₹${p.price}/piece` : `₹${p.price}/sqft`;
+        return `<option value="${p.id}">🖼️ ${escHtml(p.name)} (${priceLabel})</option>`;
+      }).join('')
+    : '<option value="">No paper types — add via ⚙️ Manage</option>';
+  calcFlexCost();
+}
+
+function renderFlexAddonsContainer() {
+  const container = document.getElementById('fxAddonsContainer');
+  if (!container) return;
+  const addons = state.flexAddons || [];
+  if (!addons.length) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No add-ons — add via ⚙️ Manage</div>';
+    return;
+  }
+  container.innerHTML = addons.map((a, i) => {
+    const priceLabel = a.pricing === 'flat' ? `+₹${Number(a.price).toFixed(2)} flat` : `+₹${Number(a.price).toFixed(2)}/sqft`;
+    return `<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:normal;${i<addons.length-1?'margin-bottom:6px;':''}cursor:pointer">
+      <input type="checkbox" class="fx-addon-check" data-id="${a.id}" data-price="${a.price}" data-pricing="${a.pricing}" onchange="calcFlexCost()">
+      ${escHtml(a.name)} (${priceLabel})
+    </label>`;
+  }).join('');
+}
+
+function onFlexCustomerChange() {
+  const custId  = document.getElementById('fxCustomer').value;
+  const addrSel = document.getElementById('fxAddress');
+  if (!custId) { addrSel.innerHTML = '<option value="">-- Select Customer First --</option>'; return; }
+  const cust = (state.customers||[]).find(c => c.id === custId);
+  addrSel.innerHTML = '<option value="">-- Select Address --</option>' +
+    (cust?.addresses||[]).map(a => `<option value="${a.id}">${escHtml(a.label)}: ${escHtml(a.text)}</option>`).join('');
+}
+
+function calcFlexCost() {
+  const w = parseFloat(document.getElementById('fxWidth').value)  || 0;
+  const h = parseFloat(document.getElementById('fxHeight').value) || 0;
+  const paperId   = document.getElementById('fxPaper').value;
+  const paperType = (state.flexPaperTypes||[]).find(p => p.id === paperId);
+  const resultEl  = document.getElementById('fxCalcResult');
+
+  if (!paperType || w <= 0 || h <= 0) {
+    flexCostPerPiece = 0;
+    resultEl.style.display = 'none';
+    document.getElementById('fxTotal').value = '';
+    return;
+  }
+
+  const area = w * h;
+  const paperCost = paperType.pricing === 'fixed' ? paperType.price : paperType.price * area;
+
+  let addonsCost = 0;
+  document.querySelectorAll('.fx-addon-check:checked').forEach(el => {
+    const price   = parseFloat(el.dataset.price)   || 0;
+    const pricing = el.dataset.pricing;
+    addonsCost += pricing === 'flat' ? price : price * area;
+  });
+
+  flexCostPerPiece = paperCost + addonsCost;
+
+  document.getElementById('fxArea').textContent        = area.toFixed(2) + ' sq ft';
+  document.getElementById('fxPaperCost').textContent   = paperCost.toFixed(2);
+  document.getElementById('fxAddonsCost').textContent  = addonsCost.toFixed(2);
+  document.getElementById('fxCostPerPiece').textContent= flexCostPerPiece.toFixed(2);
+  resultEl.style.display = 'block';
+  calcFlexTotal();
+}
+
+function calcFlexTotal() {
+  const qty = parseInt(document.getElementById('fxQty').value) || 0;
+  document.getElementById('fxTotal').value = (flexCostPerPiece > 0 && qty > 0)
+    ? '₹' + (flexCostPerPiece * qty).toFixed(2) : '';
+}
+
+function handleFlexDesignDrop(e) {
+  e.preventDefault();
+  document.getElementById('fxDesignDropArea').style.borderColor = 'var(--border)';
+  handleFlexDesignFiles(e.dataTransfer.files);
+}
+
+function handleFlexDesignFiles(files) {
+  const MAX = 5 * 1024 * 1024;
+  Array.from(files).forEach(f => {
+    if (f.size > MAX) { showToast(`${f.name} is too large (max 5 MB)`); return; }
+    if (flexDesignFiles.find(x => x.name === f.name && x.size === f.size)) return;
+    flexDesignFiles.push(f);
+  });
+  const preview = document.getElementById('fxDesignPreview');
+  preview.innerHTML = flexDesignFiles.map((f, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8f9fa;border-radius:6px;margin-bottom:4px">
+       <span style="font-size:16px">${f.type?.startsWith('image/')?'🖼️':'📄'}</span>
+       <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span>
+       <span style="font-size:11px;color:var(--text-muted)">${(f.size/1024).toFixed(1)} KB</span>
+       <button onclick="flexDesignFiles.splice(${i},1);handleFlexDesignFiles([])"
+               style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:14px;padding:0">✕</button>
+     </div>`
+  ).join('');
+}
+
+async function uploadFlexDesignFiles(orderId) {
+  if (!flexDesignFiles.length) return [];
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+  const results  = [];
+  for (let i = 0; i < flexDesignFiles.length; i++) {
+    const file    = flexDesignFiles[i];
+    const saveBtn = document.getElementById('fxSaveBtn');
+    if (saveBtn) saveBtn.textContent = `Uploading ${i+1}/${flexDesignFiles.length}…`;
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder    = `flex-designs/${orderId}`;
+    const sigStr    = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    const signature = await _cloudinarySHA1(sigStr);
+    const form = new FormData();
+    form.append('file', file); form.append('folder', folder);
+    form.append('timestamp', timestamp); form.append('api_key', CLOUDINARY_API_KEY);
+    form.append('signature', signature);
+    const res  = await fetch(endpoint, { method:'POST', body:form });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error?.message || 'Upload failed');
+    results.push({ name:file.name, url:data.secure_url, type:file.type, size:file.size });
+  }
+  return results;
+}
+
+async function saveFlexOrder() {
+  const custId  = document.getElementById('fxCustomer').value;
+  const addrId  = document.getElementById('fxAddress').value;
+  const vid     = document.getElementById('fxVendor').value;
+  const qty     = parseInt(document.getElementById('fxQty').value) || 0;
+  const paperId = document.getElementById('fxPaper').value;
+  const paperType = (state.flexPaperTypes||[]).find(p => p.id === paperId);
+  const w = parseFloat(document.getElementById('fxWidth').value)  || 0;
+  const h = parseFloat(document.getElementById('fxHeight').value) || 0;
+
+  if (!custId)              { showToast('Please select a customer');           return; }
+  if (!addrId)              { showToast('Please select a delivery address');   return; }
+  if (!vid)                 { showToast('Please select a vendor');             return; }
+  if (!paperType)           { showToast('Please select a paper type');         return; }
+  if (w <= 0 || h <= 0)    { showToast('Please enter valid dimensions');       return; }
+  if (qty < 1)              { showToast('Please enter a valid quantity');       return; }
+  if (flexCostPerPiece <= 0){ showToast('Cost could not be calculated');       return; }
+
+  const cust = (state.customers||[]).find(c => c.id === custId);
+  const addr = (cust?.addresses||[]).find(a => a.id === addrId);
+  const area = w * h;
+  const paperCost = paperType.pricing === 'fixed' ? paperType.price : paperType.price * area;
+
+  const addonLabels = [];
+  let addonsCost = 0;
+  document.querySelectorAll('.fx-addon-check:checked').forEach(el => {
+    const price   = parseFloat(el.dataset.price) || 0;
+    const pricing = el.dataset.pricing;
+    addonsCost += pricing === 'flat' ? price : price * area;
+    const addon = (state.flexAddons||[]).find(a => a.id === el.dataset.id);
+    if (addon) addonLabels.push(addon.name);
+  });
+
+  const lastNum = state.orders.reduce((max,o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0);
+  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
+
+  const saveBtn = document.getElementById('fxSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = flexDesignFiles.length ? `Uploading ${flexDesignFiles.length} file(s)…` : 'Creating order…';
+
+  let designFiles = [];
+  try { designFiles = await uploadFlexDesignFiles(orderId); }
+  catch(e) { showToast('File upload failed — saved without design files'); }
+
+  const order = {
+    id: orderId, productId: 'flex-banner', vendorId: vid, qty,
+    total:    Math.round(flexCostPerPiece * qty * 100) / 100,
+    customer: cust?.name || '',
+    address:  addr ? `${addr.label}: ${addr.text}` : '',
+    priority: document.getElementById('fxPriority').value,
+    notes:    document.getElementById('fxNotes').value.trim(),
+    status: 'pending', date: new Date().toISOString().split('T')[0],
+    statusHistory: ['pending'],
+    flexDetails: {
+      width: w, height: h, area,
+      paper: paperType.name,
+      paperPricing: paperType.pricing,
+      paperCost, addonsCost,
+      addons: addonLabels,
+      costPerPiece: flexCostPerPiece,
+      designFiles
+    }
+  };
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Create Order';
+  flexDesignFiles = [];
+  state.orders.push(order);
+  save();
+  closeModal('flexOrderModal');
+  renderOrders(); renderDashboard();
+  showToast('Flex Banner order created: ' + order.id);
+  addNotification('New Flex Banner Order', `${order.id} for ${escHtml(cust?.name||'')} — ${qty} pcs.`, 'info');
+  setTimeout(() => viewOrderDetail(order.id), 300);
+}
+
+// Flex Settings
+function openFlexSettingsModal(tab) {
+  switchFlexSettingsTab(tab || 'paper');
+  renderFlexPaperList();
+  renderFlexAddonList();
+  document.getElementById('newFlexPaperName').value    = '';
+  document.getElementById('newFlexPaperPrice').value   = '';
+  document.getElementById('newFlexAddonName').value    = '';
+  document.getElementById('newFlexAddonPrice').value   = '';
+  openModal('flexSettingsModal');
+}
+
+function switchFlexSettingsTab(tab) {
+  document.getElementById('flexSettingsPaper').style.display = tab === 'paper' ? 'block' : 'none';
+  document.getElementById('flexSettingsAddon').style.display = tab === 'addon' ? 'block' : 'none';
+  document.getElementById('fxStTab1').classList.toggle('active', tab === 'paper');
+  document.getElementById('fxStTab2').classList.toggle('active', tab === 'addon');
+}
+
+function renderFlexPaperList() {
+  const el    = document.getElementById('fxPaperList');
+  const types = state.flexPaperTypes || [];
+  el.innerHTML = types.length
+    ? types.map(p => {
+        const priceLabel = p.pricing === 'fixed' ? `₹${p.price}/piece` : `₹${p.price}/sqft`;
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+          <div>
+            <div style="font-size:13px;font-weight:600">🖼️ ${escHtml(p.name)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${priceLabel} · ${p.pricing === 'fixed' ? 'Fixed price' : 'Per sq ft'}</div>
+          </div>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteFlexPaperType('${p.id}')">🗑️</button>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No paper types added yet.</div>';
+}
+
+function renderFlexAddonList() {
+  const el     = document.getElementById('fxAddonList');
+  const addons = state.flexAddons || [];
+  el.innerHTML = addons.length
+    ? addons.map(a => {
+        const priceLabel = a.pricing === 'flat' ? `+₹${Number(a.price).toFixed(2)} flat` : `+₹${Number(a.price).toFixed(2)}/sqft`;
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+          <div>
+            <div style="font-size:13px;font-weight:600">✨ ${escHtml(a.name)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${priceLabel}</div>
+          </div>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteFlexAddon('${a.id}')">🗑️</button>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No add-ons added yet.</div>';
+}
+
+function saveFlexPaperType() {
+  const name    = document.getElementById('newFlexPaperName').value.trim();
+  const pricing = document.getElementById('newFlexPaperPricing').value;
+  const price   = parseFloat(document.getElementById('newFlexPaperPrice').value);
+  if (!name)           { showToast('Enter a paper type name'); return; }
+  if (isNaN(price) || price < 0) { showToast('Enter a valid price'); return; }
+  if (!state.flexPaperTypes) state.flexPaperTypes = [];
+  state.flexPaperTypes.push({ id: 'fxp' + Date.now(), name, pricing, price });
+  document.getElementById('newFlexPaperName').value  = '';
+  document.getElementById('newFlexPaperPrice').value = '';
+  save(); renderFlexPaperList(); renderFlexPaperSelect();
+  showToast('Paper type added');
+}
+
+function deleteFlexPaperType(id) {
+  if ((state.flexPaperTypes||[]).length <= 1) { showToast('Keep at least one paper type'); return; }
+  if (!confirm('Delete this paper type?')) return;
+  state.flexPaperTypes = state.flexPaperTypes.filter(p => p.id !== id);
+  save(); renderFlexPaperList(); renderFlexPaperSelect();
+}
+
+function saveFlexAddon() {
+  const name    = document.getElementById('newFlexAddonName').value.trim();
+  const pricing = document.getElementById('newFlexAddonPricing').value;
+  const price   = parseFloat(document.getElementById('newFlexAddonPrice').value);
+  if (!name)           { showToast('Enter an add-on name'); return; }
+  if (isNaN(price) || price < 0) { showToast('Enter a valid price'); return; }
+  if (!state.flexAddons) state.flexAddons = [];
+  state.flexAddons.push({ id: 'fxa' + Date.now(), name, pricing, price });
+  document.getElementById('newFlexAddonName').value  = '';
+  document.getElementById('newFlexAddonPrice').value = '';
+  save(); renderFlexAddonList(); renderFlexAddonsContainer();
+  showToast('Add-on added');
+}
+
+function deleteFlexAddon(id) {
+  if (!confirm('Delete this add-on?')) return;
+  state.flexAddons = (state.flexAddons||[]).filter(a => a.id !== id);
+  save(); renderFlexAddonList(); renderFlexAddonsContainer(); calcFlexCost();
+}
+
+// ===================== CUSTOM STICKER PRINTS =====================
+let stickerCostPerSticker = 0;
+let stickerDesignFiles    = [];
+
+function openStickerOrderModal() {
+  stickerCostPerSticker = 0;
+  stickerDesignFiles    = [];
+  document.getElementById('stSheetW').value    = '12';
+  document.getElementById('stSheetH').value    = '18';
+  document.getElementById('stStickerW').value  = '2';
+  document.getElementById('stStickerH').value  = '2';
+  document.getElementById('stQty').value       = '100';
+  document.getElementById('stTotal').value     = '';
+  document.getElementById('stNotes').value     = '';
+  document.getElementById('stPriority').value  = 'normal';
+  document.getElementById('stCalcResult').style.display = 'none';
+  document.getElementById('stAddress').innerHTML = '<option value="">-- Select Customer First --</option>';
+  document.getElementById('stDesignPreview').innerHTML = '';
+  document.getElementById('stDesignDropArea').style.borderColor = 'var(--border)';
+
+  renderStickerPaperSelect();
+  renderStickerAddonsContainer();
+
+  document.getElementById('stVendor').innerHTML = '<option value="">-- Select Vendor --</option>' +
+    state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
+
+  document.getElementById('stCustomer').innerHTML = '<option value="">-- Select Customer --</option>' +
+    (state.customers || []).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+
+  calcStickerCost();
+  openModal('stickerOrderModal');
+}
+
+function renderStickerPaperSelect() {
+  const sel   = document.getElementById('stPaper');
+  const types = state.stickerPaperTypes || [];
+  sel.innerHTML = types.length
+    ? types.map(p => `<option value="${p.id}">🏷️ ${escHtml(p.name)} (₹${p.price}/sheet)</option>`).join('')
+    : '<option value="">No paper types — add via ⚙️ Manage</option>';
+  calcStickerCost();
+}
+
+function onStickerCustomerChange() {
+  const custId  = document.getElementById('stCustomer').value;
+  const addrSel = document.getElementById('stAddress');
+  if (!custId) { addrSel.innerHTML = '<option value="">-- Select Customer First --</option>'; return; }
+  const cust = (state.customers || []).find(c => c.id === custId);
+  addrSel.innerHTML = '<option value="">-- Select Address --</option>' +
+    (cust?.addresses || []).map(a => `<option value="${a.id}">${escHtml(a.label)}: ${escHtml(a.text)}</option>`).join('');
+}
+
+function calcStickerCost() {
+  const sW = parseFloat(document.getElementById('stSheetW').value)   || 0;
+  const sH = parseFloat(document.getElementById('stSheetH').value)   || 0;
+  const cW = parseFloat(document.getElementById('stStickerW').value) || 0;
+  const cH = parseFloat(document.getElementById('stStickerH').value) || 0;
+  const paperId   = document.getElementById('stPaper').value;
+  const paperType = (state.stickerPaperTypes || []).find(p => p.id === paperId);
+  const sheetPrice = paperType?.price || 0;
+  const resultEl   = document.getElementById('stCalcResult');
+
+  if (sW > 0 && sH > 0 && cW > 0 && cH > 0 && cW <= sW && cH <= sH) {
+    const fit1 = Math.floor(sW / cW) * Math.floor(sH / cH);
+    const fit2 = Math.floor(sW / cH) * Math.floor(sH / cW);
+    const stickersPerSheet = Math.max(fit1, fit2);
+    if (stickersPerSheet > 0) {
+      const paperCost = sheetPrice / stickersPerSheet;
+      let addonsCost = 0;
+      document.querySelectorAll('.st-addon-check:checked').forEach(el => {
+        addonsCost += parseFloat(el.dataset.price) || 0;
+      });
+      stickerCostPerSticker = paperCost + addonsCost;
+      document.getElementById('stStickersPerSheet').textContent  = stickersPerSheet;
+      document.getElementById('stPaperCost').textContent         = paperCost.toFixed(2);
+      document.getElementById('stAddonsCostDisplay').textContent = addonsCost.toFixed(2);
+      document.getElementById('stCostPerSticker').textContent    = stickerCostPerSticker.toFixed(2);
+      resultEl.style.display = 'block';
+      calcStickerTotal();
+      return;
+    }
+  }
+  stickerCostPerSticker = 0;
+  resultEl.style.display = 'none';
+  document.getElementById('stTotal').value = '';
+}
+
+function calcStickerTotal() {
+  const qty = parseInt(document.getElementById('stQty').value) || 0;
+  document.getElementById('stTotal').value = (stickerCostPerSticker > 0 && qty > 0)
+    ? '₹' + (stickerCostPerSticker * qty).toFixed(2) : '';
+}
+
+function handleStickerDesignDrop(e) {
+  e.preventDefault();
+  document.getElementById('stDesignDropArea').style.borderColor = 'var(--border)';
+  handleStickerDesignFiles(e.dataTransfer.files);
+}
+
+function handleStickerDesignFiles(files) {
+  const MAX = 5 * 1024 * 1024;
+  Array.from(files).forEach(f => {
+    if (f.size > MAX) { showToast(`${f.name} is too large (max 5 MB)`); return; }
+    if (stickerDesignFiles.find(x => x.name === f.name && x.size === f.size)) return;
+    stickerDesignFiles.push(f);
+  });
+  const preview = document.getElementById('stDesignPreview');
+  preview.innerHTML = stickerDesignFiles.map((f, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8f9fa;border-radius:6px;margin-bottom:4px">
+       <span style="font-size:16px">${f.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+       <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span>
+       <span style="font-size:11px;color:var(--text-muted)">${(f.size/1024).toFixed(1)} KB</span>
+       <button onclick="stickerDesignFiles.splice(${i},1);handleStickerDesignFiles([])"
+               style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:14px;padding:0">✕</button>
+     </div>`
+  ).join('');
+}
+
+async function uploadStickerDesignFiles(orderId) {
+  if (!stickerDesignFiles.length) return [];
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+  const results  = [];
+  for (let i = 0; i < stickerDesignFiles.length; i++) {
+    const file      = stickerDesignFiles[i];
+    const saveBtn   = document.getElementById('stSaveBtn');
+    if (saveBtn) saveBtn.textContent = `Uploading ${i+1}/${stickerDesignFiles.length}…`;
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder    = `sticker-designs/${orderId}`;
+    const sigStr    = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    const signature = await _cloudinarySHA1(sigStr);
+    const form = new FormData();
+    form.append('file', file); form.append('folder', folder);
+    form.append('timestamp', timestamp); form.append('api_key', CLOUDINARY_API_KEY);
+    form.append('signature', signature);
+    const res  = await fetch(endpoint, { method:'POST', body:form });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error?.message || 'Upload failed');
+    results.push({ name:file.name, url:data.secure_url, type:file.type, size:file.size });
+  }
+  return results;
+}
+
+async function saveStickerOrder() {
+  const custId  = document.getElementById('stCustomer').value;
+  const addrId  = document.getElementById('stAddress').value;
+  const vid     = document.getElementById('stVendor').value;
+  const qty     = parseInt(document.getElementById('stQty').value) || 0;
+  const paperId = document.getElementById('stPaper').value;
+  const paperType = (state.stickerPaperTypes || []).find(p => p.id === paperId);
+  const sW = parseFloat(document.getElementById('stSheetW').value)   || 0;
+  const sH = parseFloat(document.getElementById('stSheetH').value)   || 0;
+  const cW = parseFloat(document.getElementById('stStickerW').value) || 0;
+  const cH = parseFloat(document.getElementById('stStickerH').value) || 0;
+
+  if (!custId)                   { showToast('Please select a customer');              return; }
+  if (!addrId)                   { showToast('Please select a delivery address');      return; }
+  if (!vid)                      { showToast('Please select a vendor');                return; }
+  if (qty < 1)                   { showToast('Please enter a valid quantity');         return; }
+  if (stickerCostPerSticker <= 0){ showToast('Please enter valid sticker dimensions'); return; }
+
+  const cust = (state.customers || []).find(c => c.id === custId);
+  const addr = (cust?.addresses || []).find(a => a.id === addrId);
+  const fit1 = Math.floor(sW / cW) * Math.floor(sH / cH);
+  const fit2 = Math.floor(sW / cH) * Math.floor(sH / cW);
+  const stickersPerSheet = Math.max(fit1, fit2);
+
+  const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0);
+  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
+
+  const saveBtn = document.getElementById('stSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = stickerDesignFiles.length ? `Uploading ${stickerDesignFiles.length} file(s)…` : 'Creating order…';
+
+  let designFiles = [];
+  try { designFiles = await uploadStickerDesignFiles(orderId); }
+  catch(e) { showToast('File upload failed — order saved without design files'); }
+
+  const order = {
+    id: orderId, productId: 'sticker-custom', vendorId: vid, qty,
+    total:     Math.round(stickerCostPerSticker * qty * 100) / 100,
+    customer:  cust?.name || '',
+    address:   addr ? `${addr.label}: ${addr.text}` : '',
+    priority:  document.getElementById('stPriority').value,
+    notes:     document.getElementById('stNotes').value.trim(),
+    status:    'pending', date: new Date().toISOString().split('T')[0],
+    statusHistory: ['pending'],
+    stickerDetails: {
+      sheetW: sW, sheetH: sH, stickerW: cW, stickerH: cH,
+      paper: paperType?.name || '—',
+      stickersPerSheet, costPerSticker: stickerCostPerSticker,
+      addons: Array.from(document.querySelectorAll('.st-addon-check:checked')).map(el =>
+        (state.stickerAddons || []).find(a => a.id === el.dataset.id)?.name || ''
+      ).filter(Boolean),
+      designFiles
+    }
+  };
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = 'Create Order';
+  stickerDesignFiles = [];
+
+  state.orders.push(order);
+  save();
+  closeModal('stickerOrderModal');
+  renderOrders(); renderDashboard();
+  showToast('Sticker order created: ' + order.id);
+  addNotification('New Sticker Order', `${order.id} for ${escHtml(cust?.name||'')} — ${qty} stickers.`, 'info');
+  setTimeout(() => viewOrderDetail(order.id), 300);
+}
+
+// Sticker Settings
+function openStickerSettingsModal(tab) {
+  switchStickerSettingsTab(tab || 'paper');
+  renderStickerPaperList();
+  renderStickerAddonList();
+  document.getElementById('newStickerPaperName').value  = '';
+  document.getElementById('newStickerPaperPrice').value = '';
+  document.getElementById('newStickerAddonName').value  = '';
+  document.getElementById('newStickerAddonPrice').value = '';
+  openModal('stickerSettingsModal');
+}
+
+function switchStickerSettingsTab(tab) {
+  document.getElementById('stickerSettingsPaper').style.display = tab === 'paper' ? 'block' : 'none';
+  document.getElementById('stickerSettingsAddon').style.display = tab === 'addon' ? 'block' : 'none';
+  document.getElementById('stStTab1').classList.toggle('active', tab === 'paper');
+  document.getElementById('stStTab2').classList.toggle('active', tab === 'addon');
+}
+
+function renderStickerAddonsContainer() {
+  const container = document.getElementById('stAddonsContainer');
+  if (!container) return;
+  const addons = state.stickerAddons || [];
+  if (!addons.length) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No add-ons — add via ⚙️ Manage</div>';
+    return;
+  }
+  container.innerHTML = addons.map((a, i) =>
+    `<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:normal;${i < addons.length-1?'margin-bottom:6px;':''}cursor:pointer">
+      <input type="checkbox" class="st-addon-check" data-id="${a.id}" data-price="${a.price}" onchange="calcStickerCost()">
+      ${escHtml(a.name)} (+₹${Number(a.price).toFixed(2)}/sticker)
+    </label>`
+  ).join('');
+}
+
+function renderStickerAddonList() {
+  const el     = document.getElementById('stAddonList');
+  const addons = state.stickerAddons || [];
+  el.innerHTML = addons.length
+    ? addons.map(a => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+          <div>
+            <div style="font-size:13px;font-weight:600">✨ ${escHtml(a.name)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">+₹${Number(a.price).toFixed(2)} per sticker</div>
+          </div>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteStickerAddon('${a.id}')">🗑️</button>
+        </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No add-ons added yet.</div>';
+}
+
+function saveStickerAddon() {
+  const name  = document.getElementById('newStickerAddonName').value.trim();
+  const price = parseFloat(document.getElementById('newStickerAddonPrice').value) || 0;
+  if (!name)  { showToast('Enter an add-on name');      return; }
+  if (!price) { showToast('Enter a price per sticker'); return; }
+  if (!state.stickerAddons) state.stickerAddons = [];
+  state.stickerAddons.push({ id: 'sta' + Date.now(), name, price });
+  document.getElementById('newStickerAddonName').value  = '';
+  document.getElementById('newStickerAddonPrice').value = '';
+  save();
+  renderStickerAddonList();
+  renderStickerAddonsContainer();
+  showToast('Add-on added');
+}
+
+function deleteStickerAddon(id) {
+  if (!confirm('Delete this add-on?')) return;
+  state.stickerAddons = (state.stickerAddons || []).filter(a => a.id !== id);
+  save();
+  renderStickerAddonList();
+  renderStickerAddonsContainer();
+  calcStickerCost();
+}
+
+function renderStickerPaperList() {
+  const el    = document.getElementById('stPaperList');
+  const types = state.stickerPaperTypes || [];
+  el.innerHTML = types.length
+    ? types.map(p => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+          <div>
+            <div style="font-size:13px;font-weight:600">🏷️ ${escHtml(p.name)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">₹${p.price} per sheet</div>
+          </div>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteStickerPaperType('${p.id}')">🗑️</button>
+        </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No paper types added yet.</div>';
+}
+
+function saveStickerPaperType() {
+  const name  = document.getElementById('newStickerPaperName').value.trim();
+  const price = parseFloat(document.getElementById('newStickerPaperPrice').value) || 0;
+  if (!name)  { showToast('Enter a paper type name'); return; }
+  if (!price) { showToast('Enter a price per sheet');  return; }
+  if (!state.stickerPaperTypes) state.stickerPaperTypes = [];
+  state.stickerPaperTypes.push({ id: 'stp' + Date.now(), name, price });
+  document.getElementById('newStickerPaperName').value  = '';
+  document.getElementById('newStickerPaperPrice').value = '';
+  save();
+  renderStickerPaperList();
+  renderStickerPaperSelect();
+  showToast('Paper type added');
+}
+
+function deleteStickerPaperType(id) {
+  if ((state.stickerPaperTypes || []).length <= 1) { showToast('Keep at least one paper type'); return; }
+  if (!confirm('Delete this paper type?')) return;
+  state.stickerPaperTypes = state.stickerPaperTypes.filter(p => p.id !== id);
+  save();
+  renderStickerPaperList();
+  renderStickerPaperSelect();
+}
+
 // ===================== ORDER TYPE STRIP =====================
 function renderOrderTypeStrip() {
   const strip = document.getElementById('orderTypeStrip');
@@ -3372,6 +4975,15 @@ function renderOrderTypeStrip() {
     </button>
     <button class="order-type-btn" onclick="openPVCOrderModal()">
       <span class="otb-icon">🟦</span><span class="otb-label">PVC Sunboard</span>
+    </button>
+    <button class="order-type-btn" onclick="openStickerOrderModal()">
+      <span class="otb-icon">🏷️</span><span class="otb-label">Sticker</span>
+    </button>
+    <button class="order-type-btn" onclick="openFlexOrderModal()">
+      <span class="otb-icon">🖼️</span><span class="otb-label">Flex/Banner</span>
+    </button>
+    <button class="order-type-btn" onclick="openVinylOrderModal()">
+      <span class="otb-icon">🎨</span><span class="otb-label">Vinyl Print</span>
     </button>
     ${custom}
     <button class="order-type-btn" onclick="openCustomTypeManager()" style="border-style:dashed">
