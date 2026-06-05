@@ -668,21 +668,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       <div class="section-title">Orders</div>
     </div>
 
-    <!-- ORDER TYPE STRIP (scrolls horizontally as more types are added) -->
-    <div class="order-type-strip viewer-hide">
-      <button class="order-type-btn" onclick="openVCOrderModal()">
-        <span class="otb-icon">📇</span>
-        <span class="otb-label">Visiting Card</span>
-      </button>
-      <button class="order-type-btn" onclick="openPVCOrderModal()">
-        <span class="otb-icon">🟦</span>
-        <span class="otb-label">PVC Sunboard</span>
-      </button>
-      <button class="order-type-btn primary" onclick="openOrderModal()">
-        <span class="otb-icon" style="color:#fff">➕</span>
-        <span class="otb-label">Custom</span>
-      </button>
-    </div>
+    <!-- ORDER TYPE STRIP — populated dynamically by renderOrderTypeStrip() -->
+    <div class="order-type-strip" id="orderTypeStrip"></div>
 
     <div class="search-bar">
       <span class="search-icon">🔍</span>
@@ -1191,6 +1178,64 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   </div>
 </div>
 
+<!-- CUSTOM TYPE MANAGER MODAL -->
+<div class="modal-overlay" id="customTypeManagerModal">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="modal-title" style="margin:0">Order Categories</div>
+      <button class="btn btn-primary btn-sm" onclick="openCustomTypeBuilder()">+ New</button>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Built-in</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">📇 Visiting Card</div>
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🟦 PVC Sunboard</div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Custom Categories</div>
+    <div id="customTypeList"></div>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('customTypeManagerModal')" style="margin-top:14px">Done</button>
+  </div>
+</div>
+
+<!-- CUSTOM TYPE BUILDER MODAL -->
+<div class="modal-overlay" id="customTypeBuilderModal" style="z-index:260">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">New Order Category</div>
+    <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:14px">
+      <div class="form-group" style="flex:0 0 72px;margin:0">
+        <label class="form-label">Icon</label>
+        <input type="text" class="form-control" id="ctbIcon" placeholder="🖼️"
+               style="text-align:center;font-size:22px;padding:6px 4px">
+      </div>
+      <div class="form-group" style="flex:1;margin:0">
+        <label class="form-label">Category Name *</label>
+        <input type="text" class="form-control" id="ctbName" placeholder="e.g. Banner Printing">
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
+      Custom Fields <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional — specifications for this order type)</span>
+    </div>
+    <div id="ctbFieldList"></div>
+    <button class="btn btn-ghost btn-full btn-sm" onclick="addCustomFieldRow()" style="margin-bottom:14px">+ Add Field</button>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('customTypeBuilderModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" onclick="saveCustomOrderType()">Save Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM ORDER MODAL -->
+<div class="modal-overlay" id="customOrderModal">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title" id="customOrderModalTitle">New Order</div>
+    <div id="customOrderFormContent"></div>
+  </div>
+</div>
+
 <!-- CUSTOMER MODAL -->
 <div class="modal-overlay" id="customerModal" style="z-index:250">
   <div class="modal">
@@ -1301,7 +1346,8 @@ const defaultState = {
     { id: 'pvct1', name: '3mm', priceWithout: 45, priceWith: 65 },
     { id: 'pvct2', name: '5mm', priceWithout: 55, priceWith: 75 },
     { id: 'pvct3', name: '8mm', priceWithout: 70, priceWith: 90 }
-  ]
+  ],
+  customOrderTypes: []
 };
 
 let state = JSON.parse(JSON.stringify(defaultState));
@@ -1326,10 +1372,11 @@ function startRealtimeSync() {
     }
     if (snap.metadata.hasPendingWrites) return;
     try { state = JSON.parse(snap.data().data); } catch(e) { return; }
-    state.customers      = state.customers      || [];
-    state.vcPaperTypes   = state.vcPaperTypes   || defaultState.vcPaperTypes;
-    state.vcAddons       = state.vcAddons       || defaultState.vcAddons;
-    state.pvcThicknesses = state.pvcThicknesses || defaultState.pvcThicknesses;
+    state.customers        = state.customers        || [];
+    state.vcPaperTypes     = state.vcPaperTypes     || defaultState.vcPaperTypes;
+    state.vcAddons         = state.vcAddons         || defaultState.vcAddons;
+    state.pvcThicknesses   = state.pvcThicknesses   || defaultState.pvcThicknesses;
+    state.customOrderTypes = state.customOrderTypes || [];
     renderDashboard();
     renderOrders();
     renderVendors();
@@ -1352,7 +1399,7 @@ function switchTab(tab, btn) {
     if (idx !== -1) navs[idx].classList.add('active');
   }
   if (tab === 'dashboard') renderDashboard();
-  if (tab === 'orders') renderOrders();
+  if (tab === 'orders') { renderOrderTypeStrip(); renderOrders(); }
   if (tab === 'vendors') renderVendors();
   if (tab === 'reports') renderReports();
 }
@@ -1509,8 +1556,9 @@ function renderOrders() {
   }
   el.innerHTML = filtered.map(o => {
     const vendor = state.vendors.find(v => v.id === o.vendorId);
-    const isVC  = o.productId === 'vc-custom';
-    const isPVC = o.productId === 'pvc-sunboard';
+    const isVC     = o.productId === 'vc-custom';
+    const isPVC    = o.productId === 'pvc-sunboard';
+    const isCustom = o.productId?.startsWith('custom-');
     const priorityBadge = o.priority === 'urgent' ? '<span style="background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">URGENT</span>' : o.priority === 'high' ? '<span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">HIGH</span>' : '';
     const deleteBtn = isReadOnly() ? '' : `<button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteOrder('${o.id}')">🗑️</button>`;
     let actionBtns = '';
@@ -1569,7 +1617,7 @@ function renderOrders() {
         </div>
       </div>
       <div class="order-product">
-        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : isPVC ? '🟦' : '📦'}</div>
+        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : isPVC ? '🟦' : isCustom ? (o.customDetails?.icon||'📦') : '📦'}</div>
         <div class="order-product-info">
           <div class="name">${escHtml(getOrderItemName(o))}</div>
           <div class="detail">Qty: ${o.qty} · ₹${Number(o.total).toLocaleString('en-IN')}</div>
@@ -1755,6 +1803,34 @@ function viewOrderDetail(oid) {
                   <div style="flex:1;min-width:0">
                     <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image' : 'PDF'} · Tap to view / download</div>
+                  </div>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                </a>`;
+      }).join('')}
+    </div>` : ''}
+    ` : ''}
+
+    ${o.customDetails?.fieldValues?.length ? `
+    <div class="detail-section">
+      <div class="detail-label">${escHtml(o.customDetails.typeName||'Custom')} Specifications</div>
+      <table class="spec-table" style="margin-top:6px">
+        ${o.customDetails.fieldValues.map(fv=>`<tr><td>${escHtml(fv.label)}</td><td>${escHtml(fv.value)}${fv.unit?' '+escHtml(fv.unit):''}</td></tr>`).join('')}
+      </table>
+    </div>
+    ${o.customDetails.designFiles?.length ? `
+    <div class="detail-section">
+      <div class="detail-label">Design Files (${o.customDetails.designFiles.length})</div>
+      ${o.customDetails.designFiles.map(f => {
+        const isImg = f.type?.startsWith('image/');
+        const thumb = isImg && f.url
+          ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
+          : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg?'var(--primary-light)':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg?'🖼️':'📄'}</div>`;
+        return `<a href="${escHtml(f.url||'#')}" target="_blank" rel="noopener"
+                   style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
+                  ${thumb}
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · Tap to view</div>
                   </div>
                   <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
                 </a>`;
@@ -2334,7 +2410,13 @@ function printOrder(oid) {
       <tr><td>Price / piece</td><td>₹${o.pvcDetails.pricePerSqFt}</td></tr>
     </table>` : '';
 
-  const _designFiles = o.vcDetails?.designFiles || o.pvcDetails?.designFiles || [];
+  const customSpecsHtml = (o.customDetails?.fieldValues?.length) ? `
+    <h3 class="sec-title">${esc(o.customDetails.typeName||'Custom')} Specifications</h3>
+    <table class="spec-tbl">
+      ${o.customDetails.fieldValues.map(fv=>`<tr><td>${esc(fv.label)}</td><td>${esc(fv.value)}${fv.unit?' '+esc(fv.unit):''}</td></tr>`).join('')}
+    </table>` : '';
+
+  const _designFiles = o.vcDetails?.designFiles || o.pvcDetails?.designFiles || o.customDetails?.designFiles || [];
   const designFilesHtml = _designFiles.length ? `
     <h3 class="sec-title">Design Files</h3>
     ${_designFiles.map(f => `
@@ -2437,6 +2519,7 @@ function printOrder(oid) {
 
   ${vcSpecsHtml}
   ${pvcSpecsHtml}
+  ${customSpecsHtml}
   ${designFilesHtml}
 
   <!-- FOOTER -->
@@ -2535,12 +2618,9 @@ function showApp() {
   document.getElementById('headerUserAv').textContent = av;
   document.getElementById('headerUserName').textContent = currentUser.name.split(' ')[0];
   document.querySelectorAll('.viewer-hide').forEach(el => {
-    if (isReadOnly()) {
-      el.style.display = 'none';
-    } else {
-      el.style.display = el.classList.contains('order-type-strip') ? 'flex' : '';
-    }
+    el.style.display = isReadOnly() ? 'none' : '';
   });
+  renderOrderTypeStrip();
   updateNotifBadge();
   renderDashboard();
 }
@@ -3273,6 +3353,466 @@ function deletePVCThickness(id) {
   renderPVCThicknessList();
   renderPVCThicknessSelect();
   showToast('Thickness option removed');
+}
+
+// ===================== ORDER TYPE STRIP =====================
+function renderOrderTypeStrip() {
+  const strip = document.getElementById('orderTypeStrip');
+  if (!strip) return;
+  if (isReadOnly()) { strip.style.display = 'none'; return; }
+  strip.style.display = 'flex';
+  const custom = (state.customOrderTypes || []).map(t => `
+    <button class="order-type-btn" onclick="openCustomOrderModal('${t.id}')">
+      <span class="otb-icon">${escHtml(t.icon||'📦')}</span>
+      <span class="otb-label">${escHtml(t.name)}</span>
+    </button>`).join('');
+  strip.innerHTML = `
+    <button class="order-type-btn" onclick="openVCOrderModal()">
+      <span class="otb-icon">📇</span><span class="otb-label">Visiting Card</span>
+    </button>
+    <button class="order-type-btn" onclick="openPVCOrderModal()">
+      <span class="otb-icon">🟦</span><span class="otb-label">PVC Sunboard</span>
+    </button>
+    ${custom}
+    <button class="order-type-btn" onclick="openCustomTypeManager()" style="border-style:dashed">
+      <span class="otb-icon">⚙️</span><span class="otb-label">Manage</span>
+    </button>`;
+}
+
+// ===================== CUSTOM TYPE MANAGER =====================
+function openCustomTypeManager() {
+  renderCustomTypeList();
+  openModal('customTypeManagerModal');
+}
+
+function renderCustomTypeList() {
+  const list = document.getElementById('customTypeList');
+  const types = state.customOrderTypes || [];
+  if (!types.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px">No custom categories yet.<br>Tap "+ New" to create one.</div>';
+    return;
+  }
+  list.innerHTML = types.map(t => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px">
+      <div style="font-size:24px;line-height:1;width:32px;text-align:center">${escHtml(t.icon||'📦')}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px">${escHtml(t.name)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${(t.fields||[]).length} field${(t.fields||[]).length!==1?'s':''}</div>
+      </div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteCustomOrderType('${t.id}')">🗑️</button>
+    </div>`).join('');
+}
+
+function deleteCustomOrderType(id) {
+  if (!confirm('Delete this order category?')) return;
+  state.customOrderTypes = (state.customOrderTypes||[]).filter(t => t.id !== id);
+  save();
+  renderCustomTypeList();
+  renderOrderTypeStrip();
+  showToast('Category deleted');
+}
+
+// ===================== CUSTOM TYPE BUILDER =====================
+let customFieldCount = 0;
+const ctbOptCounters = {};
+
+function openCustomTypeBuilder() {
+  customFieldCount = 0;
+  document.getElementById('ctbIcon').value = '';
+  document.getElementById('ctbName').value = '';
+  document.getElementById('ctbFieldList').innerHTML = '';
+  openModal('customTypeBuilderModal');
+}
+
+function addCustomFieldRow(field = null) {
+  const idx = ++customFieldCount;
+  const fid = field?.id || ('ctbf_' + idx + '_' + Date.now());
+  const type = field?.type || 'text';
+  const div = document.createElement('div');
+  div.id = 'ctbFieldRow_' + idx;
+  div.dataset.fid = fid;
+  div.style.cssText = 'background:#f8f9fa;border-radius:8px;padding:10px;margin-bottom:8px;border:1px solid var(--border)';
+
+  const optsVisible = ['dropdown','radio'].includes(type) ? '' : 'display:none';
+  const unitVisible = type === 'number' ? '' : 'display:none';
+  const existingOpts = (field?.options||[]).map((o, i) => buildCTBOptRow(idx, i, o, type)).join('');
+
+  div.innerHTML = `
+    <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:6px">
+      <input type="text" class="form-control" placeholder="Field name *" value="${escHtml(field?.label||'')}"
+             data-fld-label style="flex:1">
+      <select class="form-control" data-fld-type style="flex:0 0 110px;font-size:12px"
+              onchange="onCTBFieldTypeChange(${idx})">
+        <option value="text"     ${type==='text'    ?'selected':''}>Text</option>
+        <option value="number"   ${type==='number'  ?'selected':''}>Number</option>
+        <option value="dropdown" ${type==='dropdown'?'selected':''}>Dropdown</option>
+        <option value="radio"    ${type==='radio'   ?'selected':''}>Radio</option>
+      </select>
+      <button class="btn btn-ghost btn-icon btn-sm" style="flex-shrink:0"
+              onclick="document.getElementById('ctbFieldRow_${idx}').remove()">✕</button>
+    </div>
+    <div id="ctbUnit_${idx}" style="${unitVisible}">
+      <input type="text" class="form-control" data-fld-unit placeholder="Unit label (e.g. ft, mm)"
+             value="${escHtml(field?.unit||'')}" style="font-size:12px">
+    </div>
+    <div id="ctbOpts_${idx}" style="${optsVisible}">
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:6px 0 4px" id="ctbOptsLbl_${idx}">
+        ${type==='radio'?'Radio Options (add an optional ₹ price per option)':'Dropdown Options'}
+      </div>
+      <div id="ctbOptList_${idx}">${existingOpts}</div>
+      <button class="btn btn-ghost btn-sm" style="font-size:11px;margin-top:4px"
+              onclick="addCTBOpt(${idx})">+ Add Option</button>
+    </div>`;
+  document.getElementById('ctbFieldList').appendChild(div);
+}
+
+function buildCTBOptRow(fieldIdx, optIdx, opt, fieldType) {
+  const showPrice = fieldType === 'radio';
+  const label = typeof opt === 'string' ? opt : (opt?.label || '');
+  const price = opt?.price || '';
+  return `<div style="display:flex;gap:6px;margin-bottom:4px" id="ctbOpt_${fieldIdx}_${optIdx}">
+    <input type="text"   class="form-control" placeholder="Option label" value="${escHtml(label)}"
+           data-opt-label style="flex:1;font-size:12px">
+    <input type="number" class="form-control" placeholder="₹" value="${price}"
+           data-opt-price style="flex:0 0 70px;font-size:12px;${showPrice?'':'display:none'}">
+    <button class="btn btn-ghost btn-icon btn-sm"
+            onclick="document.getElementById('ctbOpt_${fieldIdx}_${optIdx}').remove()"
+            style="flex-shrink:0">✕</button>
+  </div>`;
+}
+
+function addCTBOpt(fieldIdx) {
+  ctbOptCounters[fieldIdx] = (ctbOptCounters[fieldIdx] || 0) + 1;
+  const row = document.getElementById('ctbFieldRow_' + fieldIdx);
+  const type = row?.querySelector('[data-fld-type]')?.value || 'dropdown';
+  const optList = document.getElementById('ctbOptList_' + fieldIdx);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = buildCTBOptRow(fieldIdx, ctbOptCounters[fieldIdx], null, type);
+  optList.appendChild(tmp.firstElementChild);
+}
+
+function onCTBFieldTypeChange(idx) {
+  const row   = document.getElementById('ctbFieldRow_' + idx);
+  const type  = row.querySelector('[data-fld-type]').value;
+  const unitEl = document.getElementById('ctbUnit_' + idx);
+  const optsEl = document.getElementById('ctbOpts_' + idx);
+  const lbl   = document.getElementById('ctbOptsLbl_' + idx);
+
+  if (unitEl) unitEl.style.display = type === 'number' ? 'block' : 'none';
+  if (optsEl) optsEl.style.display = ['dropdown','radio'].includes(type) ? 'block' : 'none';
+  if (lbl)    lbl.textContent = type === 'radio'
+    ? 'Radio Options (add an optional ₹ price per option)' : 'Dropdown Options';
+
+  row.querySelectorAll('[data-opt-price]').forEach(el => {
+    el.style.display = type === 'radio' ? 'inline-block' : 'none';
+  });
+}
+
+function saveCustomOrderType() {
+  const name = document.getElementById('ctbName').value.trim();
+  const icon = document.getElementById('ctbIcon').value.trim() || '📦';
+  if (!name) { showToast('Enter a category name'); return; }
+
+  const fields = [];
+  document.querySelectorAll('#ctbFieldList > div[id^="ctbFieldRow_"]').forEach(row => {
+    const label = row.querySelector('[data-fld-label]')?.value.trim();
+    if (!label) return;
+    const type  = row.querySelector('[data-fld-type]')?.value || 'text';
+    const unit  = row.querySelector('[data-fld-unit]')?.value.trim() || '';
+    const options = [];
+    row.querySelectorAll('[data-opt-label]').forEach(optEl => {
+      const optLabel = optEl.value.trim();
+      if (!optLabel) return;
+      const priceEl = optEl.parentElement?.querySelector('[data-opt-price]');
+      const price = parseFloat(priceEl?.value) || 0;
+      options.push({ label: optLabel, price });
+    });
+    fields.push({ id: row.dataset.fid || ('f' + Date.now()), label, type, unit, options });
+  });
+
+  if (!state.customOrderTypes) state.customOrderTypes = [];
+  state.customOrderTypes.push({ id: 'cot' + Date.now(), name, icon, fields });
+  save();
+  closeModal('customTypeBuilderModal');
+  renderCustomTypeList();
+  renderOrderTypeStrip();
+  showToast(`"${name}" category created`);
+}
+
+// ===================== CUSTOM ORDER FORM =====================
+let customDesignFiles = [];
+
+function openCustomOrderModal(typeId) {
+  const type = (state.customOrderTypes||[]).find(t => t.id === typeId);
+  if (!type) { showToast('Category not found'); return; }
+  customDesignFiles = [];
+  document.getElementById('customOrderModalTitle').textContent = `${type.icon||'📦'} ${type.name}`;
+
+  const vendorOpts = state.vendors.map(v =>
+    `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
+  const custOpts = (state.customers||[]).map(c =>
+    `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+
+  const customFieldsHtml = (type.fields||[]).map(f => buildCOFFieldHtml(f)).join('');
+
+  document.getElementById('customOrderFormContent').innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Customer</div>
+    <div class="form-group">
+      <label class="form-label">Select Customer *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="cofCustomer" onchange="onCOFCustomerChange()" style="flex:1">
+          <option value="">-- Select Customer --</option>${custOpts}
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="openCustomerModal()" style="white-space:nowrap">+ New</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Delivery Address *</label>
+      <select class="form-control" id="cofAddress">
+        <option value="">-- Select Customer First --</option>
+      </select>
+    </div>
+
+    ${customFieldsHtml ? `
+    <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;border:1px solid #e2e8f0">
+      <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Specifications</div>
+      ${customFieldsHtml}
+    </div>` : ''}
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Price per piece (₹) *</label>
+        <input type="number" class="form-control" id="cofUnitPrice" placeholder="0" min="0" oninput="calcCOFTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity *</label>
+        <input type="number" class="form-control" id="cofQty" value="1" min="1" oninput="calcCOFTotal()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Order Total (₹)</label>
+      <input type="text" class="form-control" id="cofTotal" readonly placeholder="Auto">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Assign Vendor *</label>
+      <select class="form-control" id="cofVendor">
+        <option value="">-- Select Vendor --</option>${vendorOpts}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-control" id="cofPriority">
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Design Files <span style="font-weight:normal;color:var(--text-muted)">(PDF / Image)</span></label>
+      <div id="cofDesignDropArea"
+           style="border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s"
+           onclick="document.getElementById('cofDesignInput').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
+           ondragleave="this.style.borderColor='var(--border)'"
+           ondrop="handleCOFDesignDrop(event)">
+        <input type="file" id="cofDesignInput" accept=".pdf,image/*" multiple style="display:none"
+               onchange="handleCOFDesignFiles(this.files);this.value=''">
+        <div style="font-size:30px;margin-bottom:6px">📎</div>
+        <div style="font-size:13px;color:var(--text-muted)">Tap to attach or drag & drop</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">PDF, JPG, PNG, WEBP · Max 5 MB each</div>
+      </div>
+      <div id="cofDesignPreview" style="margin-top:8px"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Instructions</label>
+      <textarea class="form-control" id="cofNotes" placeholder="Any special instructions..." rows="2"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('customOrderModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" id="cofSaveBtn" onclick="saveCustomOrder('${typeId}')">Create Order</button>
+    </div>`;
+
+  openModal('customOrderModal');
+}
+
+function buildCOFFieldHtml(f) {
+  const id = `cof_${f.id}`;
+  let inputHtml = '';
+  switch (f.type) {
+    case 'text':
+      inputHtml = `<input type="text" class="form-control" id="${id}" placeholder="Enter ${escHtml(f.label).toLowerCase()}">`;
+      break;
+    case 'number':
+      inputHtml = `<div style="display:flex;gap:8px;align-items:center">
+        <input type="number" class="form-control" id="${id}" placeholder="0" style="flex:1">
+        ${f.unit ? `<span style="font-size:13px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${escHtml(f.unit)}</span>` : ''}
+      </div>`;
+      break;
+    case 'dropdown':
+      inputHtml = `<select class="form-control" id="${id}">
+        <option value="">-- Select --</option>
+        ${(f.options||[]).map(o=>`<option value="${escHtml(o.label)}">${escHtml(o.label)}</option>`).join('')}
+      </select>`;
+      break;
+    case 'radio':
+      inputHtml = `<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+        ${(f.options||[]).map((o,i)=>`
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;transition:border-color .2s" id="cofRL_${f.id}_${i}">
+            <input type="radio" name="${id}" value="${escHtml(o.label)}" data-price="${o.price||0}"
+                   onchange="onCOFRadioChange('${f.id}')" style="accent-color:var(--primary)">
+            <span style="flex:1">
+              <div style="font-weight:700;font-size:13px">${escHtml(o.label)}</div>
+              ${o.price ? `<div style="font-size:11px;color:var(--text-muted)">₹${o.price} / piece</div>` : ''}
+            </span>
+          </label>`).join('')}
+      </div>`;
+      break;
+  }
+  return `<div class="form-group"><label class="form-label">${escHtml(f.label)}</label>${inputHtml}</div>`;
+}
+
+function onCOFRadioChange(fieldId) {
+  const checked = document.querySelector(`input[name="cof_${fieldId}"]:checked`);
+  if (!checked) return;
+  const price = parseFloat(checked.dataset.price) || 0;
+  if (price > 0) {
+    document.getElementById('cofUnitPrice').value = price;
+    calcCOFTotal();
+  }
+  document.querySelectorAll(`input[name="cof_${fieldId}"]`).forEach(inp => {
+    const lbl = inp.closest('label');
+    if (lbl) lbl.style.borderColor = inp.checked ? 'var(--primary)' : 'var(--border)';
+  });
+}
+
+function onCOFCustomerChange() {
+  const custId = document.getElementById('cofCustomer')?.value;
+  const addrSel = document.getElementById('cofAddress');
+  if (!custId) { addrSel.innerHTML = '<option value="">-- Select Customer First --</option>'; return; }
+  const cust = (state.customers||[]).find(c => c.id === custId);
+  addrSel.innerHTML = '<option value="">-- Select Address --</option>' +
+    (cust?.addresses||[]).map(a => `<option value="${a.id}">${escHtml(a.label)}: ${escHtml(a.text)}</option>`).join('');
+}
+
+function calcCOFTotal() {
+  const price = parseFloat(document.getElementById('cofUnitPrice')?.value) || 0;
+  const qty   = parseInt(document.getElementById('cofQty')?.value) || 0;
+  const el    = document.getElementById('cofTotal');
+  if (el) el.value = (price > 0 && qty > 0) ? '₹' + (price * qty).toFixed(2) : '';
+}
+
+function handleCOFDesignDrop(e) {
+  e.preventDefault();
+  document.getElementById('cofDesignDropArea').style.borderColor = 'var(--border)';
+  handleCOFDesignFiles(e.dataTransfer.files);
+}
+
+function handleCOFDesignFiles(files) {
+  const MAX = 5 * 1024 * 1024;
+  Array.from(files).forEach(f => {
+    if (f.size > MAX) { showToast(`${f.name} is too large (max 5 MB)`); return; }
+    if (customDesignFiles.find(x => x.name === f.name && x.size === f.size)) return;
+    customDesignFiles.push(f);
+  });
+  const preview = document.getElementById('cofDesignPreview');
+  if (!preview) return;
+  preview.innerHTML = customDesignFiles.map((f, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8f9fa;border-radius:6px;margin-bottom:4px">
+       <span style="font-size:16px">${f.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+       <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span>
+       <span style="font-size:11px;color:var(--text-muted)">${(f.size/1024).toFixed(1)} KB</span>
+       <button onclick="customDesignFiles.splice(${i},1);handleCOFDesignFiles([])"
+               style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:14px;padding:0">✕</button>
+     </div>`
+  ).join('');
+}
+
+async function uploadCOFDesignFiles(orderId) {
+  if (!customDesignFiles.length) return [];
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+  const results = [];
+  for (let i = 0; i < customDesignFiles.length; i++) {
+    const file = customDesignFiles[i];
+    const saveBtn = document.getElementById('cofSaveBtn');
+    if (saveBtn) saveBtn.textContent = `Uploading ${i+1}/${customDesignFiles.length}…`;
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder    = `custom-orders/${orderId}`;
+    const sigStr    = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    const signature = await _cloudinarySHA1(sigStr);
+    const form = new FormData();
+    form.append('file', file); form.append('folder', folder);
+    form.append('timestamp', timestamp); form.append('api_key', CLOUDINARY_API_KEY);
+    form.append('signature', signature);
+    const res  = await fetch(endpoint, { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error?.message || 'Upload failed');
+    results.push({ name: file.name, url: data.secure_url, type: file.type, size: file.size });
+  }
+  return results;
+}
+
+async function saveCustomOrder(typeId) {
+  const type   = (state.customOrderTypes||[]).find(t => t.id === typeId);
+  if (!type) return;
+  const custId = document.getElementById('cofCustomer').value;
+  const addrId = document.getElementById('cofAddress').value;
+  const vid    = document.getElementById('cofVendor').value;
+  const price  = parseFloat(document.getElementById('cofUnitPrice').value) || 0;
+  const qty    = parseInt(document.getElementById('cofQty').value) || 0;
+
+  if (!custId)  { showToast('Please select a customer');         return; }
+  if (!addrId)  { showToast('Please select a delivery address'); return; }
+  if (!vid)     { showToast('Please select a vendor');           return; }
+  if (price<=0) { showToast('Please enter a price per piece');   return; }
+  if (qty < 1)  { showToast('Please enter a valid quantity');    return; }
+
+  const cust = (state.customers||[]).find(c => c.id === custId);
+  const addr = (cust?.addresses||[]).find(a => a.id === addrId);
+
+  const fieldValues = (type.fields||[]).map(f => {
+    let value = '';
+    if (f.type === 'radio') {
+      const checked = document.querySelector(`input[name="cof_${f.id}"]:checked`);
+      value = checked?.value || '';
+    } else {
+      value = document.getElementById(`cof_${f.id}`)?.value?.trim() || '';
+    }
+    return { fieldId: f.id, label: f.label, type: f.type, unit: f.unit||'', value };
+  }).filter(fv => fv.value !== '');
+
+  const lastNum = state.orders.reduce((max,o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0);
+  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
+
+  const saveBtn = document.getElementById('cofSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = customDesignFiles.length ? 'Uploading…' : 'Creating…';
+
+  let designFiles = [];
+  try { designFiles = await uploadCOFDesignFiles(orderId); }
+  catch(e) { showToast('File upload failed — saved without files'); }
+
+  const order = {
+    id: orderId, productId: `custom-${typeId}`, item: type.name,
+    vendorId: vid, qty, total: Math.round(price * qty * 100) / 100,
+    unitPrice: price, customer: cust?.name || '',
+    address: addr ? `${addr.label}: ${addr.text}` : '',
+    priority: document.getElementById('cofPriority').value,
+    notes: document.getElementById('cofNotes').value.trim(),
+    status: 'pending', date: new Date().toISOString().split('T')[0],
+    statusHistory: ['pending'],
+    customDetails: { typeId, typeName: type.name, icon: type.icon||'📦', fieldValues, designFiles }
+  };
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Create Order';
+  customDesignFiles = [];
+
+  state.orders.push(order);
+  save();
+  closeModal('customOrderModal');
+  renderOrders(); renderDashboard();
+  showToast(`${type.name} order created: ${order.id}`);
+  addNotification(`New ${type.name} Order`, `${order.id} — ${qty} pcs.`, 'info');
+  setTimeout(() => viewOrderDetail(order.id), 300);
 }
 
 // ===================== CUSTOMER MANAGEMENT =====================
