@@ -2793,14 +2793,14 @@ function renderReports() {
         <div class="filter-tab" onclick="setReportRange('month')">This Month</div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;align-items:start">
-        <div>
-          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">FROM</div>
-          <input type="date" class="form-control" id="rDateFrom" value="${reportDateFrom}" onchange="applyReportCustomRange()" style="font-size:12px;padding:8px 6px;width:100%">
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;font-weight:700;color:var(--text-muted);width:34px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px">From</span>
+          <input type="date" class="form-control" id="rDateFrom" value="${reportDateFrom}" onchange="applyReportCustomRange()" style="flex:1;font-size:13px;padding:7px 10px;min-width:0">
         </div>
-        <div>
-          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">TO</div>
-          <input type="date" class="form-control" id="rDateTo" value="${reportDateTo}" onchange="applyReportCustomRange()" style="font-size:12px;padding:8px 6px;width:100%">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;font-weight:700;color:var(--text-muted);width:34px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px">To</span>
+          <input type="date" class="form-control" id="rDateTo" value="${reportDateTo}" onchange="applyReportCustomRange()" style="flex:1;font-size:13px;padding:7px 10px;min-width:0">
         </div>
       </div>
 
