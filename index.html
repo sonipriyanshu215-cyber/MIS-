@@ -1734,6 +1734,81 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   </div>
 </div>
 
+<!-- EDIT ORDER MODAL -->
+<div class="modal-overlay" id="editOrderModal" style="z-index:210">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title" id="editOrderTitle">Edit Order</div>
+
+    <!-- Generic order fields -->
+    <div id="editGenericFields">
+      <div class="form-group">
+        <label class="form-label">Item / Description *</label>
+        <input type="text" class="form-control" id="editItem" placeholder="e.g. Office Chairs...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unit Price (₹) *</label>
+          <input type="number" class="form-control" id="editUnitPrice" min="0" oninput="calcEditTotal()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quantity *</label>
+          <input type="number" class="form-control" id="editQty" min="1" oninput="calcEditTotal()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Specialty order qty only -->
+    <div id="editSpecialtyFields" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Quantity *</label>
+        <input type="number" class="form-control" id="editQtySpecialty" min="1" oninput="calcEditTotalSpecialty()">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Order Total (₹)</label>
+      <input type="text" class="form-control" id="editTotal" readonly placeholder="Auto">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Assign Vendor *</label>
+      <select class="form-control" id="editVendor">
+        <option value="">-- Select Vendor --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Customer Name</label>
+      <input type="text" class="form-control" id="editCustomer" placeholder="Customer / Department">
+    </div>
+
+    <div id="editAddressField" class="form-group">
+      <label class="form-label">Delivery Address</label>
+      <textarea class="form-control" id="editAddress" rows="2" placeholder="Delivery address..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-control" id="editPriority">
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-control" id="editNotes" rows="2" placeholder="Special instructions..."></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('editOrderModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" onclick="saveEditedOrder()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- CUSTOMER MODAL -->
 <div class="modal-overlay" id="customerModal" style="z-index:250">
   <div class="modal">
@@ -2488,6 +2563,7 @@ function viewOrderDetail(oid) {
     <div style="margin-top:16px">
       ${actionBtns}
       <button class="btn btn-outline btn-full" onclick="printOrder('${o.id}')" style="margin-top:8px">🖨️ Print / Save PDF</button>
+      ${!isReadOnly() ? `<button class="btn btn-ghost btn-full" onclick="openEditOrderModal('${o.id}')" style="margin-top:8px">✏️ Edit Order</button>` : ''}
       <button class="btn btn-ghost btn-full" onclick="closeModal('orderDetailModal')" style="margin-top:8px">Close</button>
       ${!isReadOnly() ? `<button class="btn btn-ghost btn-full" onclick="deleteOrder('${o.id}')" style="margin-top:8px;color:#ef4444">🗑️ Delete Order</button>` : ''}
     </div>`;
@@ -2890,24 +2966,22 @@ function printReport() {
     { label:'Fulfilled',       val:String(fulfilled),      bg:'#ede9fe', color:'#5b21b6', border:'#8b5cf6' },
     { label:'Avg Order Value', val:fmtMoney(avgOrder),     bg:'#fef3c7', color:'#92400e', border:'#f59e0b' }
   ];
-  const statsRow = `<table width="100%" cellspacing="0" cellpadding="0"><tr>
-    ${statCards.map((c,i) => `
-      ${i>0?'<td width="10"></td>':''}
-      <td width="25%" bgcolor="${c.bg}" style="background:${c.bg};border-top:3px solid ${c.border};padding:12px 14px;vertical-align:top">
-        <div style="font-size:20px;font-weight:800;color:${c.color}">${c.val}</div>
+  const statsRow = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">
+    ${statCards.map(c => `
+      <div style="background:${c.bg};border-top:3px solid ${c.border};padding:12px 14px;border-radius:4px">
+        <div style="font-size:18px;font-weight:800;color:${c.color};line-height:1.2">${c.val}</div>
         <div style="font-size:9px;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.5px;font-weight:700">${c.label}</div>
-      </td>`).join('')}
-  </tr></table>`;
+      </div>`).join('')}
+  </div>`;
 
-  // Status breakdown — 4 per row
-  const statusRow = (slice) => `<table width="100%" cellspacing="0" cellpadding="0"><tr>
-    ${slice.map((s,i) => `
-      ${i>0?'<td width="8"></td>':''}
-      <td bgcolor="${s.bg}" style="background:${s.bg};border:1px solid ${s.color}33;padding:8px;text-align:center;vertical-align:middle">
+  // Status breakdown — responsive grid
+  const statusRow = (items) => `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px">
+    ${items.filter(s=>s.key!=='_').map(s => `
+      <div style="background:${s.bg};border:1px solid ${s.color}33;padding:8px;text-align:center;border-radius:4px">
         <div style="font-size:18px;font-weight:800;color:${s.color}">${statusCounts[s.key]||0}</div>
         <div style="font-size:8px;font-weight:700;color:${s.color};text-transform:uppercase;margin-top:3px">${s.label}</div>
-      </td>`).join('')}
-  </tr></table>`;
+      </div>`).join('')}
+  </div>`;
 
   // Order rows — alternating bgcolor
   const orderRows = [...orders].sort((a,b)=>new Date(b.date)-new Date(a.date)).map((o,i) => {
@@ -2929,6 +3003,7 @@ function printReport() {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MIS Report — ${esc(rangeLabel)}</title>
 <style>
   @page { size: A4 portrait; margin: 12mm 14mm; }
@@ -2944,10 +3019,19 @@ function printReport() {
     color-adjust: exact !important;
     font-family: Arial, sans-serif; color: #1e293b; font-size: 11px; line-height: 1.5; background: #fff;
   }
-  .no-print { text-align:right; padding:10px 0 14px; border-bottom:1px solid #e2e8f0; margin-bottom:16px; display:flex; gap:8px; justify-content:flex-end; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 12px 16px; }
+  .no-print { padding:10px 0 14px; border-bottom:1px solid #e2e8f0; margin-bottom:16px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
   .sec-title { font-size:9px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin:14px 0 8px; border-bottom:1px solid #e2e8f0; padding-bottom:4px; }
+  .tbl-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  @media (max-width:600px) {
+    .wrap { padding: 10px 12px; }
+    .rpt-header { flex-direction:column !important; }
+    .rpt-header-right { text-align:left !important; margin-top:6px; }
+    .no-print button { flex:1; font-size:12px !important; }
+  }
   @media print {
     .no-print { display:none !important; }
+    .wrap { padding: 0; }
     *, *::before, *::after {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
@@ -2957,6 +3041,7 @@ function printReport() {
 </style>
 </head>
 <body>
+<div class="wrap">
 
 <div class="no-print">
   <button onclick="window.close()" style="padding:8px 16px;background:#f1f5f9;color:#1e293b;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">✕ Close</button>
@@ -2964,18 +3049,16 @@ function printReport() {
 </div>
 
 <!-- HEADER -->
-<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#1a56db" style="margin-bottom:18px">
-  <tr>
-    <td bgcolor="#1a56db" style="padding:16px 18px;vertical-align:middle">
-      <div style="font-size:19px;font-weight:800;color:#fff">MIS Portal</div>
-      <div style="font-size:10px;color:#bfdbfe;margin-top:2px">Order &amp; Vendor Management &mdash; Report</div>
-    </td>
-    <td bgcolor="#1a56db" style="padding:16px 18px;text-align:right;vertical-align:middle">
-      <div style="font-size:13px;font-weight:700;color:#fff;border:1px solid #93c5fd;padding:4px 12px;display:inline-block">&#128197; ${esc(rangeLabel)}</div>
-      <div style="font-size:9px;color:#93c5fd;margin-top:6px">Generated: ${new Date().toLocaleString('en-IN')}</div>
-    </td>
-  </tr>
-</table>
+<div class="rpt-header" style="background:#1a56db;padding:16px 18px;margin-bottom:18px;border-radius:6px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px">
+  <div>
+    <div style="font-size:19px;font-weight:800;color:#fff">MIS Portal</div>
+    <div style="font-size:10px;color:#bfdbfe;margin-top:2px">Order &amp; Vendor Management &mdash; Report</div>
+  </div>
+  <div class="rpt-header-right" style="text-align:right">
+    <div style="font-size:13px;font-weight:700;color:#fff;border:1px solid #93c5fd;padding:4px 12px;display:inline-block;border-radius:4px">&#128197; ${esc(rangeLabel)}</div>
+    <div style="font-size:9px;color:#93c5fd;margin-top:6px">Generated: ${new Date().toLocaleString('en-IN')}</div>
+  </div>
+</div>
 
 <!-- SUMMARY STATS -->
 <div class="sec-title">Summary</div>
@@ -2983,12 +3066,12 @@ function printReport() {
 
 <!-- STATUS BREAKDOWN -->
 <div class="sec-title">Status Breakdown</div>
-<div style="margin-bottom:6px">${statusRow(statusMeta.slice(0,4))}</div>
-<div style="margin-bottom:14px">${statusRow(statusMeta.slice(4,7).concat([{key:'_',label:'',bg:'#fff',color:'#fff'}]))}</div>
+<div style="margin-bottom:14px">${statusRow(statusMeta)}</div>
 
 <!-- ORDER TABLE -->
 <div class="sec-title">Order Details — ${totalOrders} order${totalOrders!==1?'s':''}</div>
-<table width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-collapse:collapse">
+<div class="tbl-scroll">
+<table width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-collapse:collapse;min-width:520px">
   <thead>
     <tr bgcolor="#1e293b">
       <th bgcolor="#1e293b" style="background:#1e293b;color:#fff;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap">Order ID</th>
@@ -3002,15 +3085,15 @@ function printReport() {
   </thead>
   <tbody>${orderRows || `<tr><td colspan="7" style="padding:20px;text-align:center;color:#94a3b8">No orders for this period</td></tr>`}</tbody>
 </table>
+</div>
 
 <!-- FOOTER -->
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;padding-top:10px;border-top:1px solid #e2e8f0">
-  <tr>
-    <td style="font-size:9px;color:#64748b;font-weight:700">MIS Portal — Official Report</td>
-    <td style="font-size:9px;color:#94a3b8;text-align:right">${esc(rangeLabel)} &middot; ${totalOrders} orders &middot; ${new Date().toLocaleDateString('en-IN')}</td>
-  </tr>
-</table>
+<div style="margin-top:16px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px">
+  <span style="font-size:9px;color:#64748b;font-weight:700">MIS Portal — Official Report</span>
+  <span style="font-size:9px;color:#94a3b8">${esc(rangeLabel)} &middot; ${totalOrders} orders &middot; ${new Date().toLocaleDateString('en-IN')}</span>
+</div>
 
+</div>
 </body>
 </html>`;
 
@@ -5425,6 +5508,113 @@ async function saveCustomOrder(typeId) {
   showToast(`${type.name} order created: ${order.id}`);
   addNotification(`New ${type.name} Order`, `${order.id} — ${qty} pcs.`, 'info');
   setTimeout(() => viewOrderDetail(order.id), 300);
+}
+
+// ===================== EDIT ORDER =====================
+let editOrderUnitCost = 0;
+
+const SPECIALTY_PRODUCT_IDS = ['vc-custom','pvc-sunboard','sticker-custom','flex-banner','vinyl-print'];
+
+function openEditOrderModal(oid) {
+  const o = state.orders.find(x => x.id === oid);
+  if (!o) return;
+  editingOrderId = oid;
+
+  const isGeneric = !o.productId || !SPECIALTY_PRODUCT_IDS.includes(o.productId) && !o.productId.startsWith('custom-');
+
+  document.getElementById('editOrderTitle').textContent = `✏️ Edit — ${o.id}`;
+
+  // Show/hide field groups
+  document.getElementById('editGenericFields').style.display    = isGeneric ? 'block' : 'none';
+  document.getElementById('editSpecialtyFields').style.display  = isGeneric ? 'none'  : 'block';
+  document.getElementById('editAddressField').style.display     = isGeneric ? 'block' : 'none';
+
+  // Vendor dropdown
+  document.getElementById('editVendor').innerHTML =
+    '<option value="">-- Select Vendor --</option>' +
+    state.vendors.map(v => `<option value="${v.id}" ${v.id===o.vendorId?'selected':''}>${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
+
+  // Common fields
+  document.getElementById('editCustomer').value  = o.customer  || '';
+  document.getElementById('editPriority').value  = o.priority  || 'normal';
+  document.getElementById('editNotes').value     = o.notes     || '';
+
+  if (isGeneric) {
+    document.getElementById('editItem').value      = o.item      || '';
+    document.getElementById('editUnitPrice').value = o.unitPrice || '';
+    document.getElementById('editQty').value       = o.qty       || 1;
+    document.getElementById('editAddress').value   = o.address   || '';
+    calcEditTotal();
+  } else {
+    // Determine stored cost per piece
+    editOrderUnitCost =
+      o.vcDetails?.costPerCard      ??
+      o.stickerDetails?.costPerSticker ??
+      o.flexDetails?.costPerPiece   ??
+      o.vinylDetails?.costPerPiece  ??
+      o.pvcDetails?.pricePerSqFt    ??
+      (o.qty > 0 ? o.total / o.qty  : 0);
+
+    document.getElementById('editQtySpecialty').value = o.qty || 1;
+    document.getElementById('editTotal').value = '₹' + Number(o.total).toLocaleString('en-IN');
+  }
+
+  closeModal('orderDetailModal');
+  openModal('editOrderModal');
+}
+
+function calcEditTotal() {
+  const price = parseFloat(document.getElementById('editUnitPrice').value) || 0;
+  const qty   = parseInt(document.getElementById('editQty').value)         || 0;
+  document.getElementById('editTotal').value = (price > 0 && qty > 0)
+    ? '₹' + (price * qty).toLocaleString('en-IN') : '';
+}
+
+function calcEditTotalSpecialty() {
+  const qty = parseInt(document.getElementById('editQtySpecialty').value) || 0;
+  document.getElementById('editTotal').value = (editOrderUnitCost > 0 && qty > 0)
+    ? '₹' + (editOrderUnitCost * qty).toFixed(2) : '';
+}
+
+function saveEditedOrder() {
+  const o = state.orders.find(x => x.id === editingOrderId);
+  if (!o) return;
+
+  const vid = document.getElementById('editVendor').value;
+  if (!vid) { showToast('Please select a vendor'); return; }
+
+  const isGeneric = !o.productId || !SPECIALTY_PRODUCT_IDS.includes(o.productId) && !o.productId.startsWith('custom-');
+
+  if (isGeneric) {
+    const item      = document.getElementById('editItem').value.trim();
+    const unitPrice = parseFloat(document.getElementById('editUnitPrice').value) || 0;
+    const qty       = parseInt(document.getElementById('editQty').value) || 0;
+    if (!item)      { showToast('Please enter an item description'); return; }
+    if (!unitPrice) { showToast('Please enter a unit price');        return; }
+    if (qty < 1)    { showToast('Please enter a valid quantity');    return; }
+    o.item      = item;
+    o.unitPrice = unitPrice;
+    o.qty       = qty;
+    o.total     = Math.round(unitPrice * qty * 100) / 100;
+    o.address   = document.getElementById('editAddress').value.trim();
+  } else {
+    const qty = parseInt(document.getElementById('editQtySpecialty').value) || 0;
+    if (qty < 1) { showToast('Please enter a valid quantity'); return; }
+    o.qty   = qty;
+    o.total = Math.round(editOrderUnitCost * qty * 100) / 100;
+  }
+
+  o.vendorId = vid;
+  o.customer = document.getElementById('editCustomer').value.trim();
+  o.priority = document.getElementById('editPriority').value;
+  o.notes    = document.getElementById('editNotes').value.trim();
+
+  save();
+  closeModal('editOrderModal');
+  renderOrders();
+  renderDashboard();
+  showToast(`Order ${editingOrderId} updated`);
+  setTimeout(() => viewOrderDetail(editingOrderId), 300);
 }
 
 // ===================== CUSTOMER MANAGEMENT =====================
