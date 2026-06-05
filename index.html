@@ -477,6 +477,23 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .notif-item .ni-time { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
 .notif-item.unread { background: #eff6ff; }
 
+/* ORDER TYPE STRIP */
+.order-type-strip {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px;
+}
+.order-type-strip::-webkit-scrollbar { display: none; }
+.order-type-btn {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--border);
+  background: var(--card); cursor: pointer; white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06); transition: all .18s; min-width: 72px;
+}
+.order-type-btn:active { transform: scale(.95); }
+.order-type-btn .otb-icon { font-size: 22px; line-height: 1; }
+.order-type-btn .otb-label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.order-type-btn.primary { background: var(--primary); border-color: var(--primary); }
+.order-type-btn.primary .otb-label { color: rgba(255,255,255,.85); }
+
 /* SPEC PAIR INPUT */
 .spec-pair { display: flex; gap: 6px; margin-bottom: 6px; }
 .spec-pair input { flex: 1; }
@@ -649,12 +666,24 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   <div class="section" id="sec-orders">
     <div class="section-header">
       <div class="section-title">Orders</div>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-outline btn-sm viewer-hide" onclick="openVCOrderModal()">📇 Visiting Card</button>
-        <button class="btn btn-outline btn-sm viewer-hide" onclick="openPVCOrderModal()">🟦 PVC Sunboard</button>
-        <button class="btn btn-primary btn-sm viewer-hide" onclick="openOrderModal()">+ New</button>
-      </div>
     </div>
+
+    <!-- ORDER TYPE STRIP (scrolls horizontally as more types are added) -->
+    <div class="order-type-strip viewer-hide">
+      <button class="order-type-btn" onclick="openVCOrderModal()">
+        <span class="otb-icon">📇</span>
+        <span class="otb-label">Visiting Card</span>
+      </button>
+      <button class="order-type-btn" onclick="openPVCOrderModal()">
+        <span class="otb-icon">🟦</span>
+        <span class="otb-label">PVC Sunboard</span>
+      </button>
+      <button class="order-type-btn primary" onclick="openOrderModal()">
+        <span class="otb-icon" style="color:#fff">➕</span>
+        <span class="otb-label">Custom</span>
+      </button>
+    </div>
+
     <div class="search-bar">
       <span class="search-icon">🔍</span>
       <input type="text" placeholder="Search orders..." id="orderSearch" oninput="renderOrders()">
@@ -2506,7 +2535,11 @@ function showApp() {
   document.getElementById('headerUserAv').textContent = av;
   document.getElementById('headerUserName').textContent = currentUser.name.split(' ')[0];
   document.querySelectorAll('.viewer-hide').forEach(el => {
-    el.style.display = isReadOnly() ? 'none' : '';
+    if (isReadOnly()) {
+      el.style.display = 'none';
+    } else {
+      el.style.display = el.classList.contains('order-type-strip') ? 'flex' : '';
+    }
   });
   updateNotifBadge();
   renderDashboard();
