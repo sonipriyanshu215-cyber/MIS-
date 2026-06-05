@@ -651,6 +651,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       <div class="section-title">Orders</div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-outline btn-sm viewer-hide" onclick="openVCOrderModal()">📇 Visiting Card</button>
+        <button class="btn btn-outline btn-sm viewer-hide" onclick="openPVCOrderModal()">🟦 PVC Sunboard</button>
         <button class="btn btn-primary btn-sm viewer-hide" onclick="openOrderModal()">+ New</button>
       </div>
     </div>
@@ -929,12 +930,28 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       </select>
     </div>
     <div class="form-group">
+      <label class="form-label">Design Files <span style="font-weight:normal;color:var(--text-muted)">(PDF / Image)</span></label>
+      <div id="vcDesignDropArea"
+           style="border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s"
+           onclick="document.getElementById('vcDesignInput').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
+           ondragleave="this.style.borderColor='var(--border)'"
+           ondrop="handleVCDesignDrop(event)">
+        <input type="file" id="vcDesignInput" accept=".pdf,image/*" multiple style="display:none"
+               onchange="handleVCDesignFiles(this.files);this.value=''">
+        <div style="font-size:30px;margin-bottom:6px">📎</div>
+        <div style="font-size:13px;color:var(--text-muted)">Tap to attach or drag & drop</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">PDF, JPG, PNG, WEBP · Max 5 MB each</div>
+      </div>
+      <div id="vcDesignPreview" style="margin-top:8px"></div>
+    </div>
+    <div class="form-group">
       <label class="form-label">Notes / Design Instructions</label>
       <textarea class="form-control" id="vcNotes" placeholder="Design details, contact info to print, etc." rows="2"></textarea>
     </div>
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-ghost btn-full" onclick="closeModal('vcOrderModal')">Cancel</button>
-      <button class="btn btn-primary btn-full" onclick="saveVCOrder()">Create Order</button>
+      <button class="btn btn-primary btn-full" id="vcSaveBtn" onclick="saveVCOrder()">Create Order</button>
     </div>
   </div>
 </div>
@@ -985,6 +1002,163 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
 
     <button class="btn btn-ghost btn-full" onclick="closeModal('vcSettingsModal')" style="margin-top:14px">Done</button>
+  </div>
+</div>
+
+<!-- PVC SUNBOARD ORDER MODAL -->
+<div class="modal-overlay" id="pvcOrderModal">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">🟦 PVC Sunboard Order</div>
+
+    <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Customer</div>
+    <div class="form-group">
+      <label class="form-label">Select Customer *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="pvcCustomer" onchange="onPVCCustomerChange()" style="flex:1">
+          <option value="">-- Select Customer --</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="openCustomerModal()" style="white-space:nowrap">+ New</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Delivery Address *</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="pvcAddress" style="flex:1">
+          <option value="">-- Select Customer First --</option>
+        </select>
+        <button class="btn btn-outline btn-sm" id="pvcAddAddrBtn" onclick="openAddressModal()" style="white-space:nowrap;display:none">+ Add</button>
+      </div>
+    </div>
+
+    <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;border:1px solid #e2e8f0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px">Board Specifications</div>
+        <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openPVCSettingsModal()">⚙️ Manage Prices</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Thickness</label>
+        <select class="form-control" id="pvcThickness" onchange="calcPVCCost()">
+          <option value="">-- Select Thickness --</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Width (ft)</label>
+          <input type="number" class="form-control" id="pvcWidth" value="" step="0.1" min="0.1" placeholder="e.g. 4" oninput="calcPVCCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Height (ft)</label>
+          <input type="number" class="form-control" id="pvcHeight" value="" step="0.1" min="0.1" placeholder="e.g. 3" oninput="calcPVCCost()">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Lamination</label>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;background:#fff;border:2px solid var(--border);border-radius:8px;padding:10px 12px;transition:border-color .2s" id="pvcLamNoLabel">
+            <input type="radio" name="pvcLam" value="without" id="pvcLamNo" onchange="calcPVCCost()" checked style="accent-color:#1a56db">
+            <span>
+              <div style="font-weight:700;font-size:13px">Without Lamination</div>
+              <div style="font-size:11px;color:#64748b" id="pvcPriceNoLam">₹— / sq ft</div>
+            </span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;background:#fff;border:2px solid var(--border);border-radius:8px;padding:10px 12px;transition:border-color .2s" id="pvcLamYesLabel">
+            <input type="radio" name="pvcLam" value="with" id="pvcLamYes" onchange="calcPVCCost()" style="accent-color:#1a56db">
+            <span>
+              <div style="font-weight:700;font-size:13px">With Lamination</div>
+              <div style="font-size:11px;color:#64748b" id="pvcPriceWithLam">₹— / sq ft</div>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div id="pvcCalcResult" style="background:#e8f4f8;border-radius:6px;padding:10px;font-size:13px;display:none;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Area:</span><strong id="pvcArea">0</strong></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #b8d4e0;padding-top:6px;margin-top:4px"><span style="font-weight:700">Price per piece:</span><strong style="color:#1a56db">₹<span id="pvcPricePerPiece">0</span><span id="pvcRateDisplay" style="display:none"></span></strong></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Quantity (pieces) *</label>
+        <input type="number" class="form-control" id="pvcQty" value="1" min="1" oninput="calcPVCTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order Total (₹)</label>
+        <input type="text" class="form-control" id="pvcTotal" readonly placeholder="Auto">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Assign Vendor *</label>
+      <select class="form-control" id="pvcVendor">
+        <option value="">-- Select Vendor --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-control" id="pvcPriority">
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Design Files <span style="font-weight:normal;color:var(--text-muted)">(PDF / Image)</span></label>
+      <div id="pvcDesignDropArea"
+           style="border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s"
+           onclick="document.getElementById('pvcDesignInput').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
+           ondragleave="this.style.borderColor='var(--border)'"
+           ondrop="handlePVCDesignDrop(event)">
+        <input type="file" id="pvcDesignInput" accept=".pdf,image/*" multiple style="display:none"
+               onchange="handlePVCDesignFiles(this.files);this.value=''">
+        <div style="font-size:30px;margin-bottom:6px">📎</div>
+        <div style="font-size:13px;color:var(--text-muted)">Tap to attach or drag & drop</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">PDF, JPG, PNG, WEBP · Max 5 MB each</div>
+      </div>
+      <div id="pvcDesignPreview" style="margin-top:8px"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Instructions</label>
+      <textarea class="form-control" id="pvcNotes" placeholder="Design details, finishing notes, etc." rows="2"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('pvcOrderModal')">Cancel</button>
+      <button class="btn btn-primary btn-full" id="pvcSaveBtn" onclick="savePVCOrder()">Create Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- PVC SETTINGS MODAL -->
+<div class="modal-overlay" id="pvcSettingsModal" style="z-index:250">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">⚙️ PVC Sunboard Pricing</div>
+
+    <div id="pvcThicknessList" style="max-height:260px;overflow-y:auto;margin-bottom:10px"></div>
+
+    <div style="background:#f8f9fa;border-radius:8px;padding:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add Thickness Option</div>
+      <div class="form-group" style="margin-bottom:8px">
+        <input type="text" class="form-control" id="newPVCThicknessName" placeholder="e.g. 10mm">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Price per piece (₹)</label>
+          <input type="number" class="form-control" id="newPVCPriceWithout" placeholder="e.g. 450" min="1" step="1">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">With Lamination (₹/piece)</label>
+          <input type="number" class="form-control" id="newPVCPriceWith" placeholder="e.g. 65" min="1" step="1">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="savePVCThickness()" style="margin-top:8px">+ Add Thickness</button>
+    </div>
+
+    <button class="btn btn-ghost btn-full" onclick="closeModal('pvcSettingsModal')" style="margin-top:14px">Done</button>
   </div>
 </div>
 
@@ -1041,9 +1215,14 @@ const firebaseConfig = {
   measurementId:     "G-T9DM5Q12RB"
 };
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+const auth     = firebase.auth();
+const db       = firebase.firestore();
 const stateRef = db.collection('mis').doc('state');
+// ── Cloudinary config ──────────────────────────────────────────────────────
+const CLOUDINARY_CLOUD_NAME = 'dxca1xau1';
+const CLOUDINARY_API_KEY    = '928327715729427';
+const CLOUDINARY_API_SECRET = 'MevjqfL3V2RvHkEO4cVQjRSWHBU';
+// ───────────────────────────────────────────────────────────────────────────
 
 // ===================== STATE =====================
 const defaultState = {
@@ -1088,6 +1267,11 @@ const defaultState = {
     { id: 'vca2', name: 'Rounded Corners',    price: 0.20 },
     { id: 'vca3', name: 'Gold / Silver Foil', price: 1.50 },
     { id: 'vca4', name: 'Spot UV',            price: 1.00 }
+  ],
+  pvcThicknesses: [
+    { id: 'pvct1', name: '3mm', priceWithout: 45, priceWith: 65 },
+    { id: 'pvct2', name: '5mm', priceWithout: 55, priceWith: 75 },
+    { id: 'pvct3', name: '8mm', priceWithout: 70, priceWith: 90 }
   ]
 };
 
@@ -1096,6 +1280,8 @@ let currentOrderFilter = 'all';
 let editingVendorId = null;
 let editingOrderId = null;
 let unsubscribeSync = null;
+let reportDateFrom = '';
+let reportDateTo = '';
 
 function save() {
   // Firestore does not support nested arrays, so we serialize the full state as JSON
@@ -1111,9 +1297,10 @@ function startRealtimeSync() {
     }
     if (snap.metadata.hasPendingWrites) return;
     try { state = JSON.parse(snap.data().data); } catch(e) { return; }
-    state.customers     = state.customers     || [];
-    state.vcPaperTypes  = state.vcPaperTypes  || defaultState.vcPaperTypes;
-    state.vcAddons      = state.vcAddons      || defaultState.vcAddons;
+    state.customers      = state.customers      || [];
+    state.vcPaperTypes   = state.vcPaperTypes   || defaultState.vcPaperTypes;
+    state.vcAddons       = state.vcAddons       || defaultState.vcAddons;
+    state.pvcThicknesses = state.pvcThicknesses || defaultState.pvcThicknesses;
     renderDashboard();
     renderOrders();
     renderVendors();
@@ -1218,7 +1405,7 @@ function renderDashboard() {
   if (!recent.length) { rod.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-sub">No orders yet</div></div>'; return; }
   rod.innerHTML = recent.map(o => {
     const vendor = state.vendors.find(v => v.id === o.vendorId);
-    const icon = o.productId === 'vc-custom' ? '📇' : '🛒';
+    const icon = o.productId === 'vc-custom' ? '📇' : o.productId === 'pvc-sunboard' ? '🟦' : '🛒';
     return `<div class="product-item" onclick="viewOrderDetail('${o.id}')">
       <div class="product-img-placeholder" style="width:44px;height:44px;font-size:18px;">${icon}</div>
       <div class="product-info">
@@ -1239,34 +1426,34 @@ function deleteOrder(id) {
 
 // ===================== ORDERS =====================
 const ORDER_WORKFLOW = [
-  { key: 'pending', label: 'Pending', icon: '⏳' },
-  { key: 'approved', label: 'Approved', icon: '✅' },
-  { key: 'processing', label: 'Processing', icon: '⚙️' },
-  { key: 'shipped', label: 'Shipped', icon: '🚚' },
-  { key: 'delivered', label: 'Delivered', icon: '📬' },
+  { key: 'pending', label: 'Order Received', icon: '📥' },
+  { key: 'approved', label: 'Given to Vendor', icon: '🏢' },
+  { key: 'processing', label: 'Ready to Collect', icon: '📦' },
+  { key: 'shipped', label: 'Collected & Dispatched', icon: '🚚' },
+  { key: 'delivered', label: 'Completed', icon: '✅' },
   { key: 'completed', label: 'Completed', icon: '🎉' }
 ];
 
 const NEXT_ACTIONS = {
   pending: {
-    title: 'Review & Approve Order',
-    steps: ['Verify product availability and stock', 'Confirm vendor capacity', 'Approve or reject order — use action buttons below']
+    title: 'Order Received — Awaiting Vendor Assignment',
+    steps: ['Verify order details and quantity', 'Confirm vendor availability', 'Assign to vendor using the action button below']
   },
   approved: {
-    title: 'Initiate Processing with Vendor',
-    steps: ['Notify assigned vendor to begin fulfillment', 'Confirm delivery timeline with vendor', 'Update status to Processing once vendor confirms']
+    title: 'Order Given to Vendor',
+    steps: ['Notify vendor to begin work', 'Confirm timeline with vendor', 'Update status once vendor says order is ready']
   },
   processing: {
-    title: 'Monitor Fulfillment Progress',
-    steps: ['Follow up with vendor on production/preparation status', 'Verify packaging and quality checks are done', 'Arrange logistics/shipping partner when ready']
+    title: 'Ready to Collect',
+    steps: ['Order is prepared and ready at vendor', 'Arrange pickup or collection', 'Mark as Collected & Dispatched once picked up']
   },
   shipped: {
-    title: 'Track Delivery & Coordinate',
-    steps: ['Monitor shipment tracking updates', 'Share tracking info with recipient/customer', 'Confirm expected delivery date with logistics']
+    title: 'Collected & Dispatched',
+    steps: ['Order has been picked up from vendor', 'Coordinate delivery to customer', 'Confirm receipt with customer and complete']
   },
   delivered: {
-    title: 'Confirm Receipt & Close',
-    steps: ['Get confirmation from recipient that goods are received', 'Verify quantity and condition of delivered items', 'Mark order as Completed and process payment/invoice']
+    title: 'Completed',
+    steps: ['Confirm customer has received the order', 'Process payment and invoice', 'Archive order for records']
   },
   completed: {
     title: 'Order Successfully Completed',
@@ -1293,9 +1480,55 @@ function renderOrders() {
   }
   el.innerHTML = filtered.map(o => {
     const vendor = state.vendors.find(v => v.id === o.vendorId);
-    const isVC = o.productId === 'vc-custom';
+    const isVC  = o.productId === 'vc-custom';
+    const isPVC = o.productId === 'pvc-sunboard';
     const priorityBadge = o.priority === 'urgent' ? '<span style="background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">URGENT</span>' : o.priority === 'high' ? '<span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px">HIGH</span>' : '';
     const deleteBtn = isReadOnly() ? '' : `<button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteOrder('${o.id}')">🗑️</button>`;
+    let actionBtns = '';
+    if (!isReadOnly()) {
+      if (o.status === 'pending') {
+        actionBtns = `<div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','approved')">🏢 Give to Vendor</button>
+          <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">❌</button>
+        </div>`;
+      } else if (o.status === 'approved') {
+        actionBtns = `<div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','processing')">📦 Mark Ready to Collect</button>
+          <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">❌</button>
+        </div>`;
+      } else if (o.status === 'processing') {
+        actionBtns = `<div style="margin-top:10px">
+          <button class="btn btn-primary btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','shipped')">🚚 Collected & Dispatched</button>
+        </div>`;
+      } else if (o.status === 'shipped') {
+        actionBtns = `<div style="margin-top:10px">
+          <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','delivered')">✅ Mark Completed</button>
+        </div>`;
+      } else if (o.status === 'delivered') {
+        actionBtns = `<div style="margin-top:10px">
+          <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">🎉 Close Order</button>
+        </div>`;
+      }
+    }
+    const wfIdx = ORDER_WORKFLOW.findIndex(s => s.key === o.status);
+    const isCanc = o.status === 'cancelled';
+    const miniWf = isCanc
+      ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><span style="background:#fee2e2;color:#7f1d1d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">❌ Cancelled</span></div>`
+      : `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;overflow-x:auto;padding-bottom:2px">` +
+        ORDER_WORKFLOW.map((step, i) => {
+          const isDone = i < wfIdx;
+          const isCurrent = i === wfIdx;
+          const dotBg = isDone ? 'var(--success)' : isCurrent ? 'var(--primary)' : 'var(--border)';
+          const dotColor = (isDone || isCurrent) ? '#fff' : 'var(--text-muted)';
+          const labelColor = isCurrent ? 'var(--primary)' : isDone ? 'var(--success)' : 'var(--text-muted)';
+          const labelWeight = isCurrent ? '700' : '400';
+          const lineColor = isDone ? 'var(--success)' : 'var(--border)';
+          return (i > 0 ? `<div style="flex:1;height:2px;background:${lineColor};min-width:8px;margin-bottom:14px"></div>` : '') +
+            `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">
+              <div style="width:22px;height:22px;border-radius:50%;background:${dotBg};color:${dotColor};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${isDone ? '✓' : step.icon}</div>
+              <div style="font-size:9px;color:${labelColor};font-weight:${labelWeight};text-align:center;line-height:1.2;white-space:nowrap">${step.label}</div>
+            </div>`;
+        }).join('') + `</div>`;
     return `<div class="order-item" onclick="viewOrderDetail('${o.id}')">
       <div class="order-header">
         <div>
@@ -1303,12 +1536,11 @@ function renderOrders() {
           <div class="order-date">${formatDate(o.date)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          <span class="badge-status badge-${o.status}">${o.status}</span>
           ${deleteBtn}
         </div>
       </div>
       <div class="order-product">
-        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : '📦'}</div>
+        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : isPVC ? '🟦' : '📦'}</div>
         <div class="order-product-info">
           <div class="name">${escHtml(getOrderItemName(o))}</div>
           <div class="detail">Qty: ${o.qty} · ₹${Number(o.total).toLocaleString('en-IN')}</div>
@@ -1318,9 +1550,10 @@ function renderOrders() {
         <div class="order-vendor">🏢 ${escHtml(vendor?.name || 'No Vendor')}</div>
         <div class="order-amount">₹${Number(o.total).toLocaleString('en-IN')}</div>
       </div>
-      <div class="next-action">
-        <div class="na-label">Next Action</div>
-        <div class="na-text">${escHtml(NEXT_ACTIONS[o.status]?.title || '—')}</div>
+      ${miniWf}
+      ${actionBtns}
+      <div style="margin-top:8px">
+        <button class="btn btn-outline btn-full btn-sm" onclick="event.stopPropagation();printOrder('${o.id}')">🖨️ Print / Save PDF</button>
       </div>
     </div>`;
   }).join('');
@@ -1360,17 +1593,17 @@ function viewOrderDetail(oid) {
   let actionBtns = '';
   if (!isReadOnly()) {
     if (o.status === 'pending') {
-      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','approved')">✅ Approve Order</button>
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','approved')">🏢 Give to Vendor</button>
         <button class="btn btn-danger btn-full" onclick="updateOrderStatus('${o.id}','cancelled')" style="margin-top:8px">❌ Cancel Order</button>`;
     } else if (o.status === 'approved') {
-      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','processing')">⚙️ Mark as Processing</button>
+      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','processing')">📦 Mark Ready to Collect</button>
         <button class="btn btn-danger btn-full" onclick="updateOrderStatus('${o.id}','cancelled')" style="margin-top:8px">❌ Cancel Order</button>`;
     } else if (o.status === 'processing') {
-      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','shipped')">🚚 Mark as Shipped</button>`;
+      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','shipped')">🚚 Collected & Dispatched</button>`;
     } else if (o.status === 'shipped') {
-      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','delivered')">📬 Confirm Delivery</button>`;
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','delivered')">✅ Mark Completed</button>`;
     } else if (o.status === 'delivered') {
-      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','completed')">🎉 Complete Order</button>`;
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','completed')">🎉 Close Order</button>`;
     }
   }
 
@@ -1446,10 +1679,63 @@ function viewOrderDetail(oid) {
         ${o.vcDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.vcDetails.addons.map(escHtml).join(', ')}</td></tr>` : ''}
         <tr><td>Cost / Card</td><td style="color:var(--primary);font-weight:700">₹${Number(o.vcDetails.costPerCard).toFixed(2)}</td></tr>
       </table>
+    </div>
+    ${o.vcDetails.designFiles?.length ? `
+    <div class="detail-section">
+      <div class="detail-label">Design Files (${o.vcDetails.designFiles.length})</div>
+      ${o.vcDetails.designFiles.map(f => {
+        const isImg = f.type?.startsWith('image/');
+        const thumb = isImg && f.url
+          ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
+          : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg ? 'var(--primary-light)' : '#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg ? '🖼️' : '📄'}</div>`;
+        return `<a href="${escHtml(f.url || '#')}" target="_blank" rel="noopener"
+                   style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
+                  ${thumb}
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image' : 'PDF'} · Tap to view / download</div>
+                  </div>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                </a>`;
+      }).join('')}
     </div>` : ''}
+    ` : ''}
+
+    ${o.pvcDetails ? `
+    <div class="detail-section">
+      <div class="detail-label">Board Specifications</div>
+      <table class="spec-table" style="margin-top:6px">
+        <tr><td>Thickness</td><td>${escHtml(o.pvcDetails.thickness)}</td></tr>
+        <tr><td>Size</td><td>${o.pvcDetails.width} ft × ${o.pvcDetails.height} ft</td></tr>
+        <tr><td>Area</td><td>${(o.pvcDetails.width * o.pvcDetails.height).toFixed(2)} sq ft</td></tr>
+        <tr><td>Lamination</td><td>${o.pvcDetails.lamination === 'with' ? 'With Lamination' : 'Without Lamination'}</td></tr>
+        <tr><td>Base Price</td><td style="color:var(--primary);font-weight:700">₹${o.pvcDetails.pricePerSqFt} / piece</td></tr>
+      </table>
+    </div>
+    ${o.pvcDetails.designFiles?.length ? `
+    <div class="detail-section">
+      <div class="detail-label">Design Files (${o.pvcDetails.designFiles.length})</div>
+      ${o.pvcDetails.designFiles.map(f => {
+        const isImg = f.type?.startsWith('image/');
+        const thumb = isImg && f.url
+          ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
+          : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg ? 'var(--primary-light)' : '#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg ? '🖼️' : '📄'}</div>`;
+        return `<a href="${escHtml(f.url || '#')}" target="_blank" rel="noopener"
+                   style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
+                  ${thumb}
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image' : 'PDF'} · Tap to view / download</div>
+                  </div>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                </a>`;
+      }).join('')}
+    </div>` : ''}
+    ` : ''}
 
     <div style="margin-top:16px">
       ${actionBtns}
+      <button class="btn btn-outline btn-full" onclick="printOrder('${o.id}')" style="margin-top:8px">🖨️ Print / Save PDF</button>
       <button class="btn btn-ghost btn-full" onclick="closeModal('orderDetailModal')" style="margin-top:8px">Close</button>
       ${!isReadOnly() ? `<button class="btn btn-ghost btn-full" onclick="deleteOrder('${o.id}')" style="margin-top:8px;color:#ef4444">🗑️ Delete Order</button>` : ''}
     </div>`;
@@ -1520,6 +1806,7 @@ function saveOrder() {
   save(); closeModal('orderModal'); renderOrders(); renderDashboard();
   showToast('Order created: ' + order.id);
   addNotification('New Order Created', `${order.id} placed — awaiting admin approval.`, 'info');
+  setTimeout(() => viewOrderDetail(order.id), 300);
 }
 
 // ===================== VENDORS =====================
@@ -1603,16 +1890,84 @@ function deleteVendor(id) {
 }
 
 // ===================== REPORTS =====================
+function setReportRange(preset) {
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  if (preset === 'today') {
+    reportDateFrom = reportDateTo = fmt(today);
+  } else if (preset === 'week') {
+    const start = new Date(today); start.setDate(today.getDate() - today.getDay());
+    reportDateFrom = fmt(start); reportDateTo = fmt(today);
+  } else if (preset === 'month') {
+    reportDateFrom = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+    reportDateTo = fmt(today);
+  } else {
+    reportDateFrom = ''; reportDateTo = '';
+  }
+  renderReports();
+}
+
+function applyReportCustomRange() {
+  reportDateFrom = document.getElementById('rDateFrom').value;
+  reportDateTo   = document.getElementById('rDateTo').value;
+  renderReports();
+}
+
 function renderReports() {
-  const totalRevenue = state.orders.filter(o => ['delivered','completed'].includes(o.status)).reduce((s,o) => s + o.total, 0);
-  const avgOrder = state.orders.length ? Math.round(state.orders.reduce((s,o)=>s+o.total,0)/state.orders.length) : 0;
-  const topVendor = getTopVendor();
+  const from = reportDateFrom ? new Date(reportDateFrom) : null;
+  const to   = reportDateTo   ? new Date(reportDateTo + 'T23:59:59') : null;
+
+  const filtered = state.orders.filter(o => {
+    const d = new Date(o.date);
+    if (from && d < from) return false;
+    if (to   && d > to)   return false;
+    return true;
+  });
+
+  const isFiltered = from || to;
+  const rangeLabel = isFiltered
+    ? (reportDateFrom === reportDateTo
+        ? `${reportDateFrom}`
+        : `${reportDateFrom || '—'} → ${reportDateTo || '—'}`)
+    : 'All Time';
+
+  const totalRevenue = filtered.filter(o => ['delivered','completed'].includes(o.status)).reduce((s,o) => s + o.total, 0);
+  const avgOrder = filtered.length ? Math.round(filtered.reduce((s,o)=>s+o.total,0)/filtered.length) : 0;
   const vendorOrders = {};
-  state.orders.forEach(o => { vendorOrders[o.vendorId] = (vendorOrders[o.vendorId]||0)+1; });
-  const maxVO = Math.max(...Object.values(vendorOrders),1);
+  filtered.forEach(o => { vendorOrders[o.vendorId] = (vendorOrders[o.vendorId]||0)+1; });
+  const maxVO = Math.max(...Object.values(vendorOrders), 1);
+  const topVendorEntry = Object.entries(vendorOrders).sort((a,b)=>b[1]-a[1])[0];
+  const topVendor = topVendorEntry ? (state.vendors.find(v=>v.id===topVendorEntry[0])?.name || 'N/A') : 'N/A';
 
   const el = document.getElementById('reportsContent');
   el.innerHTML = `
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Date Range</div>
+      <div class="filter-tabs" style="margin-bottom:10px">
+        <div class="filter-tab ${!isFiltered?'active':''}" onclick="setReportRange('all')">All Time</div>
+        <div class="filter-tab ${reportDateFrom===reportDateTo&&reportDateFrom===new Date().toISOString().split('T')[0]?'active':''}" onclick="setReportRange('today')">Today</div>
+        <div class="filter-tab" onclick="setReportRange('week')">This Week</div>
+        <div class="filter-tab" onclick="setReportRange('month')">This Month</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">FROM</div>
+          <input type="date" class="form-control" id="rDateFrom" value="${reportDateFrom}" onchange="applyReportCustomRange()">
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">TO</div>
+          <input type="date" class="form-control" id="rDateTo" value="${reportDateTo}" onchange="applyReportCustomRange()">
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="setReportRange('all')" style="flex-shrink:0;padding:9px 12px">✕ Clear</button>
+      </div>
+      ${isFiltered ? `<div style="margin-top:8px;font-size:12px;color:var(--primary);font-weight:600">📅 Showing: ${rangeLabel} · ${filtered.length} order${filtered.length!==1?'s':''}</div>` : `<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">${filtered.length} total order${filtered.length!==1?'s':''}</div>`}
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-outline btn-full btn-sm" onclick="downloadReportCSV()">⬇️ Download CSV</button>
+        <button class="btn btn-primary btn-full btn-sm" onclick="printReport()">🖨️ Print / PDF</button>
+      </div>
+    </div>
+
+    ${filtered.length === 0 ? `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No Orders</div><div class="empty-sub">No orders found for the selected date range</div></div>` : `
     <div class="stats-grid" style="margin-bottom:12px">
       <div class="stat-card green" style="grid-column:1/-1">
         <div class="stat-icon">💰</div>
@@ -1626,7 +1981,7 @@ function renderReports() {
         <div class="stat-label">Avg Order Value</div>
       </div>
       <div class="stat-card amber">
-        <div class="stat-value">${state.orders.filter(o=>['delivered','completed'].includes(o.status)).length}</div>
+        <div class="stat-value">${filtered.filter(o=>['delivered','completed'].includes(o.status)).length}</div>
         <div class="stat-label">Fulfilled Orders</div>
       </div>
       <div class="stat-card green" style="grid-column:1/-1">
@@ -1638,7 +1993,7 @@ function renderReports() {
     <div class="card">
       <div class="card-header"><div class="card-title">Orders by Vendor</div></div>
       <div class="bar-chart">
-        ${Object.entries(vendorOrders).map(([vid,cnt]) => {
+        ${Object.entries(vendorOrders).length ? Object.entries(vendorOrders).map(([vid,cnt]) => {
           const v = state.vendors.find(x=>x.id===vid);
           return `<div class="bar-row">
             <div class="bar-label">${v?.name.split(' ')[0]||'?'}</div>
@@ -1648,7 +2003,7 @@ function renderReports() {
               </div>
             </div>
           </div>`;
-        }).join('')}
+        }).join('') : '<div style="color:var(--text-muted);font-size:13px;">No data</div>'}
       </div>
     </div>
 
@@ -1656,7 +2011,7 @@ function renderReports() {
       <div class="card-header"><div class="card-title">Order Status Breakdown</div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         ${['pending','approved','processing','shipped','delivered','completed','cancelled'].map(s => {
-          const count = state.orders.filter(o=>o.status===s).length;
+          const count = filtered.filter(o=>o.status===s).length;
           return `<div style="background:var(--bg);border-radius:8px;padding:10px">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600">${s}</div>
             <div style="font-size:20px;font-weight:800;margin-top:4px">${count}</div>
@@ -1664,8 +2019,222 @@ function renderReports() {
         }).join('')}
       </div>
     </div>
-
+    `}
     `;
+}
+
+function getReportFilteredOrders() {
+  const from = reportDateFrom ? new Date(reportDateFrom) : null;
+  const to   = reportDateTo   ? new Date(reportDateTo + 'T23:59:59') : null;
+  return state.orders.filter(o => {
+    const d = new Date(o.date);
+    if (from && d < from) return false;
+    if (to   && d > to)   return false;
+    return true;
+  });
+}
+
+function downloadReportCSV() {
+  const orders = getReportFilteredOrders();
+  if (!orders.length) { showToast('No orders to export'); return; }
+  const rows = [
+    ['Order ID','Date','Item','Qty','Unit Price','Total','Vendor','Customer','Status','Priority']
+  ];
+  orders.forEach(o => {
+    const vendor = state.vendors.find(v => v.id === o.vendorId);
+    rows.push([
+      o.id,
+      o.date,
+      getOrderItemName(o),
+      o.qty,
+      o.unitPrice || 0,
+      o.total,
+      vendor?.name || '',
+      o.customer || '',
+      o.status,
+      o.priority
+    ]);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const from = reportDateFrom || 'all';
+  const to   = reportDateTo   || 'all';
+  const filename = `report_${from}_to_${to}.csv`;
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV downloaded');
+}
+
+function printReport() {
+  const orders = getReportFilteredOrders();
+  const from = reportDateFrom || null;
+  const to   = reportDateTo   || null;
+  const rangeLabel = (!from && !to) ? 'All Time'
+    : from === to ? from
+    : `${from || '—'} to ${to || '—'}`;
+
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const fmtMoney = n => '&#8377;' + Number(n||0).toLocaleString('en-IN');
+  const fmtDate  = d => new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  const totalOrders  = orders.length;
+  const totalRevenue = orders.filter(o=>['delivered','completed'].includes(o.status)).reduce((s,o)=>s+o.total,0);
+  const fulfilled    = orders.filter(o=>['delivered','completed'].includes(o.status)).length;
+  const avgOrder     = totalOrders ? Math.round(orders.reduce((s,o)=>s+o.total,0)/totalOrders) : 0;
+
+  const statusCounts = {};
+  orders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status]||0)+1; });
+
+  const vendorCounts = {};
+  orders.forEach(o => { vendorCounts[o.vendorId] = (vendorCounts[o.vendorId]||0)+1; });
+
+  const statusMeta = [
+    { key:'pending',    label:'Order Received',        bg:'#fef3c7', color:'#92400e' },
+    { key:'approved',   label:'Given to Vendor',        bg:'#dbeafe', color:'#1e40af' },
+    { key:'processing', label:'Ready to Collect',       bg:'#ede9fe', color:'#5b21b6' },
+    { key:'shipped',    label:'Collected & Dispatched', bg:'#d1fae5', color:'#065f46' },
+    { key:'delivered',  label:'Completed',              bg:'#dcfce7', color:'#14532d' },
+    { key:'completed',  label:'Closed',                 bg:'#f0fdf4', color:'#15803d' },
+    { key:'cancelled',  label:'Cancelled',              bg:'#fee2e2', color:'#7f1d1d' }
+  ];
+  const statusMap = Object.fromEntries(statusMeta.map(s => [s.key, s]));
+
+  // Stats — 4 cards in a row using table so bgcolor works in PDF
+  const statCards = [
+    { label:'Total Revenue',   val:fmtMoney(totalRevenue), bg:'#d1fae5', color:'#065f46', border:'#10b981' },
+    { label:'Total Orders',    val:String(totalOrders),    bg:'#dbeafe', color:'#1e40af', border:'#3b82f6' },
+    { label:'Fulfilled',       val:String(fulfilled),      bg:'#ede9fe', color:'#5b21b6', border:'#8b5cf6' },
+    { label:'Avg Order Value', val:fmtMoney(avgOrder),     bg:'#fef3c7', color:'#92400e', border:'#f59e0b' }
+  ];
+  const statsRow = `<table width="100%" cellspacing="0" cellpadding="0"><tr>
+    ${statCards.map((c,i) => `
+      ${i>0?'<td width="10"></td>':''}
+      <td width="25%" bgcolor="${c.bg}" style="background:${c.bg};border-top:3px solid ${c.border};padding:12px 14px;vertical-align:top">
+        <div style="font-size:20px;font-weight:800;color:${c.color}">${c.val}</div>
+        <div style="font-size:9px;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.5px;font-weight:700">${c.label}</div>
+      </td>`).join('')}
+  </tr></table>`;
+
+  // Status breakdown — 4 per row
+  const statusRow = (slice) => `<table width="100%" cellspacing="0" cellpadding="0"><tr>
+    ${slice.map((s,i) => `
+      ${i>0?'<td width="8"></td>':''}
+      <td bgcolor="${s.bg}" style="background:${s.bg};border:1px solid ${s.color}33;padding:8px;text-align:center;vertical-align:middle">
+        <div style="font-size:18px;font-weight:800;color:${s.color}">${statusCounts[s.key]||0}</div>
+        <div style="font-size:8px;font-weight:700;color:${s.color};text-transform:uppercase;margin-top:3px">${s.label}</div>
+      </td>`).join('')}
+  </tr></table>`;
+
+  // Order rows — alternating bgcolor
+  const orderRows = [...orders].sort((a,b)=>new Date(b.date)-new Date(a.date)).map((o,i) => {
+    const vendor = state.vendors.find(v=>v.id===o.vendorId);
+    const sm = statusMap[o.status] || { bg:'#f1f5f9', color:'#1e293b', label:o.status };
+    const rowBg = i%2===0 ? '#ffffff' : '#f8fafc';
+    return `<tr bgcolor="${rowBg}">
+      <td bgcolor="${rowBg}" style="padding:6px 8px;font-size:10px;font-weight:700;color:#1a56db;white-space:nowrap;border-bottom:1px solid #f1f5f9">${esc(o.id)}</td>
+      <td bgcolor="${rowBg}" style="padding:6px 8px;font-size:10px;white-space:nowrap;border-bottom:1px solid #f1f5f9">${fmtDate(o.date)}</td>
+      <td bgcolor="${rowBg}" style="padding:6px 8px;font-size:10px;border-bottom:1px solid #f1f5f9">${esc(getOrderItemName(o))}</td>
+      <td bgcolor="${rowBg}" style="padding:6px 8px;font-size:10px;text-align:center;border-bottom:1px solid #f1f5f9">${o.qty}</td>
+      <td bgcolor="${rowBg}" style="padding:6px 8px;font-size:10px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9">${fmtMoney(o.total)}</td>
+      <td bgcolor="${rowBg}" style="padding:6px 8px;font-size:10px;border-bottom:1px solid #f1f5f9">${esc(vendor?.name||'—')}</td>
+      <td bgcolor="${sm.bg}" style="background:${sm.bg};padding:6px 8px;font-size:9px;font-weight:700;color:${sm.color};text-align:center;white-space:nowrap;border-bottom:1px solid #f1f5f9">${esc(sm.label)}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MIS Report — ${esc(rangeLabel)}</title>
+<style>
+  @page { size: A4 portrait; margin: 12mm 14mm; }
+  *, *::before, *::after {
+    box-sizing: border-box; margin: 0; padding: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  html, body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    font-family: Arial, sans-serif; color: #1e293b; font-size: 11px; line-height: 1.5; background: #fff;
+  }
+  .no-print { text-align:right; padding:10px 0 14px; border-bottom:1px solid #e2e8f0; margin-bottom:16px; display:flex; gap:8px; justify-content:flex-end; }
+  .sec-title { font-size:9px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin:14px 0 8px; border-bottom:1px solid #e2e8f0; padding-bottom:4px; }
+  @media print {
+    .no-print { display:none !important; }
+    *, *::before, *::after {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button onclick="window.close()" style="padding:8px 16px;background:#f1f5f9;color:#1e293b;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">✕ Close</button>
+  <button onclick="window.print()" style="padding:8px 20px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Print / Save as PDF</button>
+</div>
+
+<!-- HEADER -->
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#1a56db" style="margin-bottom:18px">
+  <tr>
+    <td bgcolor="#1a56db" style="padding:16px 18px;vertical-align:middle">
+      <div style="font-size:19px;font-weight:800;color:#fff">MIS Portal</div>
+      <div style="font-size:10px;color:#bfdbfe;margin-top:2px">Order &amp; Vendor Management &mdash; Report</div>
+    </td>
+    <td bgcolor="#1a56db" style="padding:16px 18px;text-align:right;vertical-align:middle">
+      <div style="font-size:13px;font-weight:700;color:#fff;border:1px solid #93c5fd;padding:4px 12px;display:inline-block">&#128197; ${esc(rangeLabel)}</div>
+      <div style="font-size:9px;color:#93c5fd;margin-top:6px">Generated: ${new Date().toLocaleString('en-IN')}</div>
+    </td>
+  </tr>
+</table>
+
+<!-- SUMMARY STATS -->
+<div class="sec-title">Summary</div>
+<div style="margin-bottom:14px">${statsRow}</div>
+
+<!-- STATUS BREAKDOWN -->
+<div class="sec-title">Status Breakdown</div>
+<div style="margin-bottom:6px">${statusRow(statusMeta.slice(0,4))}</div>
+<div style="margin-bottom:14px">${statusRow(statusMeta.slice(4,7).concat([{key:'_',label:'',bg:'#fff',color:'#fff'}]))}</div>
+
+<!-- ORDER TABLE -->
+<div class="sec-title">Order Details — ${totalOrders} order${totalOrders!==1?'s':''}</div>
+<table width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-collapse:collapse">
+  <thead>
+    <tr bgcolor="#1e293b">
+      <th bgcolor="#1e293b" style="background:#1e293b;color:#fff;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap">Order ID</th>
+      <th bgcolor="#1e293b" style="background:#1e293b;color:#fff;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap">Date</th>
+      <th bgcolor="#1e293b" style="background:#1e293b;color:#fff;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left">Item</th>
+      <th bgcolor="#1e293b" style="background:#1e293b;color:#fff;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:center">Qty</th>
+      <th bgcolor="#1e293b" style="background:#1e293b;color:#fff;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:right">Total</th>
+      <th bgcolor="#1e293b" style="background:#1e293b;color:#fff;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left">Vendor</th>
+      <th bgcolor="#1e293b" style="background:#1e293b;color:#fff;padding:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:center">Status</th>
+    </tr>
+  </thead>
+  <tbody>${orderRows || `<tr><td colspan="7" style="padding:20px;text-align:center;color:#94a3b8">No orders for this period</td></tr>`}</tbody>
+</table>
+
+<!-- FOOTER -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;padding-top:10px;border-top:1px solid #e2e8f0">
+  <tr>
+    <td style="font-size:9px;color:#64748b;font-weight:700">MIS Portal — Official Report</td>
+    <td style="font-size:9px;color:#94a3b8;text-align:right">${esc(rangeLabel)} &middot; ${totalOrders} orders &middot; ${new Date().toLocaleDateString('en-IN')}</td>
+  </tr>
+</table>
+
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
 }
 
 function getTopVendor() {
@@ -1673,6 +2242,158 @@ function getTopVendor() {
   state.orders.forEach(o => { counts[o.vendorId] = (counts[o.vendorId]||0)+1; });
   const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
   return top ? state.vendors.find(v=>v.id===top[0])?.name : 'N/A';
+}
+
+// ===================== PRINT / PDF =====================
+function printOrder(oid) {
+  const o = state.orders.find(x => x.id === oid);
+  if (!o) return;
+  const vendor  = state.vendors.find(v => v.id === o.vendorId);
+  const isVC    = o.productId === 'vc-custom';
+  const isPVC   = o.productId === 'pvc-sunboard';
+  const esc     = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const fmtDate = d => { const [y,m,day] = d.split('-').map(Number); return new Date(y,m-1,day).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); };
+  const fmtMoney = n => '₹' + Number(n||0).toLocaleString('en-IN');
+
+  const vcSpecsHtml = (isVC && o.vcDetails) ? `
+    <h3 class="sec-title">Card Specifications</h3>
+    <table class="spec-tbl">
+      <tr><td>Card Size</td><td>${o.vcDetails.cardW}" × ${o.vcDetails.cardH}"</td></tr>
+      <tr><td>Sheet Size</td><td>${o.vcDetails.sheetW}" × ${o.vcDetails.sheetH}"</td></tr>
+      <tr><td>Paper</td><td>${esc(o.vcDetails.paper)}</td></tr>
+      <tr><td>Print Sides</td><td>${esc(o.vcDetails.printSides)}</td></tr>
+      ${o.vcDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.vcDetails.addons.map(esc).join(', ')}</td></tr>` : ''}
+    </table>` : '';
+
+  const pvcSpecsHtml = (isPVC && o.pvcDetails) ? `
+    <h3 class="sec-title">Board Specifications</h3>
+    <table class="spec-tbl">
+      <tr><td>Thickness</td><td>${esc(o.pvcDetails.thickness)}</td></tr>
+      <tr><td>Size</td><td>${o.pvcDetails.width} ft × ${o.pvcDetails.height} ft</td></tr>
+      <tr><td>Area</td><td>${(o.pvcDetails.width * o.pvcDetails.height).toFixed(2)} sq ft</td></tr>
+      <tr><td>Lamination</td><td>${o.pvcDetails.lamination === 'with' ? 'With Lamination' : 'Without Lamination'}</td></tr>
+      <tr><td>Price / piece</td><td>₹${o.pvcDetails.pricePerSqFt}</td></tr>
+    </table>` : '';
+
+  const _designFiles = o.vcDetails?.designFiles || o.pvcDetails?.designFiles || [];
+  const designFilesHtml = _designFiles.length ? `
+    <h3 class="sec-title">Design Files</h3>
+    ${_designFiles.map(f => `
+      <div class="design-row">
+        <span>${f.type?.startsWith('image/') ? '🖼️' : '📄'} <strong>${esc(f.name)}</strong> — ${(f.size/1024).toFixed(1)} KB</span>
+        ${f.url ? `<div class="design-url">${esc(f.url)}</div>` : ''}
+      </div>`).join('')}` : '';
+
+  const historyHtml = (o.statusHistory||[]).map(s =>
+    `<span class="hist-badge badge-${s}">${s}</span>`).join('<span class="hist-arrow">→</span>');
+
+  const priorityColors = { normal:'#065f46', high:'#92400e', urgent:'#b91c1c' };
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Order ${esc(o.id)} — MIS Portal</title>
+<style>
+  @page { margin: 18mm; size: A4; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; font-size: 13px; line-height: 1.5; }
+  .page { max-width: 720px; margin: 0 auto; padding: 24px; }
+
+  /* HEADER */
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; border-bottom: 3px solid #1a56db; margin-bottom: 20px; }
+  .brand { font-size: 18px; font-weight: 800; color: #1a56db; }
+  .brand small { display: block; font-size: 10px; font-weight: 400; color: #64748b; margin-top: 2px; }
+  .order-meta { text-align: right; }
+  .order-meta .oid { font-size: 22px; font-weight: 800; }
+  .order-meta .date { font-size: 11px; color: #64748b; margin-top: 3px; }
+
+  /* BADGE */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge-pending    { background:#fef3c7; color:#92400e; }
+  .badge-approved   { background:#dbeafe; color:#1e40af; }
+  .badge-processing { background:#ede9fe; color:#5b21b6; }
+  .badge-shipped    { background:#d1fae5; color:#065f46; }
+  .badge-delivered  { background:#dcfce7; color:#14532d; }
+  .badge-completed  { background:#f0fdf4; color:#15803d; }
+  .badge-cancelled  { background:#fee2e2; color:#7f1d1d; }
+
+  /* SECTIONS */
+  .sec-title { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin: 18px 0 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 4px; }
+  .field label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 2px; }
+  .field .val { font-size: 13px; font-weight: 500; }
+  .field .val.big { font-size: 22px; font-weight: 800; color: #1a56db; }
+
+  /* TABLES */
+  .spec-tbl { width: 100%; border-collapse: collapse; }
+  .spec-tbl td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+  .spec-tbl td:first-child { color: #64748b; font-weight: 600; width: 40%; }
+
+  /* STATUS HISTORY */
+  .hist-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; vertical-align: middle; }
+  .hist-arrow { color: #94a3b8; margin: 0 4px; font-size: 11px; }
+
+  /* DESIGN FILES */
+  .design-row { padding: 7px 10px; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; border: 1px solid #e2e8f0; }
+  .design-url { font-size: 10px; color: #1a56db; word-break: break-all; margin-top: 3px; }
+
+  /* FOOTER */
+  .page-footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; }
+
+  @media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- PRINT BUTTON (hidden in print) -->
+  <div class="no-print" style="margin-bottom:16px;text-align:right">
+    <button onclick="window.print()" style="padding:8px 20px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Print / Save as PDF</button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="brand">📊 MIS Portal <small>Product & Order Management</small></div>
+      <div style="margin-top:8px">
+        <span class="badge badge-${o.status}">${o.status.toUpperCase()}</span>
+        <span style="font-size:11px;color:${priorityColors[o.priority]||'#1e293b'};font-weight:700;margin-left:8px">${o.priority.toUpperCase()} PRIORITY</span>
+      </div>
+    </div>
+    <div class="order-meta">
+      <div class="oid">${esc(o.id)}</div>
+      <div class="date">${fmtDate(o.date)}</div>
+    </div>
+  </div>
+
+  <!-- ORDER SUMMARY -->
+  <h3 class="sec-title">Order Summary</h3>
+  <div class="grid2">
+    <div class="field"><label>Item / Description</label><div class="val">${esc(o.item || 'Visiting Card')}</div></div>
+    <div class="field"><label>Quantity</label><div class="val">${o.qty} units</div></div>
+  </div>
+
+  ${o.notes ? `<h3 class="sec-title">Notes</h3><p style="font-size:13px">${esc(o.notes)}</p>` : ''}
+
+  ${vcSpecsHtml}
+  ${pvcSpecsHtml}
+  ${designFilesHtml}
+
+  <!-- FOOTER -->
+  <div class="page-footer">
+    <span>MIS Portal — Official Order Receipt</span>
+    <span>Generated: ${new Date().toLocaleString('en-IN')}</span>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+  const w = window.open('', '_blank', 'width=820,height=700');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
 }
 
 // ===================== MODAL HELPERS =====================
@@ -1703,7 +2424,8 @@ function escHtml(s) {
 function isReadOnly() { return currentUser?.role === 'Viewer'; }
 
 function getOrderItemName(o) {
-  if (o.productId === 'vc-custom') return 'Visiting Card';
+  if (o.productId === 'vc-custom')  return 'Visiting Card';
+  if (o.productId === 'pvc-sunboard') return 'PVC Sunboard';
   return o.item || 'Order Item';
 }
 
@@ -1826,6 +2548,112 @@ function fillCreds(u, p) {
   document.getElementById('loginUser').value = u;
   document.getElementById('loginPass').value = p;
   document.getElementById('loginError').classList.remove('show');
+}
+
+// ===================== VC DESIGN FILES =====================
+let vcDesignFiles = [];
+
+function handleVCDesignDrop(e) {
+  e.preventDefault();
+  document.getElementById('vcDesignDropArea').style.borderColor = 'var(--border)';
+  handleVCDesignFiles(e.dataTransfer.files);
+}
+
+function handleVCDesignFiles(files) {
+  const allowed = ['application/pdf','image/jpeg','image/png','image/webp','image/gif'];
+  const maxBytes = 5 * 1024 * 1024;
+  Array.from(files).forEach(f => {
+    const isPDF  = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+    const isImg  = f.type.startsWith('image/');
+    if (!isPDF && !isImg) { showToast(`Skipped "${f.name}" — only PDF and images`); return; }
+    if (f.size > maxBytes) { showToast(`Skipped "${f.name}" — exceeds 5 MB`); return; }
+    if (vcDesignFiles.find(x => x.name === f.name && x.size === f.size)) return; // no dupe
+    vcDesignFiles.push(f);
+  });
+  renderVCDesignPreview();
+}
+
+function renderVCDesignPreview() {
+  const container = document.getElementById('vcDesignPreview');
+  container.innerHTML = '';
+  vcDesignFiles.forEach((file, idx) => {
+    const isImage = file.type.startsWith('image/');
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:6px';
+
+    // Thumbnail
+    const thumb = document.createElement('div');
+    thumb.style.cssText = 'width:52px;height:52px;border-radius:6px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:24px;background:' + (isImage ? 'var(--primary-light)' : '#fee2e2');
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+        thumb.innerHTML = '';
+        thumb.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+      thumb.textContent = '🖼️';
+    } else {
+      thumb.textContent = '📄';
+    }
+
+    // Info
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0';
+    info.innerHTML = `<div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(file.name)}</div>
+                      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(file.size/1024).toFixed(1)} KB · ${isImage ? 'Image' : 'PDF'}</div>`;
+
+    // Remove button
+    const rm = document.createElement('button');
+    rm.className = 'btn btn-ghost btn-icon btn-sm';
+    rm.style.flexShrink = '0';
+    rm.textContent = '✕';
+    rm.onclick = () => { vcDesignFiles.splice(idx, 1); renderVCDesignPreview(); };
+
+    row.appendChild(thumb);
+    row.appendChild(info);
+    row.appendChild(rm);
+    container.appendChild(row);
+  });
+}
+
+async function _cloudinarySHA1(message) {
+  const buf  = new TextEncoder().encode(message);
+  const hash = await crypto.subtle.digest('SHA-1', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function uploadVCDesignFiles(orderId) {
+  if (!vcDesignFiles.length) return [];
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+  const results  = [];
+  for (let i = 0; i < vcDesignFiles.length; i++) {
+    const file      = vcDesignFiles[i];
+    const saveBtn   = document.getElementById('vcSaveBtn');
+    if (saveBtn) saveBtn.textContent = `Uploading ${i + 1} / ${vcDesignFiles.length}…`;
+
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder    = `vc-designs/${orderId}`;
+    const sigStr    = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    const signature = await _cloudinarySHA1(sigStr);
+
+    const form = new FormData();
+    form.append('file',      file);
+    form.append('folder',    folder);
+    form.append('timestamp', timestamp);
+    form.append('api_key',   CLOUDINARY_API_KEY);
+    form.append('signature', signature);
+
+    const res  = await fetch(endpoint, { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (!res.ok || data.error) throw new Error(data.error?.message || 'Upload failed');
+    results.push({ name: file.name, url: data.secure_url, type: file.type, size: file.size });
+  }
+  return results;
 }
 
 // ===================== VC PAPER & ADDON SETTINGS =====================
@@ -1966,6 +2794,9 @@ function openVCOrderModal() {
   document.getElementById('vcCalcResult').style.display = 'none';
   document.getElementById('vcAddress').innerHTML = '<option value="">-- Select Customer First --</option>';
   document.getElementById('vcAddAddrBtn').style.display = 'none';
+  document.getElementById('vcDesignPreview').innerHTML = '';
+  document.getElementById('vcDesignDropArea').style.borderColor = 'var(--border)';
+  vcDesignFiles = [];
 
   const vcVendorSel = document.getElementById('vcVendor');
   vcVendorSel.innerHTML = '<option value="">-- Select Vendor --</option>' +
@@ -2044,7 +2875,7 @@ function calcVCTotal() {
     : '';
 }
 
-function saveVCOrder() {
+async function saveVCOrder() {
   const custId = document.getElementById('vcCustomer').value;
   const addrId = document.getElementById('vcAddress').value;
   const vid    = document.getElementById('vcVendor').value;
@@ -2066,8 +2897,21 @@ function saveVCOrder() {
   }).filter(Boolean);
 
   const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-','')) || 0), 0);
+  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
+
+  const saveBtn = document.getElementById('vcSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = vcDesignFiles.length ? `Uploading ${vcDesignFiles.length} file(s)…` : 'Creating order…';
+
+  let designFiles = [];
+  try {
+    designFiles = await uploadVCDesignFiles(orderId);
+  } catch(e) {
+    showToast('File upload failed — order saved without design files');
+  }
+
   const order = {
-    id:        'ORD-' + String(lastNum + 1).padStart(3, '0'),
+    id:        orderId,
     productId: 'vc-custom',
     vendorId:  vid,
     qty,
@@ -2087,9 +2931,14 @@ function saveVCOrder() {
       paper:       paperType?.name || '—',
       printSides:  vcPrintSidesSel.options[vcPrintSidesSel.selectedIndex].text,
       addons:      addonLabels,
-      costPerCard: vcCostPerCard
+      costPerCard: vcCostPerCard,
+      designFiles
     }
   };
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = 'Create Order';
+  vcDesignFiles = [];
 
   state.orders.push(order);
   save();
@@ -2098,6 +2947,269 @@ function saveVCOrder() {
   renderDashboard();
   showToast('Visiting card order created: ' + order.id);
   addNotification('New Visiting Card Order', `${order.id} for ${escHtml(cust?.name||'')} — ${qty} cards.`, 'info');
+  setTimeout(() => viewOrderDetail(order.id), 300);
+}
+
+// ===================== PVC SUNBOARD =====================
+let pvcPricePerPiece = 0;
+let pvcDesignFiles   = [];
+
+function openPVCOrderModal() {
+  pvcPricePerPiece = 0;
+  pvcDesignFiles   = [];
+  document.getElementById('pvcWidth').value   = '';
+  document.getElementById('pvcHeight').value  = '';
+  document.getElementById('pvcQty').value     = '1';
+  document.getElementById('pvcTotal').value   = '';
+  document.getElementById('pvcNotes').value   = '';
+  document.getElementById('pvcPriority').value = 'normal';
+  document.getElementById('pvcCalcResult').style.display = 'none';
+  document.getElementById('pvcAddress').innerHTML = '<option value="">-- Select Customer First --</option>';
+  document.getElementById('pvcAddAddrBtn').style.display = 'none';
+  document.getElementById('pvcDesignPreview').innerHTML = '';
+  document.getElementById('pvcDesignDropArea').style.borderColor = 'var(--border)';
+  document.getElementById('pvcLamNo').checked = true;
+
+  renderPVCThicknessSelect();
+
+  const pvcVendorSel = document.getElementById('pvcVendor');
+  pvcVendorSel.innerHTML = '<option value="">-- Select Vendor --</option>' +
+    state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
+
+  const pvcCustSel = document.getElementById('pvcCustomer');
+  pvcCustSel.innerHTML = '<option value="">-- Select Customer --</option>' +
+    (state.customers || []).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+
+  openModal('pvcOrderModal');
+}
+
+function renderPVCThicknessSelect() {
+  const sel = document.getElementById('pvcThickness');
+  const thicknesses = state.pvcThicknesses || [];
+  sel.innerHTML = '<option value="">-- Select Thickness --</option>' +
+    thicknesses.map(t => `<option value="${t.id}">${escHtml(t.name)}</option>`).join('');
+  calcPVCCost();
+}
+
+function onPVCCustomerChange() {
+  const custId = document.getElementById('pvcCustomer').value;
+  const addrSel = document.getElementById('pvcAddress');
+  const addBtn  = document.getElementById('pvcAddAddrBtn');
+  if (!custId) {
+    addrSel.innerHTML = '<option value="">-- Select Customer First --</option>';
+    addBtn.style.display = 'none';
+    return;
+  }
+  const cust = (state.customers || []).find(c => c.id === custId);
+  addrSel.innerHTML = '<option value="">-- Select Address --</option>' +
+    (cust?.addresses || []).map(a =>
+      `<option value="${a.id}">${escHtml(a.label)}: ${escHtml(a.text)}</option>`
+    ).join('');
+  addBtn.style.display = '';
+}
+
+function calcPVCCost() {
+  const thicknessId = document.getElementById('pvcThickness').value;
+  const thickness   = (state.pvcThicknesses || []).find(t => t.id === thicknessId);
+  const w  = parseFloat(document.getElementById('pvcWidth').value)  || 0;
+  const h  = parseFloat(document.getElementById('pvcHeight').value) || 0;
+  const lam = document.querySelector('input[name="pvcLam"]:checked')?.value || 'without';
+  const resultEl = document.getElementById('pvcCalcResult');
+
+  // Update price labels on the radio buttons
+  document.getElementById('pvcPriceNoLam').textContent   = thickness ? `₹${thickness.priceWithout} / piece` : '₹— / piece';
+  document.getElementById('pvcPriceWithLam').textContent = thickness ? `₹${thickness.priceWith ?? 0} / piece` : '₹— / piece';
+
+  // Highlight selected lamination option
+  document.getElementById('pvcLamNoLabel').style.borderColor  = lam === 'without' ? 'var(--primary)' : 'var(--border)';
+  document.getElementById('pvcLamYesLabel').style.borderColor = lam === 'with'    ? 'var(--primary)' : 'var(--border)';
+
+  if (thickness && w > 0 && h > 0) {
+    const area     = w * h;
+    pvcPricePerPiece = lam === 'with' ? (thickness.priceWith ?? 0) : thickness.priceWithout;
+    document.getElementById('pvcArea').textContent          = area.toFixed(2) + ' sq ft';
+    document.getElementById('pvcRateDisplay').textContent   = pvcPricePerPiece.toFixed(2);
+    document.getElementById('pvcPricePerPiece').textContent = pvcPricePerPiece.toFixed(2);
+    resultEl.style.display = 'block';
+    calcPVCTotal();
+  } else {
+    pvcPricePerPiece = 0;
+    resultEl.style.display = 'none';
+    document.getElementById('pvcTotal').value = '';
+  }
+}
+
+function calcPVCTotal() {
+  const qty = parseInt(document.getElementById('pvcQty').value) || 0;
+  document.getElementById('pvcTotal').value = (pvcPricePerPiece > 0 && qty > 0)
+    ? '₹' + (pvcPricePerPiece * qty).toFixed(2)
+    : '';
+}
+
+function handlePVCDesignDrop(e) {
+  e.preventDefault();
+  document.getElementById('pvcDesignDropArea').style.borderColor = 'var(--border)';
+  handlePVCDesignFiles(e.dataTransfer.files);
+}
+
+function handlePVCDesignFiles(files) {
+  const MAX = 5 * 1024 * 1024;
+  Array.from(files).forEach(f => {
+    if (f.size > MAX) { showToast(`${f.name} is too large (max 5 MB)`); return; }
+    if (pvcDesignFiles.find(x => x.name === f.name && x.size === f.size)) return;
+    pvcDesignFiles.push(f);
+  });
+  const preview = document.getElementById('pvcDesignPreview');
+  preview.innerHTML = pvcDesignFiles.map((f, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8f9fa;border-radius:6px;margin-bottom:4px">
+       <span style="font-size:16px">${f.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+       <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span>
+       <span style="font-size:11px;color:var(--text-muted)">${(f.size/1024).toFixed(1)} KB</span>
+       <button onclick="pvcDesignFiles.splice(${i},1);handlePVCDesignFiles([])" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:14px;padding:0">✕</button>
+     </div>`
+  ).join('');
+}
+
+async function uploadPVCDesignFiles(orderId) {
+  if (!pvcDesignFiles.length) return [];
+  const results = [];
+  for (const f of pvcDesignFiles) {
+    const fd = new FormData();
+    fd.append('file', f);
+    fd.append('upload_preset', CLOUDINARY_PRESET);
+    fd.append('folder', `mis-orders/${orderId}`);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, { method:'POST', body:fd });
+    const data = await res.json();
+    results.push({ name:f.name, size:f.size, type:f.type, url:data.secure_url || '' });
+  }
+  return results;
+}
+
+async function savePVCOrder() {
+  const custId = document.getElementById('pvcCustomer').value;
+  const addrId = document.getElementById('pvcAddress').value;
+  const vid    = document.getElementById('pvcVendor').value;
+  const qty    = parseInt(document.getElementById('pvcQty').value) || 0;
+  const thicknessId = document.getElementById('pvcThickness').value;
+  const thickness   = (state.pvcThicknesses || []).find(t => t.id === thicknessId);
+  const w  = parseFloat(document.getElementById('pvcWidth').value)  || 0;
+  const h  = parseFloat(document.getElementById('pvcHeight').value) || 0;
+  const lam = document.querySelector('input[name="pvcLam"]:checked')?.value || 'without';
+
+  if (!custId)    { showToast('Please select a customer');            return; }
+  if (!addrId)    { showToast('Please select a delivery address');    return; }
+  if (!vid)       { showToast('Please select a vendor');              return; }
+  if (!thickness) { showToast('Please select a thickness');           return; }
+  if (w <= 0 || h <= 0) { showToast('Please enter valid dimensions'); return; }
+  if (qty < 1)    { showToast('Please enter a valid quantity');       return; }
+
+  const cust = (state.customers || []).find(c => c.id === custId);
+  const addr = (cust?.addresses || []).find(a => a.id === addrId);
+  const rate = lam === 'with' ? (thickness.priceWith ?? 0) : thickness.priceWithout;
+
+  const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-','')) || 0), 0);
+  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
+
+  const saveBtn = document.getElementById('pvcSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = pvcDesignFiles.length ? `Uploading ${pvcDesignFiles.length} file(s)…` : 'Creating order…';
+
+  let designFiles = [];
+  try {
+    designFiles = await uploadPVCDesignFiles(orderId);
+  } catch(e) {
+    showToast('File upload failed — order saved without design files');
+  }
+
+  const order = {
+    id:        orderId,
+    productId: 'pvc-sunboard',
+    vendorId:  vid,
+    qty,
+    total:     Math.round(pvcPricePerPiece * qty * 100) / 100,
+    customer:  cust?.name || '',
+    address:   addr ? `${addr.label}: ${addr.text}` : '',
+    priority:  document.getElementById('pvcPriority').value,
+    notes:     document.getElementById('pvcNotes').value.trim(),
+    status:    'pending',
+    date:      new Date().toISOString().split('T')[0],
+    statusHistory: ['pending'],
+    pvcDetails: {
+      thickness:  thickness.name,
+      width:      w,
+      height:     h,
+      lamination: lam,
+      pricePerSqFt: rate,
+      designFiles
+    }
+  };
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = 'Create Order';
+  pvcDesignFiles = [];
+
+  state.orders.push(order);
+  save();
+  closeModal('pvcOrderModal');
+  renderOrders();
+  renderDashboard();
+  showToast('PVC Sunboard order created: ' + order.id);
+  addNotification('New PVC Sunboard Order', `${order.id} for ${escHtml(cust?.name||'')} — ${qty} pcs.`, 'info');
+  setTimeout(() => viewOrderDetail(order.id), 300);
+}
+
+// PVC Settings
+function openPVCSettingsModal() {
+  renderPVCThicknessList();
+  document.getElementById('newPVCThicknessName').value  = '';
+  document.getElementById('newPVCPriceWithout').value   = '';
+  document.getElementById('newPVCPriceWith').value      = '';
+  openModal('pvcSettingsModal');
+}
+
+function renderPVCThicknessList() {
+  const list = document.getElementById('pvcThicknessList');
+  const thicknesses = state.pvcThicknesses || [];
+  if (!thicknesses.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;font-size:13px">No thickness options yet</div>';
+    return;
+  }
+  list.innerHTML = thicknesses.map(t => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8f9fa;border-radius:6px;margin-bottom:6px">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px">${escHtml(t.name)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">
+          Without Lam: ₹${t.priceWithout}/piece &nbsp;·&nbsp; With Lam: ₹${t.priceWith ?? t.laminationPrice ?? 0}/piece
+        </div>
+      </div>
+      <button onclick="deletePVCThickness('${t.id}')" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:15px;padding:4px" title="Delete">🗑️</button>
+    </div>`).join('');
+}
+
+function savePVCThickness() {
+  const name    = document.getElementById('newPVCThicknessName').value.trim();
+  const without = parseFloat(document.getElementById('newPVCPriceWithout').value);
+  const withLam = parseFloat(document.getElementById('newPVCPriceWith').value);
+  if (!name)          { showToast('Enter a thickness name');                    return; }
+  if (isNaN(without) || without <= 0) { showToast('Enter a valid price without lamination'); return; }
+  if (isNaN(withLam) || withLam <= 0) { showToast('Enter a valid price with lamination');    return; }
+  state.pvcThicknesses = state.pvcThicknesses || [];
+  state.pvcThicknesses.push({ id: 'pvct' + Date.now(), name, priceWithout: without, priceWith: withLam });
+  save();
+  document.getElementById('newPVCThicknessName').value = '';
+  document.getElementById('newPVCPriceWithout').value  = '';
+  document.getElementById('newPVCPriceWith').value     = '';
+  renderPVCThicknessList();
+  renderPVCThicknessSelect();
+  showToast('Thickness option added');
+}
+
+function deletePVCThickness(id) {
+  state.pvcThicknesses = (state.pvcThicknesses || []).filter(t => t.id !== id);
+  save();
+  renderPVCThicknessList();
+  renderPVCThicknessSelect();
+  showToast('Thickness option removed');
 }
 
 // ===================== CUSTOMER MANAGEMENT =====================
