@@ -465,17 +465,23 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .notif-panel {
   position: fixed; top: var(--header-h); right: 0; width: 300px; max-height: 70vh;
   background: var(--card); box-shadow: -4px 4px 20px rgba(0,0,0,.15);
-  z-index: 150; border-radius: 0 0 0 12px; overflow-y: auto;
-  display: none;
+  z-index: 150; border-radius: 0 0 0 12px; overflow: hidden;
+  display: none; flex-direction: column;
 }
-.notif-panel.open { display: block; }
-.notif-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
-.notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.notif-panel.open { display: flex; }
+.notif-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.notif-actions { display: flex; gap: 6px; align-items: center; }
+.notif-action-btn { background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 2px 7px; }
+.notif-action-btn:hover { background: var(--bg); color: var(--text); }
+.notif-list-scroll { overflow-y: auto; flex: 1; }
+.notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .notif-item:hover { background: var(--bg); }
 .notif-item .ni-title { font-size: 13px; font-weight: 600; }
 .notif-item .ni-text { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .notif-item .ni-time { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
 .notif-item.unread { background: #eff6ff; }
+.notif-delete { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 13px; padding: 0; margin-left: 8px; flex-shrink: 0; line-height: 1; }
+.notif-delete:hover { color: var(--danger); }
 
 /* ORDER TYPE STRIP */
 .order-type-strip {
@@ -498,6 +504,127 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .spec-pair { display: flex; gap: 6px; margin-bottom: 6px; }
 .spec-pair input { flex: 1; }
 .spec-list { margin-top: 8px; }
+
+/* ===== MOBILE RESPONSIVE ===== */
+*, *::before, *::after { -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+.content { -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
+
+/* Notification panel — full width on phones */
+@media (max-width: 520px) {
+  .notif-panel {
+    width: 100%;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    max-height: 75vh;
+  }
+}
+
+/* Standard phones (≤ 430px) */
+@media (max-width: 430px) {
+  /* Header */
+  .header-logo { font-size: 15px; }
+  .header-logo span { font-size: 10px; }
+  .user-pill .user-name { max-width: 56px; font-size: 11px; }
+
+  /* Content */
+  .content { padding: 10px; }
+
+  /* Cards & Order items */
+  .card { padding: 12px; }
+  .order-item { padding: 12px; }
+
+  /* Stats grid stays 2-col but tighter */
+  .stat-card { padding: 12px 10px; }
+  .stat-card .stat-value { font-size: 22px; }
+  .stat-card .stat-icon { font-size: 24px; }
+
+  /* Section header */
+  .section-title { font-size: 16px; }
+  .section-header { flex-wrap: wrap; gap: 6px; }
+
+  /* Buttons inside section headers shouldn't overflow */
+  .section-header .btn { font-size: 12px; padding: 7px 12px; }
+
+  /* Order filter dropdowns — stack on small screens */
+  #orderCustomerFilter,
+  #orderVendorFilter { font-size: 12px; padding: 6px 8px; }
+
+  /* Toast */
+  .toast { white-space: normal; text-align: center; max-width: 88vw; }
+
+  /* Modals */
+  .modal { padding: 16px; }
+  .modal-title { font-size: 15px; }
+
+  /* Workflow steps — keep scrollable, shrink dots slightly */
+  .wf-step { width: 60px; }
+  .wf-dot { width: 24px; height: 24px; font-size: 11px; }
+  .wf-label { font-size: 8px; }
+
+  /* Bottom nav labels */
+  .nav-item { font-size: 9px; gap: 2px; }
+  .nav-item .nav-icon { font-size: 18px; }
+
+  /* Bar chart labels */
+  .bar-label { width: 70px; font-size: 10px; }
+
+  /* Spec table */
+  .spec-table td { font-size: 12px; padding: 5px 6px; }
+  .spec-table td:first-child { width: 40%; }
+
+  /* Filter tabs */
+  .filter-tab { padding: 5px 11px; font-size: 11px; }
+
+  /* Vendor items */
+  .vendor-avatar { width: 38px; height: 38px; font-size: 14px; }
+  .vendor-name { font-size: 13px; }
+}
+
+/* Very small phones (≤ 360px) */
+@media (max-width: 360px) {
+  /* Hide username in header pill, keep avatar */
+  .user-pill .user-name,
+  .user-pill .user-arrow { display: none; }
+  .user-pill { padding: 4px; }
+
+  /* Stack form rows */
+  .form-row { grid-template-columns: 1fr; }
+
+  /* Stack order filter dropdowns */
+  div:has(> #orderCustomerFilter) { flex-direction: column; }
+
+  /* Stats — single column on very tiny screens */
+  .stats-grid { grid-template-columns: 1fr; }
+
+  /* Content tighter */
+  .content { padding: 8px; }
+
+  /* FAB */
+  .fab { width: 46px; height: 46px; font-size: 20px; right: 12px; }
+
+  /* Buttons */
+  .btn { padding: 8px 12px; font-size: 12px; }
+  .btn-sm { padding: 5px 8px; font-size: 11px; }
+
+  /* Next action box */
+  .next-action .na-step { font-size: 11px; }
+
+  /* Login card on very small screens */
+  .login-card { padding: 18px 14px; }
+}
+
+/* Ensure smooth scrolling on modals and lists */
+.modal, .notif-list-scroll, #orderList, #vendorList, #customerList, #productList {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Minimum touch target size for interactive elements */
+.nav-item { min-height: 44px; }
+.btn { min-height: 38px; }
+.filter-tab { min-height: 34px; display: inline-flex; align-items: center; }
+.icon-btn { min-width: 36px; min-height: 36px; }
 
 </style>
 
@@ -610,9 +737,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 <div class="notif-panel" id="notifPanel">
   <div class="notif-header">
     Notifications
-    <button onclick="toggleNotifPanel()" style="background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
+    <div class="notif-actions">
+      <button class="notif-action-btn" onclick="markAllRead()">All Read</button>
+      <button class="notif-action-btn" onclick="clearAllNotifications()">Clear All</button>
+      <button onclick="toggleNotifPanel()" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted);">✕</button>
+    </div>
   </div>
-  <div id="notifList"></div>
+  <div id="notifList" class="notif-list-scroll"></div>
 </div>
 
 <!-- CONTENT -->
@@ -673,7 +804,15 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
     <div class="search-bar">
       <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Search orders..." id="orderSearch" oninput="renderOrders()">
+      <input type="text" placeholder="Search orders by ID, item..." id="orderSearch" oninput="renderOrders()">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <select id="orderCustomerFilter" onchange="renderOrders()" style="flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:8px;font-size:13px;padding:7px 10px;color:var(--text);outline:none;cursor:pointer">
+        <option value="">All Customers</option>
+      </select>
+      <select id="orderVendorFilter" onchange="renderOrders()" style="flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:8px;font-size:13px;padding:7px 10px;color:var(--text);outline:none;cursor:pointer">
+        <option value="">All Vendors</option>
+      </select>
     </div>
     <div class="filter-tabs" id="orderFilterTabs">
       <div class="filter-tab active" data-filter="all" onclick="setOrderFilter('all',this)">All</div>
@@ -1887,9 +2026,9 @@ const defaultState = {
     { id: 'ORD-005', item: 'Smart Watch Pro X1', unitPrice: 8999, vendorId: 'v2', qty: 2, total: 17998, customer: 'Sales Team', address: 'Sales Office, Pune', priority: 'high', notes: 'For client demo', status: 'pending', date: '2026-06-03', statusHistory: ['pending'] }
   ],
   notifications: [
-    { id: 'n1', title: 'Low Stock Alert', text: 'Industrial Drill Set has only 6 units left.', time: '2 hrs ago', read: false, type: 'warning' },
-    { id: 'n2', title: 'New Order Created', text: 'ORD-005 placed by Sales Team.', time: '1 hr ago', read: false, type: 'info' },
-    { id: 'n3', title: 'Order Shipped', text: 'ORD-002 has been shipped by QuickMart.', time: '30 min ago', read: false, type: 'success' }
+    { id: 'n1', title: 'Low Stock Alert', text: 'Industrial Drill Set has only 6 units left.', ts: Date.now() - 7200000, read: false, type: 'warning' },
+    { id: 'n2', title: 'New Order Created', text: 'ORD-005 placed by Sales Team.', ts: Date.now() - 3600000, read: false, type: 'info' },
+    { id: 'n3', title: 'Order Shipped', text: 'ORD-002 has been shipped by QuickMart.', ts: Date.now() - 1800000, read: false, type: 'success' }
   ],
   customers: [
     { id: 'cust1', name: 'Raj Sharma', addresses: [
@@ -2025,6 +2164,15 @@ function switchTab(tab, btn) {
 }
 
 // ===================== NOTIFICATIONS =====================
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + ' hr ago';
+  return Math.floor(diff / 86400) + ' day' + (Math.floor(diff / 86400) > 1 ? 's' : '') + ' ago';
+}
+
 function toggleNotifPanel() {
   const p = document.getElementById('notifPanel');
   p.classList.toggle('open');
@@ -2035,20 +2183,41 @@ function renderNotifications() {
   const list = document.getElementById('notifList');
   if (!state.notifications.length) {
     list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">No notifications</div>';
+    updateNotifBadge();
     return;
   }
   list.innerHTML = state.notifications.map(n => `
-    <div class="notif-item ${n.read?'':'unread'}" onclick="markRead('${n.id}')">
-      <div class="ni-title">${n.type==='warning'?'⚠️':n.type==='success'?'✅':'ℹ️'} ${n.title}</div>
-      <div class="ni-text">${n.text}</div>
-      <div class="ni-time">${n.time}</div>
+    <div class="notif-item ${n.read?'':'unread'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1;cursor:pointer" onclick="markRead('${n.id}')">
+          <div class="ni-title">${n.type==='warning'?'⚠️':n.type==='success'?'✅':'ℹ️'} ${escHtml(n.title)}</div>
+          <div class="ni-text">${escHtml(n.text)}</div>
+          <div class="ni-time">${n.ts ? timeAgo(n.ts) : (n.time||'')}</div>
+        </div>
+        <button class="notif-delete" onclick="deleteNotification('${n.id}')" title="Dismiss">✕</button>
+      </div>
     </div>`).join('');
   updateNotifBadge();
 }
 
 function markRead(id) {
   const n = state.notifications.find(x => x.id === id);
-  if (n) { n.read = true; save(); renderNotifications(); updateNotifBadge(); }
+  if (n) { n.read = true; save(); renderNotifications(); }
+}
+
+function markAllRead() {
+  state.notifications.forEach(n => n.read = true);
+  save(); renderNotifications();
+}
+
+function deleteNotification(id) {
+  state.notifications = state.notifications.filter(n => n.id !== id);
+  save(); renderNotifications();
+}
+
+function clearAllNotifications() {
+  state.notifications = [];
+  save(); renderNotifications();
 }
 
 function updateNotifBadge() {
@@ -2059,7 +2228,7 @@ function updateNotifBadge() {
 }
 
 function addNotification(title, text, type='info') {
-  state.notifications.unshift({ id: 'n'+Date.now(), title, text, time: 'Just now', read: false, type });
+  state.notifications.unshift({ id: 'n'+Date.now(), title, text, ts: Date.now(), read: false, type });
   save(); updateNotifBadge();
 }
 
@@ -2073,7 +2242,7 @@ function renderDashboard() {
   // Alerts
   const alerts = document.getElementById('dash-alerts');
   let alertHtml = '';
-  const urgentOrders = state.orders.filter(o => o.priority === 'urgent' && o.status !== 'delivered');
+  const urgentOrders = state.orders.filter(o => o.priority === 'urgent' && !['delivered','completed','cancelled'].includes(o.status));
   urgentOrders.forEach(o => {
     alertHtml += `<div class="alert alert-danger"><span class="alert-icon">🚨</span><div>Urgent order <strong>${escHtml(o.id)}</strong> for <strong>${escHtml(getOrderItemName(o))}</strong> needs attention.</div></div>`;
   });
@@ -2126,8 +2295,8 @@ const ORDER_WORKFLOW = [
   { key: 'approved', label: 'Given to Vendor', icon: '🏢' },
   { key: 'processing', label: 'Ready to Collect', icon: '📦' },
   { key: 'shipped', label: 'Collected & Dispatched', icon: '🚚' },
-  { key: 'delivered', label: 'Completed', icon: '✅' },
-  { key: 'completed', label: 'Completed', icon: '🎉' }
+  { key: 'delivered', label: 'Delivered', icon: '✅' },
+  { key: 'completed', label: 'Paid', icon: '🎉' }
 ];
 
 const NEXT_ACTIONS = {
@@ -2148,7 +2317,7 @@ const NEXT_ACTIONS = {
     steps: ['Order has been picked up from vendor', 'Coordinate delivery to customer', 'Confirm receipt with customer and complete']
   },
   delivered: {
-    title: 'Completed',
+    title: 'Delivered',
     steps: ['Confirm customer has received the order', 'Process payment and invoice', 'Archive order for records']
   },
   completed: {
@@ -2161,11 +2330,30 @@ const NEXT_ACTIONS = {
   }
 };
 
+function populateOrderFilterDropdowns() {
+  const custSel = document.getElementById('orderCustomerFilter');
+  const vendSel = document.getElementById('orderVendorFilter');
+  if (!custSel || !vendSel) return;
+  const prevCust = custSel.value, prevVend = vendSel.value;
+  const customers = [...new Set(state.orders.map(o => o.customer).filter(Boolean))].sort();
+  const vendors = [...new Set(state.orders.map(o => state.vendors.find(v => v.id === o.vendorId)?.name).filter(Boolean))].sort();
+  custSel.innerHTML = '<option value="">All Customers</option>' + customers.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+  vendSel.innerHTML = '<option value="">All Vendors</option>' + vendors.map(v => `<option value="${escHtml(v)}">${escHtml(v)}</option>`).join('');
+  custSel.value = prevCust;
+  vendSel.value = prevVend;
+}
+
 function renderOrders() {
+  populateOrderFilterDropdowns();
   const q = (document.getElementById('orderSearch')?.value || '').toLowerCase();
+  const custFilter = (document.getElementById('orderCustomerFilter')?.value || '').toLowerCase();
+  const vendFilter = (document.getElementById('orderVendorFilter')?.value || '').toLowerCase();
   let filtered = state.orders.filter(o => {
     const vendor = state.vendors.find(v => v.id === o.vendorId);
-    return o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || vendor?.name.toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q);
+    const matchesQ = !q || o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || vendor?.name.toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q);
+    const matchesCust = !custFilter || (o.customer||'').toLowerCase() === custFilter;
+    const matchesVend = !vendFilter || vendor?.name.toLowerCase() === vendFilter;
+    return matchesQ && matchesCust && matchesVend;
   });
   if (currentOrderFilter !== 'all') filtered = filtered.filter(o => o.status === currentOrderFilter);
   filtered = filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -2186,27 +2374,30 @@ function renderOrders() {
     const deleteBtn = isReadOnly() ? '' : `<button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteOrder('${o.id}')">🗑️</button>`;
     let actionBtns = '';
     if (!isReadOnly()) {
+      const cancelBtn = `<button class="btn btn-sm btn-outline" style="flex-shrink:0;color:var(--danger);border-color:var(--danger)" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">Cancel</button>`;
       if (o.status === 'pending') {
         actionBtns = `<div style="display:flex;gap:8px;margin-top:10px">
           <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','approved')">🏢 Give to Vendor</button>
-          <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">❌</button>
+          ${cancelBtn}
         </div>`;
       } else if (o.status === 'approved') {
         actionBtns = `<div style="display:flex;gap:8px;margin-top:10px">
           <button class="btn btn-primary btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','processing')">📦 Mark Ready to Collect</button>
-          <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">❌</button>
+          ${cancelBtn}
         </div>`;
       } else if (o.status === 'processing') {
-        actionBtns = `<div style="margin-top:10px">
+        actionBtns = `<div style="display:flex;gap:8px;margin-top:10px">
           <button class="btn btn-primary btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','shipped')">🚚 Collected & Dispatched</button>
+          ${cancelBtn}
         </div>`;
       } else if (o.status === 'shipped') {
-        actionBtns = `<div style="margin-top:10px">
-          <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','delivered')">✅ Mark Completed</button>
+        actionBtns = `<div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','delivered')">✅ Mark as Delivered</button>
+          ${cancelBtn}
         </div>`;
       } else if (o.status === 'delivered') {
         actionBtns = `<div style="margin-top:10px">
-          <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">🎉 Close Order</button>
+          <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">💰 Mark as Paid</button>
         </div>`;
       }
     }
@@ -2292,18 +2483,17 @@ function viewOrderDetail(oid) {
   // Action buttons based on status — hidden for Viewer role
   let actionBtns = '';
   if (!isReadOnly()) {
+    const cancelFull = `<button class="btn btn-outline btn-full" style="color:var(--danger);border-color:var(--danger);margin-top:8px" onclick="updateOrderStatus('${o.id}','cancelled')">❌ Cancel Order</button>`;
     if (o.status === 'pending') {
-      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','approved')">🏢 Give to Vendor</button>
-        <button class="btn btn-danger btn-full" onclick="updateOrderStatus('${o.id}','cancelled')" style="margin-top:8px">❌ Cancel Order</button>`;
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','approved')">🏢 Give to Vendor</button>${cancelFull}`;
     } else if (o.status === 'approved') {
-      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','processing')">📦 Mark Ready to Collect</button>
-        <button class="btn btn-danger btn-full" onclick="updateOrderStatus('${o.id}','cancelled')" style="margin-top:8px">❌ Cancel Order</button>`;
+      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','processing')">📦 Mark Ready to Collect</button>${cancelFull}`;
     } else if (o.status === 'processing') {
-      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','shipped')">🚚 Collected & Dispatched</button>`;
+      actionBtns = `<button class="btn btn-primary btn-full" onclick="updateOrderStatus('${o.id}','shipped')">🚚 Collected & Dispatched</button>${cancelFull}`;
     } else if (o.status === 'shipped') {
-      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','delivered')">✅ Mark Completed</button>`;
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','delivered')">✅ Mark as Delivered</button>${cancelFull}`;
     } else if (o.status === 'delivered') {
-      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','completed')">🎉 Close Order</button>`;
+      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','completed')">💰 Mark as Paid</button>`;
     }
   }
 
@@ -2314,15 +2504,46 @@ function viewOrderDetail(oid) {
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">${escHtml(getOrderItemName(o))}</div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${formatDate(o.date)}</div>
       </div>
-      <div style="text-align:right">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <button onclick="closeModal('orderDetailModal')" style="background:none;border:none;cursor:pointer;font-size:20px;line-height:1;color:var(--text-muted);padding:0;margin:0" aria-label="Close">&#x2715;</button>
         <span class="badge-status badge-${o.status}">${o.status}</span>
-        <div style="font-size:11px;color:${priorityColor};font-weight:700;margin-top:4px">${o.priority.toUpperCase()}</div>
+        <div style="font-size:11px;color:${priorityColor};font-weight:700;">${o.priority.toUpperCase()}</div>
       </div>
     </div>
 
     <div class="detail-section">
       <div class="detail-label">Order Workflow</div>
       ${wfHtml}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-label">Status History</div>
+      <div style="margin-top:6px">
+        ${(()=>{
+          const steps = ORDER_WORKFLOW.filter(step =>
+            (o.statusHistory||[]).some(h => (typeof h==='string'?h:h.status)===step.key)
+          );
+          if (o.status==='cancelled') {
+            const cancEntry = (o.statusHistory||[]).find(h=>(typeof h==='string'?h:h.status)==='cancelled');
+            if (cancEntry) steps.push({ key:'cancelled', label:'Cancelled', icon:'❌' });
+          }
+          if (!steps.length) return '<div style="font-size:13px;color:var(--text-muted)">No history yet.</div>';
+          return steps.map((step, i) => {
+            const entry = (o.statusHistory||[]).find(h=>(typeof h==='string'?h:h.status)===step.key);
+            const ts = entry && typeof entry==='object' ? entry.ts : null;
+            const isCurrent = step.key===o.status;
+            const dotBg = step.key==='cancelled' ? 'var(--danger)' : isCurrent ? 'var(--primary)' : 'var(--success)';
+            return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;${i<steps.length-1?'border-bottom:1px solid var(--border)':''}">
+              <div style="width:30px;height:30px;border-radius:50%;background:${dotBg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${step.icon}</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600;color:var(--text)">${step.label}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${ts ? fmtDateTime(ts) : '<em style="opacity:.5">No timestamp (legacy)</em>'}</div>
+              </div>
+              ${isCurrent ? '<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;font-weight:700;align-self:center;flex-shrink:0">CURRENT</span>' : ''}
+            </div>`;
+          }).join('');
+        })()}
+      </div>
     </div>
 
     <div class="next-action" style="margin-bottom:14px">
@@ -2570,12 +2791,29 @@ function viewOrderDetail(oid) {
   openModal('orderDetailModal');
 }
 
+function fmtDateTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const day = d.getDate().toString().padStart(2,'0');
+  const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+  const yr = d.getFullYear();
+  let h = d.getHours(), mi = d.getMinutes().toString().padStart(2,'0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${day} ${mon} ${yr}, ${h}:${mi} ${ampm}`;
+}
+
+function getStatusEntry(o, statusKey) {
+  return (o.statusHistory || []).find(h => (typeof h === 'string' ? h : h.status) === statusKey);
+}
+
 function updateOrderStatus(oid, newStatus) {
   const o = state.orders.find(x => x.id === oid);
   if (!o) return;
   o.status = newStatus;
   o.statusHistory = o.statusHistory || [];
-  if (!o.statusHistory.includes(newStatus)) o.statusHistory.push(newStatus);
+  const alreadyHas = o.statusHistory.some(h => (typeof h === 'string' ? h : h.status) === newStatus);
+  if (!alreadyHas) o.statusHistory.push({ status: newStatus, ts: Date.now() });
   save();
   closeModal('orderDetailModal');
   renderOrders();
@@ -2628,7 +2866,7 @@ function saveOrder() {
     notes: document.getElementById('oNotes').value.trim(),
     status: 'pending',
     date: new Date().toISOString().split('T')[0],
-    statusHistory: ['pending']
+    statusHistory: [{ status: 'pending', ts: Date.now() }]
   };
   state.orders.push(order);
   save(); closeModal('orderModal'); renderOrders(); renderDashboard();
@@ -2776,8 +3014,8 @@ function renderReports() {
     approved:   { label:'Given to Vendor',        bg:'#dbeafe', color:'#1e40af' },
     processing: { label:'Ready to Collect',       bg:'#ede9fe', color:'#5b21b6' },
     shipped:    { label:'Collected & Dispatched', bg:'#d1fae5', color:'#065f46' },
-    delivered:  { label:'Completed',              bg:'#dcfce7', color:'#14532d' },
-    completed:  { label:'Closed',                 bg:'#f0fdf4', color:'#15803d' },
+    delivered:  { label:'Delivered',              bg:'#dcfce7', color:'#14532d' },
+    completed:  { label:'Paid',                   bg:'#f0fdf4', color:'#15803d' },
     cancelled:  { label:'Cancelled',              bg:'#fee2e2', color:'#7f1d1d' }
   };
 
@@ -2953,8 +3191,8 @@ function printReport() {
     { key:'approved',   label:'Given to Vendor',        bg:'#dbeafe', color:'#1e40af' },
     { key:'processing', label:'Ready to Collect',       bg:'#ede9fe', color:'#5b21b6' },
     { key:'shipped',    label:'Collected & Dispatched', bg:'#d1fae5', color:'#065f46' },
-    { key:'delivered',  label:'Completed',              bg:'#dcfce7', color:'#14532d' },
-    { key:'completed',  label:'Closed',                 bg:'#f0fdf4', color:'#15803d' },
+    { key:'delivered',  label:'Delivered',              bg:'#dcfce7', color:'#14532d' },
+    { key:'completed',  label:'Paid',                   bg:'#f0fdf4', color:'#15803d' },
     { key:'cancelled',  label:'Cancelled',              bg:'#fee2e2', color:'#7f1d1d' }
   ];
   const statusMap = Object.fromEntries(statusMeta.map(s => [s.key, s]));
@@ -3183,8 +3421,11 @@ function printOrder(oid) {
         ${f.url ? `<div class="design-url">${esc(f.url)}</div>` : ''}
       </div>`).join('')}` : '';
 
-  const historyHtml = (o.statusHistory||[]).map(s =>
-    `<span class="hist-badge badge-${s}">${s}</span>`).join('<span class="hist-arrow">→</span>');
+  const historyHtml = (o.statusHistory||[]).map(h => {
+    const s = typeof h==='string' ? h : h.status;
+    const ts = h && typeof h==='object' ? h.ts : null;
+    return `<span class="hist-badge badge-${s}" title="${ts ? fmtDateTime(ts) : ''}">${s}${ts ? `<small style="display:block;font-size:9px;opacity:.7">${fmtDateTime(ts)}</small>` : ''}</span>`;
+  }).join('<span class="hist-arrow">→</span>');
 
   const priorityColors = { normal:'#065f46', high:'#92400e', urgent:'#b91c1c' };
 
@@ -3829,7 +4070,7 @@ async function saveVCOrder() {
     notes:     document.getElementById('vcNotes').value.trim(),
     status:    'pending',
     date:      new Date().toISOString().split('T')[0],
-    statusHistory: ['pending'],
+    statusHistory: [{ status: 'pending', ts: Date.now() }],
     vcDetails: {
       sheetW:      parseFloat(document.getElementById('vcSheetW').value),
       sheetH:      parseFloat(document.getElementById('vcSheetH').value),
@@ -4040,7 +4281,7 @@ async function savePVCOrder() {
     notes:     document.getElementById('pvcNotes').value.trim(),
     status:    'pending',
     date:      new Date().toISOString().split('T')[0],
-    statusHistory: ['pending'],
+    statusHistory: [{ status: 'pending', ts: Date.now() }],
     pvcDetails: {
       thickness:  thickness.name,
       width:      w,
@@ -4300,7 +4541,7 @@ async function saveVinylOrder() {
     priority: document.getElementById('vyPriority').value,
     notes: document.getElementById('vyNotes').value.trim(),
     status: 'pending', date: new Date().toISOString().split('T')[0],
-    statusHistory: ['pending'],
+    statusHistory: [{ status: 'pending', ts: Date.now() }],
     vinylDetails: {
       width: w, height: h, area, paper: paperType.name,
       paperCost, addonsCost, addons: addonLabels,
@@ -4602,7 +4843,7 @@ async function saveFlexOrder() {
     priority: document.getElementById('fxPriority').value,
     notes:    document.getElementById('fxNotes').value.trim(),
     status: 'pending', date: new Date().toISOString().split('T')[0],
-    statusHistory: ['pending'],
+    statusHistory: [{ status: 'pending', ts: Date.now() }],
     flexDetails: {
       width: w, height: h, area,
       paper: paperType.name,
@@ -4903,7 +5144,7 @@ async function saveStickerOrder() {
     priority:  document.getElementById('stPriority').value,
     notes:     document.getElementById('stNotes').value.trim(),
     status:    'pending', date: new Date().toISOString().split('T')[0],
-    statusHistory: ['pending'],
+    statusHistory: [{ status: 'pending', ts: Date.now() }],
     stickerDetails: {
       sheetW: sW, sheetH: sH, stickerW: cW, stickerH: cH,
       paper: paperType?.name || '—',
@@ -5494,7 +5735,7 @@ async function saveCustomOrder(typeId) {
     priority: document.getElementById('cofPriority').value,
     notes: document.getElementById('cofNotes').value.trim(),
     status: 'pending', date: new Date().toISOString().split('T')[0],
-    statusHistory: ['pending'],
+    statusHistory: [{ status: 'pending', ts: Date.now() }],
     customDetails: { typeId, typeName: type.name, icon: type.icon||'📦', fieldValues, designFiles }
   };
 
