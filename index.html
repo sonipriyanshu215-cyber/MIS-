@@ -2878,7 +2878,7 @@ function renderReports() {
         : `${reportDateFrom || '—'} → ${reportDateTo || '—'}`)
     : 'All Time';
 
-  const totalRevenue = filtered.filter(o => ['delivered','completed'].includes(o.status)).reduce((s,o) => s + o.total, 0);
+  const totalRevenue = filtered.filter(o => o.status === 'delivered').reduce((s,o) => s + o.total, 0);
   const avgOrder = filtered.length ? Math.round(filtered.reduce((s,o)=>s+o.total,0)/filtered.length) : 0;
   const vendorOrders = {};
   filtered.forEach(o => { vendorOrders[o.vendorId] = (vendorOrders[o.vendorId]||0)+1; });
@@ -2896,7 +2896,7 @@ function renderReports() {
     processing: { label:'Ready to Collect',       bg:'#ede9fe', color:'#5b21b6' },
     shipped:    { label:'Collected & Dispatched', bg:'#d1fae5', color:'#065f46' },
     delivered:  { label:'Delivered',              bg:'#dcfce7', color:'#14532d' },
-    completed:  { label:'Paid',                   bg:'#f0fdf4', color:'#15803d' },
+    paid:       { label:'Paid',                   bg:'#f0fdf4', color:'#15803d' },
     cancelled:  { label:'Cancelled',              bg:'#fee2e2', color:'#7f1d1d' }
   };
 
@@ -2950,7 +2950,7 @@ function renderReports() {
         <div class="stat-label">Total Orders</div>
       </div>
       <div class="stat-card amber">
-        <div class="stat-value" style="font-size:20px">${filtered.filter(o=>['delivered','completed'].includes(o.status)).length}</div>
+        <div class="stat-value" style="font-size:20px">${filtered.filter(o=>o.status==='delivered').length}</div>
         <div class="stat-label">Fulfilled</div>
       </div>
       <div class="stat-card blue">
@@ -2988,7 +2988,7 @@ function renderReports() {
       <div class="card-header"><div class="card-title">Status Breakdown</div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         ${Object.entries(statusDisplay).map(([s, meta]) => {
-          const count = filtered.filter(o=>o.status===s).length;
+          const count = s === 'paid' ? filtered.filter(o=>o.paid).length : filtered.filter(o=>o.status===s).length;
           return `<div style="background:${meta.bg};border-radius:8px;padding:10px 12px">
             <div style="font-size:10px;color:${meta.color};font-weight:700;text-transform:uppercase;letter-spacing:.3px;line-height:1.3">${meta.label}</div>
             <div style="font-size:22px;font-weight:800;color:${meta.color};margin-top:4px">${count}</div>
@@ -3057,8 +3057,8 @@ function printReport() {
   const fmtDate  = d => new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
 
   const totalOrders  = orders.length;
-  const totalRevenue = orders.filter(o=>['delivered','completed'].includes(o.status)).reduce((s,o)=>s+o.total,0);
-  const fulfilled    = orders.filter(o=>['delivered','completed'].includes(o.status)).length;
+  const totalRevenue = orders.filter(o=>o.status==='delivered').reduce((s,o)=>s+o.total,0);
+  const fulfilled    = orders.filter(o=>o.status==='delivered').length;
   const avgOrder     = totalOrders ? Math.round(orders.reduce((s,o)=>s+o.total,0)/totalOrders) : 0;
 
   const statusCounts = {};
@@ -3073,7 +3073,7 @@ function printReport() {
     { key:'processing', label:'Ready to Collect',       bg:'#ede9fe', color:'#5b21b6' },
     { key:'shipped',    label:'Collected & Dispatched', bg:'#d1fae5', color:'#065f46' },
     { key:'delivered',  label:'Delivered',              bg:'#dcfce7', color:'#14532d' },
-    { key:'completed',  label:'Paid',                   bg:'#f0fdf4', color:'#15803d' },
+    { key:'paid',       label:'Paid',                   bg:'#f0fdf4', color:'#15803d' },
     { key:'cancelled',  label:'Cancelled',              bg:'#fee2e2', color:'#7f1d1d' }
   ];
   const statusMap = Object.fromEntries(statusMeta.map(s => [s.key, s]));
@@ -3097,7 +3097,7 @@ function printReport() {
   const statusRow = (items) => `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px">
     ${items.filter(s=>s.key!=='_').map(s => `
       <div style="background:${s.bg};border:1px solid ${s.color}33;padding:8px;text-align:center;border-radius:4px">
-        <div style="font-size:18px;font-weight:800;color:${s.color}">${statusCounts[s.key]||0}</div>
+        <div style="font-size:18px;font-weight:800;color:${s.color}">${s.key==='paid' ? orders.filter(o=>o.paid).length : (statusCounts[s.key]||0)}</div>
         <div style="font-size:8px;font-weight:700;color:${s.color};text-transform:uppercase;margin-top:3px">${s.label}</div>
       </div>`).join('')}
   </div>`;
