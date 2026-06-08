@@ -547,9 +547,7 @@ html { -webkit-text-size-adjust: 100%; }
   /* Buttons inside section headers shouldn't overflow */
   .section-header .btn { font-size: 12px; padding: 7px 12px; }
 
-  /* Order filter dropdowns — stack on small screens */
-  #orderCustomerFilter,
-  #orderVendorFilter { font-size: 12px; padding: 6px 8px; }
+  #orderSortSelect { font-size: 12px; padding: 6px 8px; }
 
   /* Toast */
   .toast { white-space: normal; text-align: center; max-width: 88vw; }
@@ -591,9 +589,6 @@ html { -webkit-text-size-adjust: 100%; }
 
   /* Stack form rows */
   .form-row { grid-template-columns: 1fr; }
-
-  /* Stack order filter dropdowns */
-  div:has(> #orderCustomerFilter) { flex-direction: column; }
 
   /* Stats — single column on very tiny screens */
   .stats-grid { grid-template-columns: 1fr; }
@@ -807,19 +802,19 @@ html { -webkit-text-size-adjust: 100%; }
       <input type="text" placeholder="Search orders by ID, item..." id="orderSearch" oninput="renderOrders()">
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
-      <select id="orderCustomerFilter" onchange="renderOrders()" style="flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:8px;font-size:13px;padding:7px 10px;color:var(--text);outline:none;cursor:pointer">
-        <option value="">All Customers</option>
-      </select>
-      <select id="orderVendorFilter" onchange="renderOrders()" style="flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:8px;font-size:13px;padding:7px 10px;color:var(--text);outline:none;cursor:pointer">
-        <option value="">All Vendors</option>
+      <select id="orderSortSelect" onchange="renderOrders()" style="flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:8px;font-size:13px;padding:7px 10px;color:var(--text);outline:none;cursor:pointer">
+        <option value="id-asc">Sort: ID ↑ (Ascending)</option>
+        <option value="priority-asc">Sort: Priority (Urgent first)</option>
+        <option value="date-asc">Sort: Date ↑ (Oldest first)</option>
+        <option value="date-desc">Sort: Date ↓ (Newest first)</option>
       </select>
     </div>
     <div class="filter-tabs" id="orderFilterTabs">
       <div class="filter-tab active" data-filter="all" onclick="setOrderFilter('all',this)">All</div>
-      <div class="filter-tab" data-filter="pending" onclick="setOrderFilter('pending',this)">Pending</div>
-      <div class="filter-tab" data-filter="approved" onclick="setOrderFilter('approved',this)">Approved</div>
-      <div class="filter-tab" data-filter="processing" onclick="setOrderFilter('processing',this)">Processing</div>
-      <div class="filter-tab" data-filter="shipped" onclick="setOrderFilter('shipped',this)">Shipped</div>
+      <div class="filter-tab" data-filter="pending" onclick="setOrderFilter('pending',this)">Order Received</div>
+      <div class="filter-tab" data-filter="approved" onclick="setOrderFilter('approved',this)">Given to Vendor</div>
+      <div class="filter-tab" data-filter="processing" onclick="setOrderFilter('processing',this)">Ready to Collect</div>
+      <div class="filter-tab" data-filter="shipped" onclick="setOrderFilter('shipped',this)">Collected & Dispatched</div>
       <div class="filter-tab" data-filter="delivered" onclick="setOrderFilter('delivered',this)">Delivered</div>
     </div>
     <div id="orderList"></div>
@@ -846,6 +841,18 @@ html { -webkit-text-size-adjust: 100%; }
     <div id="reportsContent"></div>
   </div>
 
+  <!-- ARCHIVE -->
+  <div class="section" id="sec-archive">
+    <div class="section-header">
+      <div class="section-title">Archive</div>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Search archived orders..." id="archiveSearch" oninput="renderArchive()">
+    </div>
+    <div id="archiveList"></div>
+  </div>
+
 </div>
 
 <!-- BOTTOM NAV -->
@@ -861,6 +868,9 @@ html { -webkit-text-size-adjust: 100%; }
   </button>
   <button class="nav-item" onclick="switchTab('reports',this)">
     <span class="nav-icon">📈</span>Reports
+  </button>
+  <button class="nav-item" onclick="switchTab('archive',this)">
+    <span class="nav-icon">📦</span>Archive
   </button>
 </nav>
 
@@ -1157,163 +1167,6 @@ html { -webkit-text-size-adjust: 100%; }
     </div>
 
     <button class="btn btn-ghost btn-full" onclick="closeModal('vcSettingsModal')" style="margin-top:14px">Done</button>
-  </div>
-</div>
-
-<!-- PVC SUNBOARD ORDER MODAL -->
-<div class="modal-overlay" id="pvcOrderModal">
-  <div class="modal">
-    <span class="modal-handle"></span>
-    <div class="modal-title">🟦 PVC Sunboard Order</div>
-
-    <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Customer</div>
-    <div class="form-group">
-      <label class="form-label">Select Customer *</label>
-      <div style="display:flex;gap:8px">
-        <select class="form-control" id="pvcCustomer" onchange="onPVCCustomerChange()" style="flex:1">
-          <option value="">-- Select Customer --</option>
-        </select>
-        <button class="btn btn-outline btn-sm" onclick="openCustomerModal()" style="white-space:nowrap">+ New</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Delivery Address *</label>
-      <div style="display:flex;gap:8px">
-        <select class="form-control" id="pvcAddress" style="flex:1">
-          <option value="">-- Select Customer First --</option>
-        </select>
-        <button class="btn btn-outline btn-sm" id="pvcAddAddrBtn" onclick="openAddressModal()" style="white-space:nowrap;display:none">+ Add</button>
-      </div>
-    </div>
-
-    <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;border:1px solid #e2e8f0">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:11px;font-weight:700;color:#0056b3;text-transform:uppercase;letter-spacing:.5px">Board Specifications</div>
-        <button class="btn btn-ghost btn-sm viewer-hide" style="font-size:11px;padding:3px 8px" onclick="openPVCSettingsModal()">⚙️ Manage Prices</button>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Thickness</label>
-        <select class="form-control" id="pvcThickness" onchange="calcPVCCost()">
-          <option value="">-- Select Thickness --</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Width (ft)</label>
-          <input type="number" class="form-control" id="pvcWidth" value="" step="0.1" min="0.1" placeholder="e.g. 4" oninput="calcPVCCost()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Height (ft)</label>
-          <input type="number" class="form-control" id="pvcHeight" value="" step="0.1" min="0.1" placeholder="e.g. 3" oninput="calcPVCCost()">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Lamination</label>
-        <div style="display:flex;gap:10px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;background:#fff;border:2px solid var(--border);border-radius:8px;padding:10px 12px;transition:border-color .2s" id="pvcLamNoLabel">
-            <input type="radio" name="pvcLam" value="without" id="pvcLamNo" onchange="calcPVCCost()" checked style="accent-color:#1a56db">
-            <span>
-              <div style="font-weight:700;font-size:13px">Without Lamination</div>
-              <div style="font-size:11px;color:#64748b" id="pvcPriceNoLam">₹— / sq ft</div>
-            </span>
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;background:#fff;border:2px solid var(--border);border-radius:8px;padding:10px 12px;transition:border-color .2s" id="pvcLamYesLabel">
-            <input type="radio" name="pvcLam" value="with" id="pvcLamYes" onchange="calcPVCCost()" style="accent-color:#1a56db">
-            <span>
-              <div style="font-weight:700;font-size:13px">With Lamination</div>
-              <div style="font-size:11px;color:#64748b" id="pvcPriceWithLam">₹— / sq ft</div>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <div id="pvcCalcResult" style="background:#e8f4f8;border-radius:6px;padding:10px;font-size:13px;display:none;margin-top:4px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Area:</span><strong id="pvcArea">0</strong></div>
-        <div style="display:flex;justify-content:space-between;border-top:1px solid #b8d4e0;padding-top:6px;margin-top:4px"><span style="font-weight:700">Price per piece:</span><strong style="color:#1a56db">₹<span id="pvcPricePerPiece">0</span><span id="pvcRateDisplay" style="display:none"></span></strong></div>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Quantity (pieces) *</label>
-        <input type="number" class="form-control" id="pvcQty" value="1" min="1" oninput="calcPVCTotal()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Order Total (₹)</label>
-        <input type="text" class="form-control" id="pvcTotal" readonly placeholder="Auto">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Assign Vendor *</label>
-      <select class="form-control" id="pvcVendor">
-        <option value="">-- Select Vendor --</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Priority</label>
-      <select class="form-control" id="pvcPriority">
-        <option value="normal">Normal</option>
-        <option value="high">High</option>
-        <option value="urgent">Urgent</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Design Files <span style="font-weight:normal;color:var(--text-muted)">(PDF / Image)</span></label>
-      <div id="pvcDesignDropArea"
-           style="border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s"
-           onclick="document.getElementById('pvcDesignInput').click()"
-           ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
-           ondragleave="this.style.borderColor='var(--border)'"
-           ondrop="handlePVCDesignDrop(event)">
-        <input type="file" id="pvcDesignInput" accept=".pdf,image/*" multiple style="display:none"
-               onchange="handlePVCDesignFiles(this.files);this.value=''">
-        <div style="font-size:30px;margin-bottom:6px">📎</div>
-        <div style="font-size:13px;color:var(--text-muted)">Tap to attach or drag & drop</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">PDF, JPG, PNG, WEBP · Max 5 MB each</div>
-      </div>
-      <div id="pvcDesignPreview" style="margin-top:8px"></div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Notes / Instructions</label>
-      <textarea class="form-control" id="pvcNotes" placeholder="Design details, finishing notes, etc." rows="2"></textarea>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:4px">
-      <button class="btn btn-ghost btn-full" onclick="closeModal('pvcOrderModal')">Cancel</button>
-      <button class="btn btn-primary btn-full" id="pvcSaveBtn" onclick="savePVCOrder()">Create Order</button>
-    </div>
-  </div>
-</div>
-
-<!-- PVC SETTINGS MODAL -->
-<div class="modal-overlay" id="pvcSettingsModal" style="z-index:250">
-  <div class="modal">
-    <span class="modal-handle"></span>
-    <div class="modal-title">⚙️ PVC Sunboard Pricing</div>
-
-    <div id="pvcThicknessList" style="max-height:260px;overflow-y:auto;margin-bottom:10px"></div>
-
-    <div style="background:#f8f9fa;border-radius:8px;padding:10px">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add Thickness Option</div>
-      <div class="form-group" style="margin-bottom:8px">
-        <input type="text" class="form-control" id="newPVCThicknessName" placeholder="e.g. 10mm">
-      </div>
-      <div class="form-row">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Price per piece (₹)</label>
-          <input type="number" class="form-control" id="newPVCPriceWithout" placeholder="e.g. 450" min="1" step="1">
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">With Lamination (₹/piece)</label>
-          <input type="number" class="form-control" id="newPVCPriceWith" placeholder="e.g. 65" min="1" step="1">
-        </div>
-      </div>
-      <button class="btn btn-primary btn-full" onclick="savePVCThickness()" style="margin-top:8px">+ Add Thickness</button>
-    </div>
-
-    <button class="btn btn-ghost btn-full" onclick="closeModal('pvcSettingsModal')" style="margin-top:14px">Done</button>
   </div>
 </div>
 
@@ -1823,8 +1676,7 @@ html { -webkit-text-size-adjust: 100%; }
     <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Built-in</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">📇 Visiting Card</div>
-      <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🟦 PVC Sunboard</div>
-      <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🏷️ Sticker</div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🏷️ Sticker</div>
       <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🖼️ Flex/Banner</div>
       <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);border-radius:8px;font-size:13px;font-weight:600">🎨 Vinyl Print</div>
     </div>
@@ -2054,11 +1906,6 @@ const defaultState = {
     { id: 'vca3', name: 'Gold / Silver Foil', price: 1.50 },
     { id: 'vca4', name: 'Spot UV',            price: 1.00 }
   ],
-  pvcThicknesses: [
-    { id: 'pvct1', name: '3mm', priceWithout: 45, priceWith: 65 },
-    { id: 'pvct2', name: '5mm', priceWithout: 55, priceWith: 75 },
-    { id: 'pvct3', name: '8mm', priceWithout: 70, priceWith: 90 }
-  ],
   customOrderTypes: [],
   vinylPaperTypes: [
     { id: 'vyp1', name: 'Normal',       pricing: 'sqft', price: 50  },
@@ -2128,7 +1975,6 @@ function startRealtimeSync() {
     state.customers        = state.customers        || [];
     state.vcPaperTypes     = state.vcPaperTypes     || defaultState.vcPaperTypes;
     state.vcAddons         = state.vcAddons         || defaultState.vcAddons;
-    state.pvcThicknesses   = state.pvcThicknesses   || defaultState.pvcThicknesses;
     state.customOrderTypes  = state.customOrderTypes  || [];
     state.vinylPaperTypes   = state.vinylPaperTypes   || defaultState.vinylPaperTypes;
     state.vinylAddons       = state.vinylAddons       || defaultState.vinylAddons;
@@ -2140,9 +1986,71 @@ function startRealtimeSync() {
     renderOrders();
     renderVendors();
     renderReports();
+    renderArchive();
     renderNotifications();
     updateNotifBadge();
   }, err => console.error('Sync error:', err));
+}
+
+// ===================== ARCHIVE =====================
+function markOrderPaid(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  o.paid = true;
+  o.archived = true;
+  save();
+  closeModal('orderDetailModal');
+  renderOrders();
+  renderArchive();
+  showToast('Order marked as paid and archived');
+}
+
+function archiveOrder(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  o.archived = true;
+  save();
+  renderOrders();
+  renderArchive();
+  closeModal('orderDetailModal');
+}
+
+function unarchiveOrder(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  o.archived = false;
+  save();
+  renderArchive();
+  renderOrders();
+}
+
+function renderArchive() {
+  const q = (document.getElementById('archiveSearch')?.value || '').toLowerCase();
+  const archived = state.orders.filter(o =>
+    o.archived && (!q || o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q))
+  );
+  const el = document.getElementById('archiveList');
+  if (!el) return;
+  if (!archived.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No Archived Orders</div><div class="empty-sub">Delivered orders you archive will appear here</div></div>`;
+    return;
+  }
+  archived.sort((a, b) => b.id.localeCompare(a.id));
+  el.innerHTML = archived.map(o => {
+    const itemName = getOrderItemName(o);
+    const badge = `<span class="badge badge-delivered">Delivered</span>`;
+    return `<div class="order-card" style="opacity:0.85">
+      <div class="order-card-header">
+        <span class="order-id">${o.id}</span>${badge}
+        <span style="font-size:11px;color:var(--text-muted)">${o.date||''}</span>
+      </div>
+      <div class="order-item-name">${itemName}</div>
+      ${o.customer ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">👤 ${o.customer}</div>` : ''}
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn btn-sm" style="flex:1;background:var(--border);color:var(--text)" onclick="unarchiveOrder('${o.id}')">↩️ Unarchive</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ===================== NAV =====================
@@ -2153,7 +2061,7 @@ function switchTab(tab, btn) {
   if (btn) btn.classList.add('active');
   else {
     const navs = document.querySelectorAll('.nav-item');
-    const map = ['dashboard','orders','vendors','reports'];
+    const map = ['dashboard','orders','vendors','reports','archive'];
     const idx = map.indexOf(tab);
     if (idx !== -1) navs[idx].classList.add('active');
   }
@@ -2161,6 +2069,7 @@ function switchTab(tab, btn) {
   if (tab === 'orders') { renderOrderTypeStrip(); renderOrders(); }
   if (tab === 'vendors') renderVendors();
   if (tab === 'reports') renderReports();
+  if (tab === 'archive') renderArchive();
 }
 
 // ===================== NOTIFICATIONS =====================
@@ -2270,7 +2179,7 @@ function renderDashboard() {
   if (!recent.length) { rod.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-sub">No orders yet</div></div>'; return; }
   rod.innerHTML = recent.map(o => {
     const vendor = state.vendors.find(v => v.id === o.vendorId);
-    const icon = o.productId === 'vc-custom' ? '📇' : o.productId === 'pvc-sunboard' ? '🟦' : o.productId === 'sticker-custom' ? '🏷️' : o.productId === 'flex-banner' ? '🖼️' : o.productId === 'vinyl-print' ? '🎨' : '🛒';
+    const icon = o.productId === 'vc-custom' ? '📇' : o.productId === 'sticker-custom' ? '🏷️' : o.productId === 'flex-banner' ? '🖼️' : o.productId === 'vinyl-print' ? '🎨' : '🛒';
     return `<div class="product-item" onclick="viewOrderDetail('${o.id}')">
       <div class="product-img-placeholder" style="width:44px;height:44px;font-size:18px;">${icon}</div>
       <div class="product-info">
@@ -2295,8 +2204,7 @@ const ORDER_WORKFLOW = [
   { key: 'approved', label: 'Given to Vendor', icon: '🏢' },
   { key: 'processing', label: 'Ready to Collect', icon: '📦' },
   { key: 'shipped', label: 'Collected & Dispatched', icon: '🚚' },
-  { key: 'delivered', label: 'Delivered', icon: '✅' },
-  { key: 'completed', label: 'Paid', icon: '🎉' }
+  { key: 'delivered', label: 'Delivered', icon: '✅' }
 ];
 
 const NEXT_ACTIONS = {
@@ -2317,12 +2225,8 @@ const NEXT_ACTIONS = {
     steps: ['Order has been picked up from vendor', 'Coordinate delivery to customer', 'Confirm receipt with customer and complete']
   },
   delivered: {
-    title: 'Delivered',
-    steps: ['Confirm customer has received the order', 'Process payment and invoice', 'Archive order for records']
-  },
-  completed: {
-    title: 'Order Successfully Completed',
-    steps: ['Generate invoice and update financial records', 'Update vendor performance metrics', 'Archive order for future reference']
+    title: 'Delivered — Archive when done',
+    steps: ['Confirm customer has received the order', 'Use the Archive button below to store this order for future reference']
   },
   cancelled: {
     title: 'Handle Cancellation',
@@ -2330,33 +2234,33 @@ const NEXT_ACTIONS = {
   }
 };
 
-function populateOrderFilterDropdowns() {
-  const custSel = document.getElementById('orderCustomerFilter');
-  const vendSel = document.getElementById('orderVendorFilter');
-  if (!custSel || !vendSel) return;
-  const prevCust = custSel.value, prevVend = vendSel.value;
-  const customers = [...new Set(state.orders.map(o => o.customer).filter(Boolean))].sort();
-  const vendors = [...new Set(state.orders.map(o => state.vendors.find(v => v.id === o.vendorId)?.name).filter(Boolean))].sort();
-  custSel.innerHTML = '<option value="">All Customers</option>' + customers.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
-  vendSel.innerHTML = '<option value="">All Vendors</option>' + vendors.map(v => `<option value="${escHtml(v)}">${escHtml(v)}</option>`).join('');
-  custSel.value = prevCust;
-  vendSel.value = prevVend;
+const PRIORITY_RANK = { urgent: 0, high: 1, normal: 2 };
+
+function sortOrders(arr) {
+  const mode = document.getElementById('orderSortSelect')?.value || 'id-asc';
+  const sorted = [...arr];
+  if (mode === 'priority-asc') {
+    sorted.sort((a, b) => {
+      const diff = (PRIORITY_RANK[a.priority] ?? 2) - (PRIORITY_RANK[b.priority] ?? 2);
+      return diff !== 0 ? diff : a.id.localeCompare(b.id);
+    });
+  } else if (mode === 'date-asc') {
+    sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
+  } else if (mode === 'date-desc') {
+    sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+  } else {
+    sorted.sort((a, b) => a.id.localeCompare(b.id));
+  }
+  return sorted;
 }
 
 function renderOrders() {
-  populateOrderFilterDropdowns();
   const q = (document.getElementById('orderSearch')?.value || '').toLowerCase();
-  const custFilter = (document.getElementById('orderCustomerFilter')?.value || '').toLowerCase();
-  const vendFilter = (document.getElementById('orderVendorFilter')?.value || '').toLowerCase();
-  let filtered = state.orders.filter(o => {
-    const vendor = state.vendors.find(v => v.id === o.vendorId);
-    const matchesQ = !q || o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || vendor?.name.toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q);
-    const matchesCust = !custFilter || (o.customer||'').toLowerCase() === custFilter;
-    const matchesVend = !vendFilter || vendor?.name.toLowerCase() === vendFilter;
-    return matchesQ && matchesCust && matchesVend;
-  });
+  let filtered = state.orders.filter(o =>
+    !o.archived && (!q || o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q))
+  );
   if (currentOrderFilter !== 'all') filtered = filtered.filter(o => o.status === currentOrderFilter);
-  filtered = filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+  filtered = sortOrders(filtered);
   const el = document.getElementById('orderList');
   if (!filtered.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">No Orders Found</div><div class="empty-sub">${currentOrderFilter !== 'all' ? 'No ' + currentOrderFilter + ' orders' : 'Create your first order'}</div></div>`;
@@ -2365,7 +2269,6 @@ function renderOrders() {
   el.innerHTML = filtered.map(o => {
     const vendor = state.vendors.find(v => v.id === o.vendorId);
     const isVC       = o.productId === 'vc-custom';
-    const isPVC      = o.productId === 'pvc-sunboard';
     const isSticker  = o.productId === 'sticker-custom';
     const isFlex     = o.productId === 'flex-banner';
     const isVinyl    = o.productId === 'vinyl-print';
@@ -2396,8 +2299,12 @@ function renderOrders() {
           ${cancelBtn}
         </div>`;
       } else if (o.status === 'delivered') {
-        actionBtns = `<div style="margin-top:10px">
-          <button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">💰 Mark as Paid</button>
+        const paidBtn = o.paid
+          ? `<button class="btn btn-full btn-sm" style="background:#dcfce7;color:#15803d;cursor:default" disabled>✅ Paid</button>`
+          : `<button class="btn btn-success btn-full btn-sm" onclick="event.stopPropagation();markOrderPaid('${o.id}')">💰 Mark as Paid</button>`;
+        actionBtns = `<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+          ${paidBtn}
+          <button class="btn btn-primary btn-full btn-sm" onclick="event.stopPropagation();archiveOrder('${o.id}')">📦 Archive Order</button>
         </div>`;
       }
     }
@@ -2416,7 +2323,7 @@ function renderOrders() {
           const lineColor = isDone ? 'var(--success)' : 'var(--border)';
           return (i > 0 ? `<div style="flex:1;height:2px;background:${lineColor};min-width:8px;margin-bottom:14px"></div>` : '') +
             `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">
-              <div style="width:22px;height:22px;border-radius:50%;background:${dotBg};color:${dotColor};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${isDone ? '✓' : step.icon}</div>
+              <div style="width:22px;height:22px;border-radius:50%;background:${dotBg};color:${dotColor};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${(isDone || isCurrent) ? '✓' : step.icon}</div>
               <div style="font-size:9px;color:${labelColor};font-weight:${labelWeight};text-align:center;line-height:1.2;white-space:nowrap">${step.label}</div>
             </div>`;
         }).join('') + `</div>`;
@@ -2431,7 +2338,7 @@ function renderOrders() {
         </div>
       </div>
       <div class="order-product">
-        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : isPVC ? '🟦' : isSticker ? '🏷️' : isFlex ? '🖼️' : isVinyl ? '🎨' : isCustom ? (o.customDetails?.icon||'📦') : '📦'}</div>
+        <div class="order-product-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">${isVC ? '📇' : isSticker ? '🏷️' : isFlex ? '🖼️' : isVinyl ? '🎨' : isCustom ? (o.customDetails?.icon||'📦') : '📦'}</div>
         <div class="order-product-info">
           <div class="name">${escHtml(getOrderItemName(o))}</div>
           <div class="detail">Qty: ${o.qty} · ₹${Number(o.total).toLocaleString('en-IN')}</div>
@@ -2462,16 +2369,18 @@ function viewOrderDetail(oid) {
   if (!o) return;
   const vendor = state.vendors.find(v => v.id === o.vendorId);
   const na = NEXT_ACTIONS[o.status];
-  const wfIdx = ORDER_WORKFLOW.findIndex(s => s.key === o.status);
+  const displayWorkflow = [...ORDER_WORKFLOW, { key: 'paid', label: 'Paid', icon: '💰' }];
+  const baseIdx = ORDER_WORKFLOW.findIndex(s => s.key === o.status);
+  const wfIdx = o.paid ? displayWorkflow.length : baseIdx;
   const priorityColor = o.priority==='urgent'?'var(--danger)':o.priority==='high'?'var(--warning)':'var(--success)';
 
   // Build workflow steps
-  const wfHtml = `<div class="workflow">` + ORDER_WORKFLOW.map((step, i) => {
+  const wfHtml = `<div class="workflow">` + displayWorkflow.map((step, i) => {
     const isDone = i < wfIdx;
     const isCurrent = i === wfIdx;
     const isCanc = o.status === 'cancelled';
     const cls = isCanc ? 'future' : isDone ? 'done' : isCurrent ? 'current' : 'future';
-    const icon = isDone ? '✓' : step.icon;
+    const icon = (isDone || isCurrent) ? '✓' : step.icon;
     const lineClass = (!isCanc && isDone) ? 'done' : '';
     return (i > 0 ? `<div class="wf-line ${lineClass}"></div>` : '') +
       `<div class="wf-step">
@@ -2493,7 +2402,10 @@ function viewOrderDetail(oid) {
     } else if (o.status === 'shipped') {
       actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','delivered')">✅ Mark as Delivered</button>${cancelFull}`;
     } else if (o.status === 'delivered') {
-      actionBtns = `<button class="btn btn-success btn-full" onclick="updateOrderStatus('${o.id}','completed')">💰 Mark as Paid</button>`;
+      const paidBtn = o.paid
+        ? `<button class="btn btn-full" style="background:#dcfce7;color:#15803d;cursor:default" disabled>✅ Paid</button>`
+        : `<button class="btn btn-success btn-full" onclick="markOrderPaid('${o.id}')">💰 Mark as Paid</button>`;
+      actionBtns = `<div style="display:flex;flex-direction:column;gap:8px">${paidBtn}<button class="btn btn-primary btn-full" onclick="archiveOrder('${o.id}')">📦 Archive Order</button></div>`;
     }
   }
 
@@ -2622,37 +2534,6 @@ function viewOrderDetail(oid) {
     </div>` : ''}
     ` : ''}
 
-    ${o.pvcDetails ? `
-    <div class="detail-section">
-      <div class="detail-label">Board Specifications</div>
-      <table class="spec-table" style="margin-top:6px">
-        <tr><td>Thickness</td><td>${escHtml(o.pvcDetails.thickness)}</td></tr>
-        <tr><td>Size</td><td>${o.pvcDetails.width} ft × ${o.pvcDetails.height} ft</td></tr>
-        <tr><td>Area</td><td>${(o.pvcDetails.width * o.pvcDetails.height).toFixed(2)} sq ft</td></tr>
-        <tr><td>Lamination</td><td>${o.pvcDetails.lamination === 'with' ? 'With Lamination' : 'Without Lamination'}</td></tr>
-        <tr><td>Base Price</td><td style="color:var(--primary);font-weight:700">₹${o.pvcDetails.pricePerSqFt} / piece</td></tr>
-      </table>
-    </div>
-    ${o.pvcDetails.designFiles?.length ? `
-    <div class="detail-section">
-      <div class="detail-label">Design Files (${o.pvcDetails.designFiles.length})</div>
-      ${o.pvcDetails.designFiles.map(f => {
-        const isImg = f.type?.startsWith('image/');
-        const thumb = isImg && f.url
-          ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
-          : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg ? 'var(--primary-light)' : '#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg ? '🖼️' : '📄'}</div>`;
-        return `<a href="${escHtml(f.url || '#')}" target="_blank" rel="noopener"
-                   style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
-                  ${thumb}
-                  <div style="flex:1;min-width:0">
-                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image' : 'PDF'} · Tap to view / download</div>
-                  </div>
-                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
-                </a>`;
-      }).join('')}
-    </div>` : ''}
-    ` : ''}
 
     ${o.vinylDetails ? `
     <div class="detail-section">
@@ -3353,7 +3234,6 @@ function printOrder(oid) {
   if (!o) return;
   const vendor  = state.vendors.find(v => v.id === o.vendorId);
   const isVC    = o.productId === 'vc-custom';
-  const isPVC   = o.productId === 'pvc-sunboard';
   const esc     = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const fmtDate = d => { const [y,m,day] = d.split('-').map(Number); return new Date(y,m-1,day).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); };
   const fmtMoney = n => '₹' + Number(n||0).toLocaleString('en-IN');
@@ -3366,16 +3246,6 @@ function printOrder(oid) {
       <tr><td>Paper</td><td>${esc(o.vcDetails.paper)}</td></tr>
       <tr><td>Print Sides</td><td>${esc(o.vcDetails.printSides)}</td></tr>
       ${o.vcDetails.addons?.length ? `<tr><td>Add-ons</td><td>${o.vcDetails.addons.map(esc).join(', ')}</td></tr>` : ''}
-    </table>` : '';
-
-  const pvcSpecsHtml = (isPVC && o.pvcDetails) ? `
-    <h3 class="sec-title">Board Specifications</h3>
-    <table class="spec-tbl">
-      <tr><td>Thickness</td><td>${esc(o.pvcDetails.thickness)}</td></tr>
-      <tr><td>Size</td><td>${o.pvcDetails.width} ft × ${o.pvcDetails.height} ft</td></tr>
-      <tr><td>Area</td><td>${(o.pvcDetails.width * o.pvcDetails.height).toFixed(2)} sq ft</td></tr>
-      <tr><td>Lamination</td><td>${o.pvcDetails.lamination === 'with' ? 'With Lamination' : 'Without Lamination'}</td></tr>
-      <tr><td>Price / piece</td><td>₹${o.pvcDetails.pricePerSqFt}</td></tr>
     </table>` : '';
 
   const vinylSpecsHtml = (o.vinylDetails) ? `
@@ -3412,7 +3282,7 @@ function printOrder(oid) {
       ${o.customDetails.fieldValues.map(fv=>`<tr><td>${esc(fv.label)}</td><td>${esc(fv.value)}${fv.unit?' '+esc(fv.unit):''}</td></tr>`).join('')}
     </table>` : '';
 
-  const _designFiles = o.vcDetails?.designFiles || o.pvcDetails?.designFiles || o.stickerDetails?.designFiles || o.flexDetails?.designFiles || o.vinylDetails?.designFiles || o.customDetails?.designFiles || [];
+  const _designFiles = o.vcDetails?.designFiles || o.stickerDetails?.designFiles || o.flexDetails?.designFiles || o.vinylDetails?.designFiles || o.customDetails?.designFiles || [];
   const designFilesHtml = _designFiles.length ? `
     <h3 class="sec-title">Design Files</h3>
     ${_designFiles.map(f => `
@@ -3517,7 +3387,6 @@ function printOrder(oid) {
   ${o.notes ? `<h3 class="sec-title">Notes</h3><p style="font-size:13px">${esc(o.notes)}</p>` : ''}
 
   ${vcSpecsHtml}
-  ${pvcSpecsHtml}
   ${flexSpecsHtml}
   ${vinylSpecsHtml}
   ${stickerSpecsHtml}
@@ -3569,7 +3438,6 @@ function isReadOnly() { return currentUser?.role === 'Viewer'; }
 
 function getOrderItemName(o) {
   if (o.productId === 'vc-custom')      return 'Visiting Card';
-  if (o.productId === 'pvc-sunboard')   return 'PVC Sunboard';
   if (o.productId === 'sticker-custom') return 'Custom Sticker';
   if (o.productId === 'flex-banner')    return 'Flex/Banner';
   if (o.productId === 'vinyl-print')   return 'Custom Vinyl';
@@ -4096,268 +3964,6 @@ async function saveVCOrder() {
   showToast('Visiting card order created: ' + order.id);
   addNotification('New Visiting Card Order', `${order.id} for ${escHtml(cust?.name||'')} — ${qty} cards.`, 'info');
   setTimeout(() => viewOrderDetail(order.id), 300);
-}
-
-// ===================== PVC SUNBOARD =====================
-let pvcPricePerPiece = 0;
-let pvcDesignFiles   = [];
-
-function openPVCOrderModal() {
-  pvcPricePerPiece = 0;
-  pvcDesignFiles   = [];
-  document.getElementById('pvcWidth').value   = '';
-  document.getElementById('pvcHeight').value  = '';
-  document.getElementById('pvcQty').value     = '1';
-  document.getElementById('pvcTotal').value   = '';
-  document.getElementById('pvcNotes').value   = '';
-  document.getElementById('pvcPriority').value = 'normal';
-  document.getElementById('pvcCalcResult').style.display = 'none';
-  document.getElementById('pvcAddress').innerHTML = '<option value="">-- Select Customer First --</option>';
-  document.getElementById('pvcAddAddrBtn').style.display = 'none';
-  document.getElementById('pvcDesignPreview').innerHTML = '';
-  document.getElementById('pvcDesignDropArea').style.borderColor = 'var(--border)';
-  document.getElementById('pvcLamNo').checked = true;
-
-  renderPVCThicknessSelect();
-
-  const pvcVendorSel = document.getElementById('pvcVendor');
-  pvcVendorSel.innerHTML = '<option value="">-- Select Vendor --</option>' +
-    state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
-
-  const pvcCustSel = document.getElementById('pvcCustomer');
-  pvcCustSel.innerHTML = '<option value="">-- Select Customer --</option>' +
-    (state.customers || []).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
-
-  openModal('pvcOrderModal');
-}
-
-function renderPVCThicknessSelect() {
-  const sel = document.getElementById('pvcThickness');
-  const thicknesses = state.pvcThicknesses || [];
-  sel.innerHTML = '<option value="">-- Select Thickness --</option>' +
-    thicknesses.map(t => `<option value="${t.id}">${escHtml(t.name)}</option>`).join('');
-  calcPVCCost();
-}
-
-function onPVCCustomerChange() {
-  const custId = document.getElementById('pvcCustomer').value;
-  const addrSel = document.getElementById('pvcAddress');
-  const addBtn  = document.getElementById('pvcAddAddrBtn');
-  if (!custId) {
-    addrSel.innerHTML = '<option value="">-- Select Customer First --</option>';
-    addBtn.style.display = 'none';
-    return;
-  }
-  const cust = (state.customers || []).find(c => c.id === custId);
-  addrSel.innerHTML = '<option value="">-- Select Address --</option>' +
-    (cust?.addresses || []).map(a =>
-      `<option value="${a.id}">${escHtml(a.label)}: ${escHtml(a.text)}</option>`
-    ).join('');
-  addBtn.style.display = '';
-}
-
-function calcPVCCost() {
-  const thicknessId = document.getElementById('pvcThickness').value;
-  const thickness   = (state.pvcThicknesses || []).find(t => t.id === thicknessId);
-  const w  = parseFloat(document.getElementById('pvcWidth').value)  || 0;
-  const h  = parseFloat(document.getElementById('pvcHeight').value) || 0;
-  const lam = document.querySelector('input[name="pvcLam"]:checked')?.value || 'without';
-  const resultEl = document.getElementById('pvcCalcResult');
-
-  // Update price labels on the radio buttons
-  document.getElementById('pvcPriceNoLam').textContent   = thickness ? `₹${thickness.priceWithout} / piece` : '₹— / piece';
-  document.getElementById('pvcPriceWithLam').textContent = thickness ? `₹${thickness.priceWith ?? 0} / piece` : '₹— / piece';
-
-  // Highlight selected lamination option
-  document.getElementById('pvcLamNoLabel').style.borderColor  = lam === 'without' ? 'var(--primary)' : 'var(--border)';
-  document.getElementById('pvcLamYesLabel').style.borderColor = lam === 'with'    ? 'var(--primary)' : 'var(--border)';
-
-  if (thickness && w > 0 && h > 0) {
-    const area     = w * h;
-    pvcPricePerPiece = lam === 'with' ? (thickness.priceWith ?? 0) : thickness.priceWithout;
-    document.getElementById('pvcArea').textContent          = area.toFixed(2) + ' sq ft';
-    document.getElementById('pvcRateDisplay').textContent   = pvcPricePerPiece.toFixed(2);
-    document.getElementById('pvcPricePerPiece').textContent = pvcPricePerPiece.toFixed(2);
-    resultEl.style.display = 'block';
-    calcPVCTotal();
-  } else {
-    pvcPricePerPiece = 0;
-    resultEl.style.display = 'none';
-    document.getElementById('pvcTotal').value = '';
-  }
-}
-
-function calcPVCTotal() {
-  const qty = parseInt(document.getElementById('pvcQty').value) || 0;
-  document.getElementById('pvcTotal').value = (pvcPricePerPiece > 0 && qty > 0)
-    ? '₹' + (pvcPricePerPiece * qty).toFixed(2)
-    : '';
-}
-
-function handlePVCDesignDrop(e) {
-  e.preventDefault();
-  document.getElementById('pvcDesignDropArea').style.borderColor = 'var(--border)';
-  handlePVCDesignFiles(e.dataTransfer.files);
-}
-
-function handlePVCDesignFiles(files) {
-  const MAX = 5 * 1024 * 1024;
-  Array.from(files).forEach(f => {
-    if (f.size > MAX) { showToast(`${f.name} is too large (max 5 MB)`); return; }
-    if (pvcDesignFiles.find(x => x.name === f.name && x.size === f.size)) return;
-    pvcDesignFiles.push(f);
-  });
-  const preview = document.getElementById('pvcDesignPreview');
-  preview.innerHTML = pvcDesignFiles.map((f, i) =>
-    `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8f9fa;border-radius:6px;margin-bottom:4px">
-       <span style="font-size:16px">${f.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
-       <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span>
-       <span style="font-size:11px;color:var(--text-muted)">${(f.size/1024).toFixed(1)} KB</span>
-       <button onclick="pvcDesignFiles.splice(${i},1);handlePVCDesignFiles([])" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:14px;padding:0">✕</button>
-     </div>`
-  ).join('');
-}
-
-async function uploadPVCDesignFiles(orderId) {
-  if (!pvcDesignFiles.length) return [];
-  const results = [];
-  for (const f of pvcDesignFiles) {
-    const fd = new FormData();
-    fd.append('file', f);
-    fd.append('upload_preset', CLOUDINARY_PRESET);
-    fd.append('folder', `mis-orders/${orderId}`);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, { method:'POST', body:fd });
-    const data = await res.json();
-    results.push({ name:f.name, size:f.size, type:f.type, url:data.secure_url || '' });
-  }
-  return results;
-}
-
-async function savePVCOrder() {
-  const custId = document.getElementById('pvcCustomer').value;
-  const addrId = document.getElementById('pvcAddress').value;
-  const vid    = document.getElementById('pvcVendor').value;
-  const qty    = parseInt(document.getElementById('pvcQty').value) || 0;
-  const thicknessId = document.getElementById('pvcThickness').value;
-  const thickness   = (state.pvcThicknesses || []).find(t => t.id === thicknessId);
-  const w  = parseFloat(document.getElementById('pvcWidth').value)  || 0;
-  const h  = parseFloat(document.getElementById('pvcHeight').value) || 0;
-  const lam = document.querySelector('input[name="pvcLam"]:checked')?.value || 'without';
-
-  if (!custId)    { showToast('Please select a customer');            return; }
-  if (!addrId)    { showToast('Please select a delivery address');    return; }
-  if (!vid)       { showToast('Please select a vendor');              return; }
-  if (!thickness) { showToast('Please select a thickness');           return; }
-  if (w <= 0 || h <= 0) { showToast('Please enter valid dimensions'); return; }
-  if (qty < 1)    { showToast('Please enter a valid quantity');       return; }
-
-  const cust = (state.customers || []).find(c => c.id === custId);
-  const addr = (cust?.addresses || []).find(a => a.id === addrId);
-  const rate = lam === 'with' ? (thickness.priceWith ?? 0) : thickness.priceWithout;
-
-  const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-','')) || 0), 0);
-  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
-
-  const saveBtn = document.getElementById('pvcSaveBtn');
-  saveBtn.disabled = true;
-  saveBtn.textContent = pvcDesignFiles.length ? `Uploading ${pvcDesignFiles.length} file(s)…` : 'Creating order…';
-
-  let designFiles = [];
-  try {
-    designFiles = await uploadPVCDesignFiles(orderId);
-  } catch(e) {
-    showToast('File upload failed — order saved without design files');
-  }
-
-  const order = {
-    id:        orderId,
-    productId: 'pvc-sunboard',
-    vendorId:  vid,
-    qty,
-    total:     Math.round(pvcPricePerPiece * qty * 100) / 100,
-    customer:  cust?.name || '',
-    address:   addr ? `${addr.label}: ${addr.text}` : '',
-    priority:  document.getElementById('pvcPriority').value,
-    notes:     document.getElementById('pvcNotes').value.trim(),
-    status:    'pending',
-    date:      new Date().toISOString().split('T')[0],
-    statusHistory: [{ status: 'pending', ts: Date.now() }],
-    pvcDetails: {
-      thickness:  thickness.name,
-      width:      w,
-      height:     h,
-      lamination: lam,
-      pricePerSqFt: rate,
-      designFiles
-    }
-  };
-
-  saveBtn.disabled = false;
-  saveBtn.textContent = 'Create Order';
-  pvcDesignFiles = [];
-
-  state.orders.push(order);
-  save();
-  closeModal('pvcOrderModal');
-  renderOrders();
-  renderDashboard();
-  showToast('PVC Sunboard order created: ' + order.id);
-  addNotification('New PVC Sunboard Order', `${order.id} for ${escHtml(cust?.name||'')} — ${qty} pcs.`, 'info');
-  setTimeout(() => viewOrderDetail(order.id), 300);
-}
-
-// PVC Settings
-function openPVCSettingsModal() {
-  renderPVCThicknessList();
-  document.getElementById('newPVCThicknessName').value  = '';
-  document.getElementById('newPVCPriceWithout').value   = '';
-  document.getElementById('newPVCPriceWith').value      = '';
-  openModal('pvcSettingsModal');
-}
-
-function renderPVCThicknessList() {
-  const list = document.getElementById('pvcThicknessList');
-  const thicknesses = state.pvcThicknesses || [];
-  if (!thicknesses.length) {
-    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;font-size:13px">No thickness options yet</div>';
-    return;
-  }
-  list.innerHTML = thicknesses.map(t => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8f9fa;border-radius:6px;margin-bottom:6px">
-      <div style="flex:1">
-        <div style="font-weight:700;font-size:13px">${escHtml(t.name)}</div>
-        <div style="font-size:11px;color:var(--text-muted)">
-          Without Lam: ₹${t.priceWithout}/piece &nbsp;·&nbsp; With Lam: ₹${t.priceWith ?? t.laminationPrice ?? 0}/piece
-        </div>
-      </div>
-      <button onclick="deletePVCThickness('${t.id}')" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:15px;padding:4px" title="Delete">🗑️</button>
-    </div>`).join('');
-}
-
-function savePVCThickness() {
-  const name    = document.getElementById('newPVCThicknessName').value.trim();
-  const without = parseFloat(document.getElementById('newPVCPriceWithout').value);
-  const withLam = parseFloat(document.getElementById('newPVCPriceWith').value);
-  if (!name)          { showToast('Enter a thickness name');                    return; }
-  if (isNaN(without) || without <= 0) { showToast('Enter a valid price without lamination'); return; }
-  if (isNaN(withLam) || withLam <= 0) { showToast('Enter a valid price with lamination');    return; }
-  state.pvcThicknesses = state.pvcThicknesses || [];
-  state.pvcThicknesses.push({ id: 'pvct' + Date.now(), name, priceWithout: without, priceWith: withLam });
-  save();
-  document.getElementById('newPVCThicknessName').value = '';
-  document.getElementById('newPVCPriceWithout').value  = '';
-  document.getElementById('newPVCPriceWith').value     = '';
-  renderPVCThicknessList();
-  renderPVCThicknessSelect();
-  showToast('Thickness option added');
-}
-
-function deletePVCThickness(id) {
-  state.pvcThicknesses = (state.pvcThicknesses || []).filter(t => t.id !== id);
-  save();
-  renderPVCThicknessList();
-  renderPVCThicknessSelect();
-  showToast('Thickness option removed');
 }
 
 // ===================== CUSTOM VINYL PRINTS =====================
@@ -5297,9 +4903,6 @@ function renderOrderTypeStrip() {
     <button class="order-type-btn" onclick="openVCOrderModal()">
       <span class="otb-icon">📇</span><span class="otb-label">Visiting Card</span>
     </button>
-    <button class="order-type-btn" onclick="openPVCOrderModal()">
-      <span class="otb-icon">🟦</span><span class="otb-label">PVC Sunboard</span>
-    </button>
     <button class="order-type-btn" onclick="openStickerOrderModal()">
       <span class="otb-icon">🏷️</span><span class="otb-label">Sticker</span>
     </button>
@@ -5754,7 +5357,7 @@ async function saveCustomOrder(typeId) {
 // ===================== EDIT ORDER =====================
 let editOrderUnitCost = 0;
 
-const SPECIALTY_PRODUCT_IDS = ['vc-custom','pvc-sunboard','sticker-custom','flex-banner','vinyl-print'];
+const SPECIALTY_PRODUCT_IDS = ['vc-custom','sticker-custom','flex-banner','vinyl-print'];
 
 function openEditOrderModal(oid) {
   const o = state.orders.find(x => x.id === oid);
@@ -5793,7 +5396,6 @@ function openEditOrderModal(oid) {
       o.stickerDetails?.costPerSticker ??
       o.flexDetails?.costPerPiece   ??
       o.vinylDetails?.costPerPiece  ??
-      o.pvcDetails?.pricePerSqFt    ??
       (o.qty > 0 ? o.total / o.qty  : 0);
 
     document.getElementById('editQtySpecialty').value = o.qty || 1;
