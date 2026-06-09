@@ -853,6 +853,19 @@ html { -webkit-text-size-adjust: 100%; }
     <div id="archiveList"></div>
   </div>
 
+  <!-- CUSTOMERS -->
+  <div class="section" id="sec-customers">
+    <div class="section-header">
+      <div class="section-title">Customers</div>
+      <button class="btn btn-primary btn-sm viewer-hide" onclick="openCustomerModal()">+ Add</button>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Search customers..." id="customerSearch" oninput="renderCustomers()">
+    </div>
+    <div id="customerList"></div>
+  </div>
+
 </div>
 
 <!-- BOTTOM NAV -->
@@ -862,6 +875,9 @@ html { -webkit-text-size-adjust: 100%; }
   </button>
   <button class="nav-item" onclick="switchTab('orders',this)">
     <span class="nav-icon">🛒</span>Orders
+  </button>
+  <button class="nav-item" onclick="switchTab('customers',this)">
+    <span class="nav-icon">👥</span>Customers
   </button>
   <button class="nav-item" onclick="switchTab('vendors',this)">
     <span class="nav-icon">🏢</span>Vendors
@@ -1810,6 +1826,10 @@ html { -webkit-text-size-adjust: 100%; }
       <input type="text" class="form-control" id="custName" placeholder="e.g. Raj Sharma">
     </div>
     <div class="form-group">
+      <label class="form-label">Company / Business Name</label>
+      <input type="text" class="form-control" id="custCompany" placeholder="e.g. Sharma Enterprises">
+    </div>
+    <div class="form-group">
       <label class="form-label">Addresses</label>
       <div id="custAddrList"></div>
       <button class="btn btn-ghost btn-sm" onclick="addCustAddrRow()" style="margin-top:6px">+ Add Address</button>
@@ -1818,6 +1838,14 @@ html { -webkit-text-size-adjust: 100%; }
       <button class="btn btn-ghost btn-full" onclick="closeModal('customerModal')">Cancel</button>
       <button class="btn btn-primary btn-full" onclick="saveCustomer()">Save Customer</button>
     </div>
+  </div>
+</div>
+
+<!-- CUSTOMER DETAIL MODAL -->
+<div class="modal-overlay" id="customerDetailModal">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div id="customerDetailContent"></div>
   </div>
 </div>
 
@@ -1987,6 +2015,7 @@ function startRealtimeSync() {
     renderVendors();
     renderReports();
     renderArchive();
+    renderCustomers();
     renderNotifications();
     updateNotifBadge();
   }, err => console.error('Sync error:', err));
@@ -2083,12 +2112,13 @@ function switchTab(tab, btn) {
   if (btn) btn.classList.add('active');
   else {
     const navs = document.querySelectorAll('.nav-item');
-    const map = ['dashboard','orders','vendors','reports','archive'];
+    const map = ['dashboard','orders','customers','vendors','reports','archive'];
     const idx = map.indexOf(tab);
     if (idx !== -1) navs[idx].classList.add('active');
   }
   if (tab === 'dashboard') renderDashboard();
   if (tab === 'orders') { renderOrderTypeStrip(); renderOrders(); }
+  if (tab === 'customers') renderCustomers();
   if (tab === 'vendors') renderVendors();
   if (tab === 'reports') renderReports();
   if (tab === 'archive') renderArchive();
@@ -2513,7 +2543,7 @@ function viewOrderDetail(oid) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div>
         <div class="detail-label">Customer</div>
-        <div class="detail-value">${o.customer||'—'}</div>
+        <div class="detail-value">${o.customer||'—'}${(()=>{ const c=(state.customers||[]).find(x=>x.name===o.customer); return c?.company ? `<div style="font-size:11px;color:var(--text-muted);margin-top:1px">${escHtml(c.company)}</div>` : ''; })()}</div>
       </div>
       <div>
         <div class="detail-label">Quantity</div>
@@ -2745,7 +2775,7 @@ function calcOrderTotal() {
   const unitPrice = parseFloat(document.getElementById('oUnitPrice').value) || 0;
   const qty = parseInt(document.getElementById('oQty').value) || 0;
   document.getElementById('oTotal').value = (unitPrice > 0 && qty > 0)
-    ? '₹' + (unitPrice * qty).toLocaleString('en-IN')
+    ? '₹' + (Math.round(unitPrice * qty * 100) / 100).toLocaleString('en-IN')
     : '';
 }
 
@@ -2780,7 +2810,7 @@ function saveOrder() {
   const order = {
     id: 'ORD-' + String(lastNum + 1).padStart(3, '0'),
     item, unitPrice, vendorId: vid, qty,
-    total: unitPrice * qty,
+    total: Math.round(unitPrice * qty * 100) / 100,
     customer, address, priority, notes,
     status: 'pending',
     date: new Date().toISOString().split('T')[0],
@@ -3328,6 +3358,29 @@ function printOrder(oid) {
         ${f.url ? `<div class="design-url">${esc(f.url)}</div>` : ''}
       </div>`).join('')}` : '';
 
+  // Payment detail values
+  const unitCost = o.vcDetails?.costPerCard
+    || o.vinylDetails?.costPerPiece
+    || o.flexDetails?.costPerPiece
+    || o.stickerDetails?.costPerSticker
+    || o.unitPrice
+    || 0;
+  const unitLabel = o.productId === 'vc-custom'      ? 'Cost per card'
+                  : o.productId === 'sticker-custom'  ? 'Cost per sticker'
+                  : o.productId === 'flex-banner'      ? 'Cost per piece'
+                  : o.productId === 'vinyl-print'      ? 'Cost per piece'
+                  : 'Unit price';
+  const qtyLabel  = o.productId === 'vc-custom'      ? 'Number of cards'
+                  : o.productId === 'sticker-custom'  ? 'Number of stickers'
+                  : 'Quantity';
+  const isPaid    = !!o.paid;
+  const payStatus = isPaid
+    ? `<span style="color:#10b981;font-weight:700">✔ Paid</span>`
+    : `<span style="color:#ef4444;font-weight:700">✘ Unpaid</span>`;
+  const stampHtml = isPaid
+    ? `<span class="paid-stamp">PAID</span>`
+    : `<span class="unpaid-stamp">UNPAID</span>`;
+
   const historyHtml = (o.statusHistory||[]).map(h => {
     const s = typeof h==='string' ? h : h.status;
     const ts = h && typeof h==='object' ? h.ts : null;
@@ -3385,6 +3438,20 @@ function printOrder(oid) {
   .design-row { padding: 7px 10px; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; border: 1px solid #e2e8f0; }
   .design-url { font-size: 10px; color: #1a56db; word-break: break-all; margin-top: 3px; }
 
+  /* PAYMENT BOX */
+  .payment-box { border: 2px solid #1a56db; border-radius: 8px; overflow: hidden; margin: 18px 0; }
+  .payment-box .pay-header { background: #1a56db; color: #fff; padding: 8px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .payment-box .pay-body { padding: 12px 14px; }
+  .payment-box .pay-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+  .payment-box .pay-row:last-child { border-bottom: none; }
+  .payment-box .pay-row .pay-lbl { color: #64748b; }
+  .payment-box .pay-row .pay-val { font-weight: 600; }
+  .payment-box .pay-total-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #eff6ff; border-top: 2px solid #1a56db; }
+  .payment-box .pay-total-row .pay-total-lbl { font-size: 13px; font-weight: 700; color: #1e293b; }
+  .payment-box .pay-total-row .pay-total-val { font-size: 22px; font-weight: 800; color: #1a56db; }
+  .paid-stamp { display: inline-block; border: 3px solid #10b981; color: #10b981; border-radius: 6px; padding: 3px 12px; font-size: 15px; font-weight: 800; letter-spacing: 2px; transform: rotate(-4deg); margin-left: 12px; vertical-align: middle; }
+  .unpaid-stamp { display: inline-block; border: 3px solid #ef4444; color: #ef4444; border-radius: 6px; padding: 3px 12px; font-size: 15px; font-weight: 800; letter-spacing: 2px; transform: rotate(-4deg); margin-left: 12px; vertical-align: middle; }
+
   /* FOOTER */
   .page-footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; }
 
@@ -3406,7 +3473,6 @@ function printOrder(oid) {
       <div class="brand">📊 MIS Portal <small>Product & Order Management</small></div>
       <div style="margin-top:8px">
         <span class="badge badge-${o.status}">${o.status.toUpperCase()}</span>
-        <span style="font-size:11px;color:${priorityColors[o.priority]||'#1e293b'};font-weight:700;margin-left:8px">${o.priority.toUpperCase()} PRIORITY</span>
       </div>
     </div>
     <div class="order-meta">
@@ -3418,8 +3484,30 @@ function printOrder(oid) {
   <!-- ORDER SUMMARY -->
   <h3 class="sec-title">Order Summary</h3>
   <div class="grid2">
-    <div class="field"><label>Item / Description</label><div class="val">${esc(o.item || 'Visiting Card')}</div></div>
-    <div class="field"><label>Quantity</label><div class="val">${o.qty} units</div></div>
+    <div class="field"><label>Item / Description</label><div class="val">${esc(getOrderItemName(o))}</div></div>
+    <div class="field"><label>${esc(qtyLabel)}</label><div class="val">${o.qty}</div></div>
+    ${o.customer ? `<div class="field"><label>Customer</label><div class="val">${esc(o.customer)}</div></div>` : ''}
+    ${vendor     ? `<div class="field"><label>Vendor</label><div class="val">${esc(vendor.name)}</div></div>` : ''}
+    ${o.address  ? `<div class="field" style="grid-column:1/-1"><label>Delivery Address</label><div class="val">${esc(o.address)}</div></div>` : ''}
+  </div>
+
+  <!-- PAYMENT DETAILS -->
+  <div class="payment-box">
+    <div class="pay-header">💳 Payment Details ${stampHtml}</div>
+    <div class="pay-body">
+      <div class="pay-row">
+        <span class="pay-lbl">${esc(unitLabel)}</span>
+        <span class="pay-val">${fmtMoney(unitCost)}</span>
+      </div>
+      <div class="pay-row">
+        <span class="pay-lbl">${esc(qtyLabel)}</span>
+        <span class="pay-val">× ${o.qty}</span>
+      </div>
+    </div>
+    <div class="pay-total-row">
+      <span class="pay-total-lbl">Amount to be Paid ${payStatus}</span>
+      <span class="pay-total-val">${fmtMoney(o.total)}</span>
+    </div>
   </div>
 
   ${o.notes ? `<h3 class="sec-title">Notes</h3><p style="font-size:13px">${esc(o.notes)}</p>` : ''}
@@ -3865,7 +3953,7 @@ function populateVCCustomerDropdown(selectId) {
   const sel = document.getElementById('vcCustomer');
   sel.innerHTML = '<option value="">-- Select Customer --</option>' +
     (state.customers || []).map(c =>
-      `<option value="${c.id}" ${c.id === selectId ? 'selected' : ''}>${escHtml(c.name)}</option>`
+      `<option value="${c.id}" ${c.id === selectId ? 'selected' : ''}>${escHtml(c.name)}${c.company ? ' — ' + escHtml(c.company) : ''}</option>`
     ).join('');
   if (selectId) { sel.value = selectId; onVCCustomerChange(); }
 }
@@ -4038,7 +4126,7 @@ function openVinylOrderModal() {
   document.getElementById('vyVendor').innerHTML = '<option value="">-- Select Vendor --</option>' +
     state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
   document.getElementById('vyCustomer').innerHTML = '<option value="">-- Select Customer --</option>' +
-    (state.customers||[]).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+    (state.customers||[]).map(c => `<option value="${c.id}">${escHtml(c.name)}${c.company ? ' — ' + escHtml(c.company) : ''}</option>`).join('');
   openModal('vinylOrderModal');
 }
 
@@ -4339,7 +4427,7 @@ function openFlexOrderModal() {
   document.getElementById('fxVendor').innerHTML = '<option value="">-- Select Vendor --</option>' +
     state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
   document.getElementById('fxCustomer').innerHTML = '<option value="">-- Select Customer --</option>' +
-    (state.customers||[]).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+    (state.customers||[]).map(c => `<option value="${c.id}">${escHtml(c.name)}${c.company ? ' — ' + escHtml(c.company) : ''}</option>`).join('');
 
   openModal('flexOrderModal');
 }
@@ -4686,7 +4774,7 @@ function openStickerOrderModal() {
     state.vendors.map(v => `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
 
   document.getElementById('stCustomer').innerHTML = '<option value="">-- Select Customer --</option>' +
-    (state.customers || []).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+    (state.customers || []).map(c => `<option value="${c.id}">${escHtml(c.name)}${c.company ? ' — ' + escHtml(c.company) : ''}</option>`).join('');
 
   calcStickerCost();
   openModal('stickerOrderModal');
@@ -5201,7 +5289,7 @@ function openCustomOrderModal(typeId) {
   const vendorOpts = state.vendors.map(v =>
     `<option value="${v.id}">🏢 ${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
   const custOpts = (state.customers||[]).map(c =>
-    `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+    `<option value="${c.id}">${escHtml(c.name)}${c.company ? ' — ' + escHtml(c.company) : ''}</option>`).join('');
 
   const customFieldsHtml = (type.fields||[]).map(f => buildCOFFieldHtml(f)).join('');
 
@@ -5704,7 +5792,7 @@ function calcEditTotal() {
 function calcEditTotalSpecialty() {
   const qty = parseInt(document.getElementById('editQtySpecialty').value) || 0;
   document.getElementById('editTotal').value = (editOrderUnitCost > 0 && qty > 0)
-    ? '₹' + (editOrderUnitCost * qty).toFixed(2) : '';
+    ? '₹' + (Math.round(editOrderUnitCost * qty * 100) / 100).toFixed(2) : '';
 }
 
 function saveEditedOrder() {
@@ -5748,6 +5836,155 @@ function saveEditedOrder() {
   setTimeout(() => viewOrderDetail(editingOrderId), 300);
 }
 
+// ===================== CUSTOMERS SECTION =====================
+function renderCustomers() {
+  const q = (document.getElementById('customerSearch')?.value || '').toLowerCase();
+  const customers = (state.customers || []).filter(c =>
+    !q ||
+    c.name.toLowerCase().includes(q) ||
+    (c.company || '').toLowerCase().includes(q) ||
+    (c.addresses || []).some(a => a.text.toLowerCase().includes(q))
+  );
+  const el = document.getElementById('customerList');
+  if (!el) return;
+  if (!customers.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No Customers Found</div><div class="empty-sub">${q ? 'No customers match your search' : 'Add your first customer'}</div></div>`;
+    return;
+  }
+  el.innerHTML = customers.map(c => {
+    const activeCount   = state.orders.filter(o => o.customer === c.name && !o.archived).length;
+    const archivedCount = state.orders.filter(o => o.customer === c.name &&  o.archived).length;
+    const totalSpend    = state.orders.filter(o => o.customer === c.name).reduce((s, o) => s + (o.total || 0), 0);
+    const outstanding   = state.orders.filter(o => o.customer === c.name && o.status === 'delivered' && !o.paid).reduce((s, o) => s + (o.total || 0), 0);
+    const actionsHtml = isReadOnly() ? '' :
+      `<button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();openCustomerModal('${c.id}')">✏️</button>
+       <button class="btn btn-ghost btn-icon btn-sm" onclick="event.stopPropagation();deleteCustomer('${c.id}')">🗑️</button>`;
+    return `<div class="vendor-item" onclick="viewCustomerDetail('${c.id}')" style="cursor:pointer">
+      <div class="vendor-avatar" style="background:${outstanding > 0 ? '#ef4444' : 'var(--success)'}">${escHtml(c.name[0].toUpperCase())}</div>
+      <div class="vendor-info">
+        <div class="vendor-name">${escHtml(c.name)}</div>
+        ${c.company ? `<div class="vendor-meta" style="color:var(--primary);font-weight:600">${escHtml(c.company)}</div>` : ''}
+        <div class="vendor-meta">${(c.addresses || []).map(a => escHtml(a.label)).join(' · ') || 'No addresses'}</div>
+        <div class="vendor-products">🛒 ${activeCount} active · 📦 ${archivedCount} archived · ₹${Number(totalSpend).toLocaleString('en-IN')} total</div>
+        ${outstanding > 0 ? `<div style="color:#ef4444;font-weight:700;font-size:12px;margin-top:3px">⚠️ Outstanding: ₹${Number(outstanding).toLocaleString('en-IN')}</div>` : ''}
+      </div>
+      <div class="product-actions">${actionsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function deleteCustomer(id) {
+  const hasOrders = state.orders.some(o => {
+    const cust = (state.customers || []).find(c => c.id === id);
+    return cust && o.customer === cust.name;
+  });
+  const msg = hasOrders
+    ? 'This customer has orders linked to their name. Delete anyway?'
+    : 'Delete this customer?';
+  if (!confirm(msg)) return;
+  state.customers = (state.customers || []).filter(c => c.id !== id);
+  save();
+  renderCustomers();
+  showToast('Customer deleted');
+}
+
+function viewCustomerDetail(custId) {
+  const c = (state.customers || []).find(x => x.id === custId);
+  if (!c) return;
+
+  const orders = state.orders.filter(o => o.customer === c.name);
+  const active   = orders.filter(o => !o.archived);
+  const archived = orders.filter(o =>  o.archived);
+  const totalSpend = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const outstanding = orders.filter(o => o.status === 'delivered' && !o.paid).reduce((s, o) => s + (o.total || 0), 0);
+
+  const statusColors = {
+    pending:    { bg:'#fef3c7', color:'#92400e' },
+    approved:   { bg:'#dbeafe', color:'#1e40af' },
+    processing: { bg:'#ede9fe', color:'#5b21b6' },
+    shipped:    { bg:'#d1fae5', color:'#065f46' },
+    delivered:  { bg:'#dcfce7', color:'#14532d' },
+    cancelled:  { bg:'#fee2e2', color:'#7f1d1d' }
+  };
+
+  const orderRow = (o) => {
+    const vendor = state.vendors.find(v => v.id === o.vendorId);
+    const sc = statusColors[o.status] || { bg:'#f1f5f9', color:'#1e293b' };
+    const icon = o.productId === 'vc-custom' ? '📇' : o.productId === 'sticker-custom' ? '🏷️' : o.productId === 'flex-banner' ? '🖼️' : o.productId === 'vinyl-print' ? '🎨' : '📦';
+    return `<div onclick="closeModal('customerDetailModal');setTimeout(()=>viewOrderDetail('${o.id}'),200)"
+               style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border)">
+      <div style="font-size:22px;flex-shrink:0">${icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:13px">${escHtml(o.id)}</span>
+          <span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${sc.bg};color:${sc.color}">${o.status}</span>
+          ${o.priority === 'urgent' ? '<span style="background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700">URGENT</span>' : o.priority === 'high' ? '<span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700">HIGH</span>' : ''}
+        </div>
+        <div style="font-size:12px;color:var(--text);margin-top:2px">${escHtml(getOrderItemName(o))} · Qty: ${o.qty}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:1px">${escHtml(vendor?.name || 'No vendor')} · ${formatDate(o.date)}</div>
+      </div>
+      <div style="font-weight:700;color:var(--primary);font-size:13px;flex-shrink:0">₹${Number(o.total).toLocaleString('en-IN')}</div>
+    </div>`;
+  };
+
+  const editBtn = isReadOnly() ? '' :
+    `<button class="btn btn-outline btn-sm" onclick="closeModal('customerDetailModal');setTimeout(()=>openCustomerModal('${c.id}'),200)">✏️ Edit</button>`;
+
+  document.getElementById('customerDetailContent').innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0">${escHtml(c.name[0].toUpperCase())}</div>
+        <div>
+          <div style="font-size:18px;font-weight:800">${escHtml(c.name)}</div>
+          ${c.company ? `<div style="font-size:13px;color:var(--primary);font-weight:600;margin-top:2px">${escHtml(c.company)}</div>` : ''}
+        </div>
+      </div>
+      <button onclick="closeModal('customerDetailModal')" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);padding:0;line-height:1">&#x2715;</button>
+    </div>
+
+    ${(c.addresses || []).length ? `
+    <div class="detail-section">
+      <div class="detail-label">Addresses</div>
+      ${c.addresses.map(a => `<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase">${escHtml(a.label)}</span><br>${escHtml(a.text)}</div>`).join('')}
+    </div>` : ''}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0">
+      <div style="background:var(--primary-light);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:var(--primary)">${active.length}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-weight:600;text-transform:uppercase">Active</div>
+      </div>
+      <div style="background:#f0fdf4;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:var(--success)">${archived.length}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-weight:600;text-transform:uppercase">Archived</div>
+      </div>
+      <div style="background:#fef3c7;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:14px;font-weight:800;color:#92400e">₹${Number(totalSpend).toLocaleString('en-IN')}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-weight:600;text-transform:uppercase">Total Spend</div>
+      </div>
+      <div style="background:${outstanding > 0 ? '#fee2e2' : '#f1f5f9'};border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:14px;font-weight:800;color:${outstanding > 0 ? '#b91c1c' : 'var(--text-muted)'}">₹${Number(outstanding).toLocaleString('en-IN')}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-weight:600;text-transform:uppercase">Outstanding</div>
+      </div>
+    </div>
+
+    ${active.length ? `
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Active Orders (${active.length})</div>
+    ${active.sort((a,b) => b.id.localeCompare(a.id)).map(orderRow).join('')}` : ''}
+
+    ${archived.length ? `
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">Archived Orders (${archived.length})</div>
+    ${archived.sort((a,b) => b.id.localeCompare(a.id)).map(orderRow).join('')}` : ''}
+
+    ${!orders.length ? `<div class="empty-state" style="padding:24px 0"><div class="empty-icon">🛒</div><div class="empty-title">No Orders Yet</div><div class="empty-sub">No orders have been placed for this customer</div></div>` : ''}
+
+    <div style="display:flex;gap:8px;margin-top:16px">
+      ${editBtn}
+      <button class="btn btn-ghost btn-full" onclick="closeModal('customerDetailModal')">Close</button>
+    </div>`;
+
+  openModal('customerDetailModal');
+}
+
 // ===================== CUSTOMER MANAGEMENT =====================
 function openCustomerModal(id) {
   editingCustomerId = id || null;
@@ -5757,11 +5994,13 @@ function openCustomerModal(id) {
   if (id) {
     const cust = (state.customers || []).find(c => c.id === id);
     if (cust) {
-      document.getElementById('custName').value = cust.name;
+      document.getElementById('custName').value    = cust.name;
+      document.getElementById('custCompany').value = cust.company || '';
       (cust.addresses || []).forEach(a => addCustAddrRow(a.label, a.text, a.id));
     }
   } else {
-    document.getElementById('custName').value = '';
+    document.getElementById('custName').value    = '';
+    document.getElementById('custCompany').value = '';
     addCustAddrRow();
   }
   openModal('customerModal');
@@ -5787,7 +6026,8 @@ function addCustAddrRow(label = '', text = '', addrId = null) {
 }
 
 function saveCustomer() {
-  const name = document.getElementById('custName').value.trim();
+  const name    = document.getElementById('custName').value.trim();
+  const company = document.getElementById('custCompany').value.trim();
   if (!name) { showToast('Customer name is required'); return; }
 
   const addresses = [];
@@ -5804,18 +6044,19 @@ function saveCustomer() {
   let savedId;
   if (editingCustomerId) {
     const idx = state.customers.findIndex(c => c.id === editingCustomerId);
-    state.customers[idx] = { ...state.customers[idx], name, addresses };
+    state.customers[idx] = { ...state.customers[idx], name, company, addresses };
     savedId = editingCustomerId;
     showToast('Customer updated');
   } else {
     savedId = 'cust' + Date.now();
-    state.customers.push({ id: savedId, name, addresses });
+    state.customers.push({ id: savedId, name, company, addresses });
     showToast('Customer added');
   }
 
   save();
   closeModal('customerModal');
   populateVCCustomerDropdown(savedId);
+  renderCustomers();
 }
 
 // ===================== INIT =====================
