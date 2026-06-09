@@ -2048,9 +2048,31 @@ function renderArchive() {
       ${o.customer ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">👤 ${o.customer}</div>` : ''}
       <div style="margin-top:8px;display:flex;gap:8px">
         <button class="btn btn-sm" style="flex:1;background:var(--border);color:var(--text)" onclick="unarchiveOrder('${o.id}')">↩️ Unarchive</button>
+        <button class="btn btn-sm btn-primary" style="flex:1" onclick="repeatOrder('${o.id}')">🔁 Repeat Order</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function repeatOrder(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  const lastNum = state.orders.reduce((max, x) => Math.max(max, parseInt(x.id.replace('ORD-','')) || 0), 0);
+  const newOrder = JSON.parse(JSON.stringify(o));
+  newOrder.id = 'ORD-' + String(lastNum + 1).padStart(3, '0');
+  newOrder.status = 'pending';
+  newOrder.date = new Date().toISOString().split('T')[0];
+  newOrder.statusHistory = [{ status: 'pending', ts: Date.now() }];
+  delete newOrder.archived;
+  delete newOrder.paid;
+  state.orders.push(newOrder);
+  save();
+  renderOrders();
+  renderDashboard();
+  addNotification('New Order Created', `${newOrder.id} repeated from ${o.id} — awaiting admin approval.`, 'info');
+  showToast('Repeat order created: ' + newOrder.id);
+  switchTab('orders', null);
+  setTimeout(() => viewOrderDetail(newOrder.id), 300);
 }
 
 // ===================== NAV =====================
@@ -2736,15 +2758,30 @@ function saveOrder() {
   if (!unitPrice) { showToast('Please enter a unit price');        return; }
   if (!vid)       { showToast('Please select a vendor');           return; }
   if (!qty)       { showToast('Please enter a valid quantity');    return; }
+  const customer = document.getElementById('oCustomer').value.trim();
+  const address  = document.getElementById('oAddress').value.trim();
+  const priority = document.getElementById('oPriority').value;
+  const notes    = document.getElementById('oNotes').value.trim();
+
+  if (editingOrderId) {
+    const o = state.orders.find(x => x.id === editingOrderId);
+    o.item = item; o.unitPrice = unitPrice; o.vendorId = vid; o.qty = qty;
+    o.total = Math.round(unitPrice * qty * 100) / 100;
+    o.customer = customer; o.address = address; o.priority = priority; o.notes = notes;
+    save(); closeModal('orderModal'); renderOrders(); renderDashboard();
+    showToast('Order ' + o.id + ' updated');
+    editingOrderId = null;
+    document.getElementById('orderModalTitle').textContent = 'Create Order';
+    document.querySelector('#orderModal .btn-primary').textContent = 'Create Order';
+    setTimeout(() => viewOrderDetail(o.id), 300);
+    return;
+  }
   const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-','')) || 0), 0);
   const order = {
     id: 'ORD-' + String(lastNum + 1).padStart(3, '0'),
     item, unitPrice, vendorId: vid, qty,
     total: unitPrice * qty,
-    customer: document.getElementById('oCustomer').value.trim(),
-    address: document.getElementById('oAddress').value.trim(),
-    priority: document.getElementById('oPriority').value,
-    notes: document.getElementById('oNotes').value.trim(),
+    customer, address, priority, notes,
     status: 'pending',
     date: new Date().toISOString().split('T')[0],
     statusHistory: [{ status: 'pending', ts: Date.now() }]
@@ -3913,25 +3950,55 @@ async function saveVCOrder() {
     return (state.vcAddons || []).find(a => a.id === el.dataset.id)?.name || '';
   }).filter(Boolean);
 
-  const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-','')) || 0), 0);
-  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
-
   const saveBtn = document.getElementById('vcSaveBtn');
   saveBtn.disabled = true;
-  saveBtn.textContent = vcDesignFiles.length ? `Uploading ${vcDesignFiles.length} file(s)…` : 'Creating order…';
+  saveBtn.textContent = vcDesignFiles.length ? `Uploading ${vcDesignFiles.length} file(s)…` : 'Saving…';
+
+  const targetId = editingOrderId || ('ORD-' + String(state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-','')) || 0), 0) + 1).padStart(3, '0'));
 
   let designFiles = [];
   try {
-    designFiles = await uploadVCDesignFiles(orderId);
+    designFiles = await uploadVCDesignFiles(targetId);
   } catch(e) {
     showToast('File upload failed — order saved without design files');
   }
 
+  const vcDetails = {
+    sheetW:      parseFloat(document.getElementById('vcSheetW').value),
+    sheetH:      parseFloat(document.getElementById('vcSheetH').value),
+    cardW:       parseFloat(document.getElementById('vcCardW').value),
+    cardH:       parseFloat(document.getElementById('vcCardH').value),
+    paper:       paperType?.name || '—',
+    printSides:  vcPrintSidesSel.options[vcPrintSidesSel.selectedIndex].text,
+    addons:      addonLabels,
+    costPerCard: vcCostPerCard,
+    designFiles: designFiles.length ? designFiles : (editingOrderId ? (state.orders.find(x => x.id === editingOrderId)?.vcDetails?.designFiles || []) : [])
+  };
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = 'Create Order';
+  vcDesignFiles = [];
+
+  if (editingOrderId) {
+    const o = state.orders.find(x => x.id === editingOrderId);
+    o.vendorId = vid; o.qty = qty;
+    o.total    = Math.round(vcCostPerCard * qty * 100) / 100;
+    o.customer = cust?.name || '';
+    o.address  = addr ? `${addr.label}: ${addr.text}` : '';
+    o.priority = document.getElementById('vcPriority').value;
+    o.notes    = document.getElementById('vcNotes').value.trim();
+    o.vcDetails = vcDetails;
+    save(); closeModal('vcOrderModal'); renderOrders(); renderDashboard();
+    showToast('Order ' + o.id + ' updated');
+    addNotification('Order Updated', `${o.id} visiting card order updated.`, 'info');
+    editingOrderId = null;
+    document.querySelector('#vcOrderModal .modal-title').textContent = '📇 Visiting Card Order';
+    setTimeout(() => viewOrderDetail(o.id), 300);
+    return;
+  }
+
   const order = {
-    id:        orderId,
-    productId: 'vc-custom',
-    vendorId:  vid,
-    qty,
+    id: targetId, productId: 'vc-custom', vendorId: vid, qty,
     total:     Math.round(vcCostPerCard * qty * 100) / 100,
     customer:  cust?.name || '',
     address:   addr ? `${addr.label}: ${addr.text}` : '',
@@ -3940,23 +4007,8 @@ async function saveVCOrder() {
     status:    'pending',
     date:      new Date().toISOString().split('T')[0],
     statusHistory: [{ status: 'pending', ts: Date.now() }],
-    vcDetails: {
-      sheetW:      parseFloat(document.getElementById('vcSheetW').value),
-      sheetH:      parseFloat(document.getElementById('vcSheetH').value),
-      cardW:       parseFloat(document.getElementById('vcCardW').value),
-      cardH:       parseFloat(document.getElementById('vcCardH').value),
-      paper:       paperType?.name || '—',
-      printSides:  vcPrintSidesSel.options[vcPrintSidesSel.selectedIndex].text,
-      addons:      addonLabels,
-      costPerCard: vcCostPerCard,
-      designFiles
-    }
+    vcDetails
   };
-
-  saveBtn.disabled = false;
-  saveBtn.textContent = 'Create Order';
-  vcDesignFiles = [];
-
   state.orders.push(order);
   save();
   closeModal('vcOrderModal');
@@ -4131,33 +4183,54 @@ async function saveVinylOrder() {
     if (addon) addonLabels.push(addon.name);
   });
 
-  const lastNum = state.orders.reduce((max,o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0);
-  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
   const saveBtn = document.getElementById('vySaveBtn');
   saveBtn.disabled = true;
-  saveBtn.textContent = vinylDesignFiles.length ? `Uploading ${vinylDesignFiles.length} file(s)…` : 'Creating order…';
+  saveBtn.textContent = vinylDesignFiles.length ? `Uploading ${vinylDesignFiles.length} file(s)…` : 'Saving…';
+
+  const targetId = editingOrderId || ('ORD-' + String(state.orders.reduce((max,o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0) + 1).padStart(3, '0'));
 
   let designFiles = [];
-  try { designFiles = await uploadVinylDesignFiles(orderId); }
+  try { designFiles = await uploadVinylDesignFiles(targetId); }
   catch(e) { showToast('File upload failed — saved without design files'); }
 
+  const vinylDetails = {
+    width: w, height: h, area, paper: paperType.name,
+    paperCost, addonsCost, addons: addonLabels,
+    costPerPiece: vinylCostPerPiece,
+    designFiles: designFiles.length ? designFiles : (editingOrderId ? (state.orders.find(x => x.id === editingOrderId)?.vinylDetails?.designFiles || []) : [])
+  };
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Create Order';
+  vinylDesignFiles = [];
+
+  if (editingOrderId) {
+    const o = state.orders.find(x => x.id === editingOrderId);
+    o.vendorId = vid; o.qty = qty;
+    o.total    = Math.round(vinylCostPerPiece * qty * 100) / 100;
+    o.customer = cust?.name || '';
+    o.address  = addr ? `${addr.label}: ${addr.text}` : '';
+    o.priority = document.getElementById('vyPriority').value;
+    o.notes    = document.getElementById('vyNotes').value.trim();
+    o.vinylDetails = vinylDetails;
+    save(); closeModal('vinylOrderModal'); renderOrders(); renderDashboard();
+    showToast('Order ' + o.id + ' updated');
+    addNotification('Order Updated', `${o.id} vinyl print order updated.`, 'info');
+    editingOrderId = null;
+    document.querySelector('#vinylOrderModal .modal-title').textContent = '🎨 Custom Vinyl Print';
+    setTimeout(() => viewOrderDetail(o.id), 300);
+    return;
+  }
+
   const order = {
-    id: orderId, productId: 'vinyl-print', vendorId: vid, qty,
+    id: targetId, productId: 'vinyl-print', vendorId: vid, qty,
     total: Math.round(vinylCostPerPiece * qty * 100) / 100,
     customer: cust?.name || '', address: addr ? `${addr.label}: ${addr.text}` : '',
     priority: document.getElementById('vyPriority').value,
     notes: document.getElementById('vyNotes').value.trim(),
     status: 'pending', date: new Date().toISOString().split('T')[0],
     statusHistory: [{ status: 'pending', ts: Date.now() }],
-    vinylDetails: {
-      width: w, height: h, area, paper: paperType.name,
-      paperCost, addonsCost, addons: addonLabels,
-      costPerPiece: vinylCostPerPiece, designFiles
-    }
+    vinylDetails
   };
-
-  saveBtn.disabled = false; saveBtn.textContent = 'Create Order';
-  vinylDesignFiles = [];
   state.orders.push(order); save();
   closeModal('vinylOrderModal'); renderOrders(); renderDashboard();
   showToast('Vinyl Print order created: ' + order.id);
@@ -4431,19 +4504,49 @@ async function saveFlexOrder() {
     if (addon) addonLabels.push(addon.name);
   });
 
-  const lastNum = state.orders.reduce((max,o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0);
-  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
-
   const saveBtn = document.getElementById('fxSaveBtn');
   saveBtn.disabled = true;
-  saveBtn.textContent = flexDesignFiles.length ? `Uploading ${flexDesignFiles.length} file(s)…` : 'Creating order…';
+  saveBtn.textContent = flexDesignFiles.length ? `Uploading ${flexDesignFiles.length} file(s)…` : 'Saving…';
+
+  const targetId = editingOrderId || ('ORD-' + String(state.orders.reduce((max,o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0) + 1).padStart(3, '0'));
 
   let designFiles = [];
-  try { designFiles = await uploadFlexDesignFiles(orderId); }
+  try { designFiles = await uploadFlexDesignFiles(targetId); }
   catch(e) { showToast('File upload failed — saved without design files'); }
 
+  const flexDetails = {
+    width: w, height: h, area,
+    paper: paperType.name,
+    paperPricing: paperType.pricing,
+    paperCost, addonsCost,
+    addons: addonLabels,
+    costPerPiece: flexCostPerPiece,
+    designFiles: designFiles.length ? designFiles : (editingOrderId ? (state.orders.find(x => x.id === editingOrderId)?.flexDetails?.designFiles || []) : [])
+  };
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Create Order';
+  flexDesignFiles = [];
+
+  if (editingOrderId) {
+    const o = state.orders.find(x => x.id === editingOrderId);
+    o.vendorId = vid; o.qty = qty;
+    o.total    = Math.round(flexCostPerPiece * qty * 100) / 100;
+    o.customer = cust?.name || '';
+    o.address  = addr ? `${addr.label}: ${addr.text}` : '';
+    o.priority = document.getElementById('fxPriority').value;
+    o.notes    = document.getElementById('fxNotes').value.trim();
+    o.flexDetails = flexDetails;
+    save(); closeModal('flexOrderModal'); renderOrders(); renderDashboard();
+    showToast('Order ' + o.id + ' updated');
+    addNotification('Order Updated', `${o.id} flex banner order updated.`, 'info');
+    editingOrderId = null;
+    document.querySelector('#flexOrderModal .modal-title').textContent = '🖼️ Custom Flex Banner';
+    setTimeout(() => viewOrderDetail(o.id), 300);
+    return;
+  }
+
   const order = {
-    id: orderId, productId: 'flex-banner', vendorId: vid, qty,
+    id: targetId, productId: 'flex-banner', vendorId: vid, qty,
     total:    Math.round(flexCostPerPiece * qty * 100) / 100,
     customer: cust?.name || '',
     address:  addr ? `${addr.label}: ${addr.text}` : '',
@@ -4451,19 +4554,8 @@ async function saveFlexOrder() {
     notes:    document.getElementById('fxNotes').value.trim(),
     status: 'pending', date: new Date().toISOString().split('T')[0],
     statusHistory: [{ status: 'pending', ts: Date.now() }],
-    flexDetails: {
-      width: w, height: h, area,
-      paper: paperType.name,
-      paperPricing: paperType.pricing,
-      paperCost, addonsCost,
-      addons: addonLabels,
-      costPerPiece: flexCostPerPiece,
-      designFiles
-    }
+    flexDetails
   };
-
-  saveBtn.disabled = false; saveBtn.textContent = 'Create Order';
-  flexDesignFiles = [];
   state.orders.push(order);
   save();
   closeModal('flexOrderModal');
@@ -4732,19 +4824,50 @@ async function saveStickerOrder() {
   const fit2 = Math.floor(sW / cH) * Math.floor(sH / cW);
   const stickersPerSheet = Math.max(fit1, fit2);
 
-  const lastNum = state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0);
-  const orderId = 'ORD-' + String(lastNum + 1).padStart(3, '0');
-
   const saveBtn = document.getElementById('stSaveBtn');
   saveBtn.disabled = true;
-  saveBtn.textContent = stickerDesignFiles.length ? `Uploading ${stickerDesignFiles.length} file(s)…` : 'Creating order…';
+  saveBtn.textContent = stickerDesignFiles.length ? `Uploading ${stickerDesignFiles.length} file(s)…` : 'Saving…';
+
+  const targetId = editingOrderId || ('ORD-' + String(state.orders.reduce((max, o) => Math.max(max, parseInt(o.id.replace('ORD-',''))||0), 0) + 1).padStart(3, '0'));
 
   let designFiles = [];
-  try { designFiles = await uploadStickerDesignFiles(orderId); }
+  try { designFiles = await uploadStickerDesignFiles(targetId); }
   catch(e) { showToast('File upload failed — order saved without design files'); }
 
+  const stickerDetails = {
+    sheetW: sW, sheetH: sH, stickerW: cW, stickerH: cH,
+    paper: paperType?.name || '—',
+    stickersPerSheet, costPerSticker: stickerCostPerSticker,
+    addons: Array.from(document.querySelectorAll('.st-addon-check:checked')).map(el =>
+      (state.stickerAddons || []).find(a => a.id === el.dataset.id)?.name || ''
+    ).filter(Boolean),
+    designFiles: designFiles.length ? designFiles : (editingOrderId ? (state.orders.find(x => x.id === editingOrderId)?.stickerDetails?.designFiles || []) : [])
+  };
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = 'Create Order';
+  stickerDesignFiles = [];
+
+  if (editingOrderId) {
+    const o = state.orders.find(x => x.id === editingOrderId);
+    o.vendorId = vid; o.qty = qty;
+    o.total    = Math.round(stickerCostPerSticker * qty * 100) / 100;
+    o.customer = cust?.name || '';
+    o.address  = addr ? `${addr.label}: ${addr.text}` : '';
+    o.priority = document.getElementById('stPriority').value;
+    o.notes    = document.getElementById('stNotes').value.trim();
+    o.stickerDetails = stickerDetails;
+    save(); closeModal('stickerOrderModal'); renderOrders(); renderDashboard();
+    showToast('Order ' + o.id + ' updated');
+    addNotification('Order Updated', `${o.id} sticker order updated.`, 'info');
+    editingOrderId = null;
+    document.querySelector('#stickerOrderModal .modal-title').textContent = '🏷️ Custom Sticker Print';
+    setTimeout(() => viewOrderDetail(o.id), 300);
+    return;
+  }
+
   const order = {
-    id: orderId, productId: 'sticker-custom', vendorId: vid, qty,
+    id: targetId, productId: 'sticker-custom', vendorId: vid, qty,
     total:     Math.round(stickerCostPerSticker * qty * 100) / 100,
     customer:  cust?.name || '',
     address:   addr ? `${addr.label}: ${addr.text}` : '',
@@ -4752,21 +4875,8 @@ async function saveStickerOrder() {
     notes:     document.getElementById('stNotes').value.trim(),
     status:    'pending', date: new Date().toISOString().split('T')[0],
     statusHistory: [{ status: 'pending', ts: Date.now() }],
-    stickerDetails: {
-      sheetW: sW, sheetH: sH, stickerW: cW, stickerH: cH,
-      paper: paperType?.name || '—',
-      stickersPerSheet, costPerSticker: stickerCostPerSticker,
-      addons: Array.from(document.querySelectorAll('.st-addon-check:checked')).map(el =>
-        (state.stickerAddons || []).find(a => a.id === el.dataset.id)?.name || ''
-      ).filter(Boolean),
-      designFiles
-    }
+    stickerDetails
   };
-
-  saveBtn.disabled = false;
-  saveBtn.textContent = 'Create Order';
-  stickerDesignFiles = [];
-
   state.orders.push(order);
   save();
   closeModal('stickerOrderModal');
@@ -5360,50 +5470,227 @@ let editOrderUnitCost = 0;
 
 const SPECIALTY_PRODUCT_IDS = ['vc-custom','sticker-custom','flex-banner','vinyl-print'];
 
+function _findCustomerIdByName(name) {
+  return (state.customers || []).find(c => c.name === name)?.id || null;
+}
+
+function _findAddressIdByString(custId, addrStr) {
+  const cust = (state.customers || []).find(c => c.id === custId);
+  return (cust?.addresses || []).find(a => `${a.label}: ${a.text}` === addrStr)?.id || null;
+}
+
+function _showExistingDesignFiles(previewId, files) {
+  if (!files?.length) return;
+  document.getElementById(previewId).innerHTML =
+    files.map(f => `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f0f9ff;border-radius:6px;margin-bottom:4px">
+      <span>🔗</span>
+      <a href="${f.url}" target="_blank" style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--primary)">${escHtml(f.name)}</a>
+      <span style="font-size:11px;color:var(--text-muted)">Uploaded</span>
+    </div>`).join('');
+}
+
 function openEditOrderModal(oid) {
   const o = state.orders.find(x => x.id === oid);
   if (!o) return;
-  editingOrderId = oid;
+  closeModal('orderDetailModal');
 
-  const isGeneric = !o.productId || !SPECIALTY_PRODUCT_IDS.includes(o.productId) && !o.productId.startsWith('custom-');
+  const pid = o.productId || '';
+  if (pid === 'vc-custom') {
+    openVCOrderModal();
+    editingOrderId = oid;
+    _prefillVC(o);
+  } else if (pid === 'vinyl-print') {
+    openVinylOrderModal();
+    editingOrderId = oid;
+    _prefillVinyl(o);
+  } else if (pid === 'flex-banner') {
+    openFlexOrderModal();
+    editingOrderId = oid;
+    _prefillFlex(o);
+  } else if (pid === 'sticker-custom') {
+    openStickerOrderModal();
+    editingOrderId = oid;
+    _prefillSticker(o);
+  } else if (!pid || !pid.startsWith('custom-')) {
+    openOrderModal();
+    editingOrderId = oid;
+    _prefillGeneric(o);
+  } else {
+    // Custom order type — fall back to legacy edit modal
+    editingOrderId = oid;
+    _openLegacyEditModal(o);
+  }
+}
 
+function _prefillGeneric(o) {
+  document.getElementById('orderModalTitle').textContent = `Edit Order — ${o.id}`;
+  document.getElementById('oItem').value      = o.item      || '';
+  document.getElementById('oUnitPrice').value = o.unitPrice || '';
+  document.getElementById('oQty').value       = o.qty       || 1;
+  document.getElementById('oCustomer').value  = o.customer  || '';
+  document.getElementById('oAddress').value   = o.address   || '';
+  document.getElementById('oPriority').value  = o.priority  || 'normal';
+  document.getElementById('oNotes').value     = o.notes     || '';
+  document.getElementById('oVendor').innerHTML =
+    '<option value="">-- Select Vendor --</option>' +
+    state.vendors.map(v => `<option value="${v.id}" ${v.id === o.vendorId ? 'selected' : ''}>${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
+  calcOrderTotal();
+  document.querySelector('#orderModal .btn-primary').textContent = 'Update Order';
+}
+
+function _prefillVC(o) {
+  const d = o.vcDetails || {};
+  if (d.sheetW) document.getElementById('vcSheetW').value = d.sheetW;
+  if (d.sheetH) document.getElementById('vcSheetH').value = d.sheetH;
+  if (d.cardW)  document.getElementById('vcCardW').value  = d.cardW;
+  if (d.cardH)  document.getElementById('vcCardH').value  = d.cardH;
+
+  const paper = (state.vcPaperTypes || []).find(p => p.name === d.paper);
+  if (paper) document.getElementById('vcPaper').value = paper.id;
+
+  const printSidesSel = document.getElementById('vcPrintSides');
+  const matchOpt = Array.from(printSidesSel.options).find(opt => opt.text === d.printSides);
+  if (matchOpt) printSidesSel.value = matchOpt.value;
+
+  const addonNames = d.addons || [];
+  document.querySelectorAll('.vc-addon-check').forEach(el => {
+    el.checked = addonNames.includes((state.vcAddons || []).find(a => a.id === el.dataset.id)?.name);
+  });
+
+  const custId = _findCustomerIdByName(o.customer);
+  if (custId) {
+    document.getElementById('vcCustomer').value = custId;
+    onVCCustomerChange();
+    const addrId = _findAddressIdByString(custId, o.address);
+    if (addrId) document.getElementById('vcAddress').value = addrId;
+  }
+
+  document.getElementById('vcVendor').value   = o.vendorId || '';
+  document.getElementById('vcQty').value      = o.qty      || 100;
+  document.getElementById('vcPriority').value = o.priority || 'normal';
+  document.getElementById('vcNotes').value    = o.notes    || '';
+  _showExistingDesignFiles('vcDesignPreview', d.designFiles);
+
+  calcVCCost();
+  document.querySelector('#vcOrderModal .modal-title').textContent = `📇 Edit Visiting Card — ${o.id}`;
+  document.getElementById('vcSaveBtn').textContent = 'Update Order';
+}
+
+function _prefillVinyl(o) {
+  const d = o.vinylDetails || {};
+  if (d.width)  document.getElementById('vyWidth').value  = d.width;
+  if (d.height) document.getElementById('vyHeight').value = d.height;
+
+  const paper = (state.vinylPaperTypes || []).find(p => p.name === d.paper);
+  if (paper) document.getElementById('vyPaper').value = paper.id;
+
+  const addonNames = d.addons || [];
+  document.querySelectorAll('.vy-addon-check').forEach(el => {
+    el.checked = addonNames.includes((state.vinylAddons || []).find(a => a.id === el.dataset.id)?.name);
+  });
+
+  const custId = _findCustomerIdByName(o.customer);
+  if (custId) {
+    document.getElementById('vyCustomer').value = custId;
+    onVinylCustomerChange();
+    const addrId = _findAddressIdByString(custId, o.address);
+    if (addrId) document.getElementById('vyAddress').value = addrId;
+  }
+
+  document.getElementById('vyVendor').value   = o.vendorId || '';
+  document.getElementById('vyQty').value      = o.qty      || 1;
+  document.getElementById('vyPriority').value = o.priority || 'normal';
+  document.getElementById('vyNotes').value    = o.notes    || '';
+  _showExistingDesignFiles('vyDesignPreview', d.designFiles);
+
+  calcVinylCost();
+  document.querySelector('#vinylOrderModal .modal-title').textContent = `🎨 Edit Vinyl Print — ${o.id}`;
+  document.getElementById('vySaveBtn').textContent = 'Update Order';
+}
+
+function _prefillFlex(o) {
+  const d = o.flexDetails || {};
+  if (d.width)  document.getElementById('fxWidth').value  = d.width;
+  if (d.height) document.getElementById('fxHeight').value = d.height;
+
+  const paper = (state.flexPaperTypes || []).find(p => p.name === d.paper);
+  if (paper) document.getElementById('fxPaper').value = paper.id;
+
+  const addonNames = d.addons || [];
+  document.querySelectorAll('.fx-addon-check').forEach(el => {
+    el.checked = addonNames.includes((state.flexAddons || []).find(a => a.id === el.dataset.id)?.name);
+  });
+
+  const custId = _findCustomerIdByName(o.customer);
+  if (custId) {
+    document.getElementById('fxCustomer').value = custId;
+    onFlexCustomerChange();
+    const addrId = _findAddressIdByString(custId, o.address);
+    if (addrId) document.getElementById('fxAddress').value = addrId;
+  }
+
+  document.getElementById('fxVendor').value   = o.vendorId || '';
+  document.getElementById('fxQty').value      = o.qty      || 1;
+  document.getElementById('fxPriority').value = o.priority || 'normal';
+  document.getElementById('fxNotes').value    = o.notes    || '';
+  _showExistingDesignFiles('fxDesignPreview', d.designFiles);
+
+  calcFlexCost();
+  document.querySelector('#flexOrderModal .modal-title').textContent = `🖼️ Edit Flex Banner — ${o.id}`;
+  document.getElementById('fxSaveBtn').textContent = 'Update Order';
+}
+
+function _prefillSticker(o) {
+  const d = o.stickerDetails || {};
+  if (d.sheetW)   document.getElementById('stSheetW').value   = d.sheetW;
+  if (d.sheetH)   document.getElementById('stSheetH').value   = d.sheetH;
+  if (d.stickerW) document.getElementById('stStickerW').value = d.stickerW;
+  if (d.stickerH) document.getElementById('stStickerH').value = d.stickerH;
+
+  const paper = (state.stickerPaperTypes || []).find(p => p.name === d.paper);
+  if (paper) document.getElementById('stPaper').value = paper.id;
+
+  const addonNames = d.addons || [];
+  document.querySelectorAll('.st-addon-check').forEach(el => {
+    el.checked = addonNames.includes((state.stickerAddons || []).find(a => a.id === el.dataset.id)?.name);
+  });
+
+  const custId = _findCustomerIdByName(o.customer);
+  if (custId) {
+    document.getElementById('stCustomer').value = custId;
+    onStickerCustomerChange();
+    const addrId = _findAddressIdByString(custId, o.address);
+    if (addrId) document.getElementById('stAddress').value = addrId;
+  }
+
+  document.getElementById('stVendor').value   = o.vendorId || '';
+  document.getElementById('stQty').value      = o.qty      || 100;
+  document.getElementById('stPriority').value = o.priority || 'normal';
+  document.getElementById('stNotes').value    = o.notes    || '';
+  _showExistingDesignFiles('stDesignPreview', d.designFiles);
+
+  calcStickerCost();
+  document.querySelector('#stickerOrderModal .modal-title').textContent = `🏷️ Edit Sticker — ${o.id}`;
+  document.getElementById('stSaveBtn').textContent = 'Update Order';
+}
+
+function _openLegacyEditModal(o) {
+  const isGeneric = true;
   document.getElementById('editOrderTitle').textContent = `✏️ Edit — ${o.id}`;
-
-  // Show/hide field groups
-  document.getElementById('editGenericFields').style.display    = isGeneric ? 'block' : 'none';
-  document.getElementById('editSpecialtyFields').style.display  = isGeneric ? 'none'  : 'block';
-  document.getElementById('editAddressField').style.display     = isGeneric ? 'block' : 'none';
-
-  // Vendor dropdown
+  document.getElementById('editGenericFields').style.display   = 'block';
+  document.getElementById('editSpecialtyFields').style.display = 'none';
+  document.getElementById('editAddressField').style.display    = 'block';
   document.getElementById('editVendor').innerHTML =
     '<option value="">-- Select Vendor --</option>' +
     state.vendors.map(v => `<option value="${v.id}" ${v.id===o.vendorId?'selected':''}>${escHtml(v.name)} (${escHtml(v.city)})</option>`).join('');
-
-  // Common fields
   document.getElementById('editCustomer').value  = o.customer  || '';
   document.getElementById('editPriority').value  = o.priority  || 'normal';
   document.getElementById('editNotes').value     = o.notes     || '';
-
-  if (isGeneric) {
-    document.getElementById('editItem').value      = o.item      || '';
-    document.getElementById('editUnitPrice').value = o.unitPrice || '';
-    document.getElementById('editQty').value       = o.qty       || 1;
-    document.getElementById('editAddress').value   = o.address   || '';
-    calcEditTotal();
-  } else {
-    // Determine stored cost per piece
-    editOrderUnitCost =
-      o.vcDetails?.costPerCard      ??
-      o.stickerDetails?.costPerSticker ??
-      o.flexDetails?.costPerPiece   ??
-      o.vinylDetails?.costPerPiece  ??
-      (o.qty > 0 ? o.total / o.qty  : 0);
-
-    document.getElementById('editQtySpecialty').value = o.qty || 1;
-    document.getElementById('editTotal').value = '₹' + Number(o.total).toLocaleString('en-IN');
-  }
-
-  closeModal('orderDetailModal');
+  document.getElementById('editItem').value      = o.item      || '';
+  document.getElementById('editUnitPrice').value = o.unitPrice || '';
+  document.getElementById('editQty').value       = o.qty       || 1;
+  document.getElementById('editAddress').value   = o.address   || '';
+  calcEditTotal();
   openModal('editOrderModal');
 }
 
