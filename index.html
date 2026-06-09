@@ -22,16 +22,24 @@
   --border: #e2e8f0;
   --nav-h: 64px;
   --header-h: 56px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
-body { display: flex; flex-direction: column; overflow: hidden; }
+html { height: 100%; height: -webkit-fill-available; }
+html, body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+body { display: flex; flex-direction: column; overflow: hidden; min-height: 100vh; min-height: -webkit-fill-available; }
 
 /* HEADER */
 .header {
-  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  position: fixed; top: 0; left: 0; right: 0;
+  height: calc(var(--header-h) + var(--safe-top));
+  padding-top: var(--safe-top);
   background: var(--primary); color: #fff; display: flex; align-items: center;
-  padding: 0 16px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  padding-left: calc(16px + var(--safe-left)); padding-right: calc(16px + var(--safe-right));
+  z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2);
 }
 .header-logo { font-size: 17px; font-weight: 700; flex: 1; }
 .header-logo span { font-size: 11px; display: block; font-weight: 400; opacity: .8; }
@@ -48,14 +56,21 @@ body { display: flex; flex-direction: column; overflow: hidden; }
 
 /* MAIN CONTENT */
 .content {
-  margin-top: var(--header-h); margin-bottom: var(--nav-h);
-  height: calc(100vh - var(--header-h) - var(--nav-h));
+  margin-top: calc(var(--header-h) + var(--safe-top));
+  margin-bottom: calc(var(--nav-h) + var(--safe-bottom));
+  height: calc(100dvh - var(--header-h) - var(--nav-h) - var(--safe-top) - var(--safe-bottom));
   overflow-y: auto; overflow-x: hidden; padding: 12px;
+  /* Fallback for browsers without dvh */
+  height: calc(100vh - var(--header-h) - var(--nav-h) - var(--safe-top) - var(--safe-bottom));
+  height: calc(100dvh - var(--header-h) - var(--nav-h) - var(--safe-top) - var(--safe-bottom));
 }
 
 /* BOTTOM NAV */
 .bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h);
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left); padding-right: var(--safe-right);
   background: #fff; border-top: 1px solid var(--border);
   display: flex; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,.08);
 }
@@ -63,7 +78,8 @@ body { display: flex; flex-direction: column; overflow: hidden; }
   flex: 1; display: flex; flex-direction: column; align-items: center;
   justify-content: center; gap: 3px; border: none; background: none;
   cursor: pointer; color: var(--text-muted); font-size: 10px; padding: 6px 0;
-  transition: color .2s;
+  transition: color .2s; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent; min-height: 44px;
 }
 .nav-item .nav-icon { font-size: 20px; }
 .nav-item.active { color: var(--primary); }
@@ -124,6 +140,8 @@ body { display: flex; flex-direction: column; overflow: hidden; }
   display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px;
   border-radius: 8px; border: none; cursor: pointer; font-size: 13px;
   font-weight: 600; transition: opacity .15s, transform .1s; white-space: nowrap;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  min-height: 40px;
 }
 .btn:active { transform: scale(.97); }
 .btn-primary { background: var(--primary); color: #fff; }
@@ -139,11 +157,14 @@ body { display: flex; flex-direction: column; overflow: hidden; }
 
 /* FAB */
 .fab {
-  position: fixed; bottom: calc(var(--nav-h) + 16px); right: 16px;
+  position: fixed;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
+  right: calc(16px + var(--safe-right));
   width: 52px; height: 52px; border-radius: 50%; background: var(--primary);
   color: #fff; border: none; cursor: pointer; font-size: 24px;
   box-shadow: 0 4px 14px rgba(26,86,219,.4); display: flex; align-items: center;
   justify-content: center; z-index: 90; transition: transform .2s;
+  touch-action: manipulation;
 }
 .fab:active { transform: scale(.93); }
 
@@ -155,8 +176,12 @@ body { display: flex; flex-direction: column; overflow: hidden; }
 .modal-overlay.open { display: flex; }
 .modal {
   background: var(--card); border-radius: 20px 20px 0 0; width: 100%;
-  max-height: 90vh; overflow-y: auto; padding: 20px;
+  max-height: 92dvh; max-height: 92vh;
+  overflow-y: auto; padding: 20px;
+  padding-bottom: calc(20px + var(--safe-bottom));
   animation: slideUp .25s ease;
+  /* Prevent iOS rubber-band bleed-through */
+  overscroll-behavior: contain;
 }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .modal-handle {
@@ -447,9 +472,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 /* TOAST */
 .toast {
-  position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; transform: translateX(-50%) translateY(20px);
+  position: fixed;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
+  left: 50%; transform: translateX(-50%) translateY(20px);
   background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 8px;
-  font-size: 13px; z-index: 300; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap;
+  font-size: 13px; z-index: 300; opacity: 0; transition: all .3s; pointer-events: none;
+  white-space: nowrap; max-width: calc(100vw - 32px); text-align: center;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -2573,14 +2601,14 @@ function viewOrderDetail(oid) {
         const thumb = isImg && f.url
           ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
           : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg ? 'var(--primary-light)' : '#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg ? '🖼️' : '📄'}</div>`;
-        return `<a href="${escHtml(f.url || '#')}" target="_blank" rel="noopener"
+        return `<a href="${escHtml(_fileHref(f))}" target="_blank" rel="noopener"
                    style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
                   ${thumb}
                   <div style="flex:1;min-width:0">
                     <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image' : 'PDF'} · Tap to view / download</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image · Tap to view' : 'PDF · Tap to download'}</div>
                   </div>
-                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">${isImg ? '↗' : '⬇'}</span>
                 </a>`;
       }).join('')}
     </div>` : ''}
@@ -2607,14 +2635,14 @@ function viewOrderDetail(oid) {
         const thumb = isImg && f.url
           ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
           : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg?'var(--primary-light)':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg?'🖼️':'📄'}</div>`;
-        return `<a href="${escHtml(f.url||'#')}" target="_blank" rel="noopener"
+        return `<a href="${escHtml(_fileHref(f))}" target="_blank" rel="noopener"
                    style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
                   ${thumb}
                   <div style="flex:1;min-width:0">
                     <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · Tap to view</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image · Tap to view' : 'PDF · Tap to download'}</div>
                   </div>
-                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">${isImg ? '↗' : '⬇'}</span>
                 </a>`;
       }).join('')}
     </div>` : ''}
@@ -2640,14 +2668,14 @@ function viewOrderDetail(oid) {
         const thumb = isImg && f.url
           ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
           : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg?'var(--primary-light)':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg?'🖼️':'📄'}</div>`;
-        return `<a href="${escHtml(f.url||'#')}" target="_blank" rel="noopener"
+        return `<a href="${escHtml(_fileHref(f))}" target="_blank" rel="noopener"
                    style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
                   ${thumb}
                   <div style="flex:1;min-width:0">
                     <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · Tap to view</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image · Tap to view' : 'PDF · Tap to download'}</div>
                   </div>
-                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">${isImg ? '↗' : '⬇'}</span>
                 </a>`;
       }).join('')}
     </div>` : ''}
@@ -2673,14 +2701,14 @@ function viewOrderDetail(oid) {
         const thumb = isImg && f.url
           ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
           : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg?'var(--primary-light)':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg?'🖼️':'📄'}</div>`;
-        return `<a href="${escHtml(f.url||'#')}" target="_blank" rel="noopener"
+        return `<a href="${escHtml(_fileHref(f))}" target="_blank" rel="noopener"
                    style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
                   ${thumb}
                   <div style="flex:1;min-width:0">
                     <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · Tap to view</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image · Tap to view' : 'PDF · Tap to download'}</div>
                   </div>
-                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">${isImg ? '↗' : '⬇'}</span>
                 </a>`;
       }).join('')}
     </div>` : ''}
@@ -2701,14 +2729,14 @@ function viewOrderDetail(oid) {
         const thumb = isImg && f.url
           ? `<img src="${escHtml(f.url)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`
           : `<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:${isImg?'var(--primary-light)':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:22px">${isImg?'🖼️':'📄'}</div>`;
-        return `<a href="${escHtml(f.url||'#')}" target="_blank" rel="noopener"
+        return `<a href="${escHtml(_fileHref(f))}" target="_blank" rel="noopener"
                    style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text)">
                   ${thumb}
                   <div style="flex:1;min-width:0">
                     <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · Tap to view</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${(f.size/1024).toFixed(1)} KB · ${isImg ? 'Image · Tap to view' : 'PDF · Tap to download'}</div>
                   </div>
-                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">↗</span>
+                  <span style="font-size:20px;color:var(--primary);flex-shrink:0">${isImg ? '↗' : '⬇'}</span>
                 </a>`;
       }).join('')}
     </div>` : ''}
@@ -3352,11 +3380,14 @@ function printOrder(oid) {
   const _designFiles = o.vcDetails?.designFiles || o.stickerDetails?.designFiles || o.flexDetails?.designFiles || o.vinylDetails?.designFiles || o.customDetails?.designFiles || [];
   const designFilesHtml = _designFiles.length ? `
     <h3 class="sec-title">Design Files</h3>
-    ${_designFiles.map(f => `
-      <div class="design-row">
-        <span>${f.type?.startsWith('image/') ? '🖼️' : '📄'} <strong>${esc(f.name)}</strong> — ${(f.size/1024).toFixed(1)} KB</span>
-        ${f.url ? `<div class="design-url">${esc(f.url)}</div>` : ''}
-      </div>`).join('')}` : '';
+    ${_designFiles.map(f => {
+      const isPdf = !f.type?.startsWith('image/');
+      const dlUrl = isPdf && f.url ? f.url.replace('/upload/', '/upload/fl_attachment/') : f.url;
+      return `<div class="design-row">
+        <span>${isPdf ? '📄' : '🖼️'} <strong>${esc(f.name)}</strong> — ${(f.size/1024).toFixed(1)} KB</span>
+        ${dlUrl ? `<div class="design-url"><a href="${esc(dlUrl)}" target="_blank" style="color:#1a56db">${isPdf ? '⬇ Download PDF' : '↗ View Image'}</a></div>` : ''}
+      </div>`;
+    }).join('')}` : '';
 
   // Payment detail values
   const unitCost = o.vcDetails?.costPerCard
@@ -3558,6 +3589,17 @@ function formatDate(d) {
 
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function _fileHref(f) {
+  if (!f?.url) return '#';
+  if (f.type?.startsWith('image/')) return f.url;
+  // PDFs opened inline in mobile Chrome show "Failed to load PDF document".
+  // fl_attachment tells Cloudinary to serve with Content-Disposition: attachment,
+  // triggering a download instead of inline rendering.
+  return f.url.includes('cloudinary.com')
+    ? f.url.replace('/upload/', '/upload/fl_attachment/')
+    : f.url;
 }
 
 function isReadOnly() { return currentUser?.role === 'Viewer'; }
@@ -5570,11 +5612,15 @@ function _findAddressIdByString(custId, addrStr) {
 function _showExistingDesignFiles(previewId, files) {
   if (!files?.length) return;
   document.getElementById(previewId).innerHTML =
-    files.map(f => `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f0f9ff;border-radius:6px;margin-bottom:4px">
-      <span>🔗</span>
-      <a href="${f.url}" target="_blank" style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--primary)">${escHtml(f.name)}</a>
-      <span style="font-size:11px;color:var(--text-muted)">Uploaded</span>
-    </div>`).join('');
+    files.map(f => {
+      const isPdf = !f.type?.startsWith('image/');
+      const href = _fileHref(f);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f0f9ff;border-radius:6px;margin-bottom:4px">
+        <span>${isPdf ? '📄' : '🖼️'}</span>
+        <a href="${escHtml(href)}" target="_blank" style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--primary)">${escHtml(f.name)}</a>
+        <span style="font-size:11px;color:var(--text-muted)">${isPdf ? '⬇ Download' : '↗ View'}</span>
+      </div>`;
+    }).join('');
 }
 
 function openEditOrderModal(oid) {
