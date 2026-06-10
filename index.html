@@ -649,6 +649,111 @@ html { -webkit-text-size-adjust: 100%; }
 .filter-tab { min-height: 34px; display: inline-flex; align-items: center; }
 .icon-btn { min-width: 36px; min-height: 36px; }
 
+/* ===== ORDER CLUBBING / GROUPING ===== */
+.group-card {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #93c5fd;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(26,86,219,.1);
+}
+.group-card-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.group-id-tag { font-weight: 800; font-size: 15px; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+.group-pill {
+  background: var(--primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.group-member-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  background: rgba(255,255,255,.8);
+  border-radius: 8px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  border: 1px solid rgba(147,197,253,.5);
+  transition: background .15s;
+}
+.group-member-row:active { background: rgba(255,255,255,.5); }
+.group-total-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1.5px dashed #93c5fd;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+.grouped-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* SELECTION MODE */
+.selection-bar {
+  position: fixed;
+  bottom: calc(var(--nav-h) + var(--safe-bottom));
+  left: 0;
+  right: 0;
+  background: var(--primary);
+  color: #fff;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  z-index: 95;
+  box-shadow: 0 -3px 12px rgba(26,86,219,.35);
+  transform: translateY(100%);
+  transition: transform .25s ease;
+}
+.selection-bar.visible { transform: translateY(0); }
+.order-item.selectable { cursor: pointer; user-select: none; }
+.order-item.order-selected {
+  border: 2px solid var(--primary);
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+}
+.sel-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: all .15s;
+  color: transparent;
+}
+.order-item.order-selected .sel-check {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
 </style>
 
 
@@ -686,39 +791,6 @@ html { -webkit-text-size-adjust: 100%; }
       <label for="rememberMe">Remember me</label>
     </div>
     <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
-    <div class="login-creds">
-      <div class="cred-title">Demo Credentials — tap to fill</div>
-      <div class="cred-item" onclick="fillCreds('admin','Admin@123')">
-        <div>
-          <div class="cred-role">Administrator</div>
-          <div class="cred-info">Full access</div>
-        </div>
-        <div style="text-align:right">
-          <div class="cred-info">admin / Admin@123</div>
-          <div class="cred-fill">Tap to fill →</div>
-        </div>
-      </div>
-      <div class="cred-item" onclick="fillCreds('manager','Manager@123')">
-        <div>
-          <div class="cred-role">Manager</div>
-          <div class="cred-info">Orders & Products</div>
-        </div>
-        <div style="text-align:right">
-          <div class="cred-info">manager / Manager@123</div>
-          <div class="cred-fill">Tap to fill →</div>
-        </div>
-      </div>
-      <div class="cred-item" onclick="fillCreds('viewer','Viewer@123')">
-        <div>
-          <div class="cred-role">Viewer</div>
-          <div class="cred-info">Read-only access</div>
-        </div>
-        <div style="text-align:right">
-          <div class="cred-info">viewer / Viewer@123</div>
-          <div class="cred-fill">Tap to fill →</div>
-        </div>
-      </div>
-    </div>
   </div>
   <div class="login-footer">MIS v1.0 · Secure Access Only</div>
 </div>
@@ -820,6 +892,7 @@ html { -webkit-text-size-adjust: 100%; }
   <div class="section" id="sec-orders">
     <div class="section-header">
       <div class="section-title">Orders</div>
+      <button class="btn btn-outline btn-sm viewer-hide" id="clubOrdersBtn" onclick="enterGroupSelectionMode()">🔗 Club Orders</button>
     </div>
 
     <!-- ORDER TYPE STRIP — populated dynamically by renderOrderTypeStrip() -->
@@ -827,7 +900,7 @@ html { -webkit-text-size-adjust: 100%; }
 
     <div class="search-bar">
       <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Search orders by ID, item..." id="orderSearch" oninput="renderOrders()">
+      <input type="text" placeholder="Search by ID, product, customer, vendor..." id="orderSearch" oninput="renderOrders()">
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <select id="orderSortSelect" onchange="renderOrders()" style="flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:8px;font-size:13px;padding:7px 10px;color:var(--text);outline:none;cursor:pointer">
@@ -839,6 +912,7 @@ html { -webkit-text-size-adjust: 100%; }
     </div>
     <div class="filter-tabs" id="orderFilterTabs">
       <div class="filter-tab active" data-filter="all" onclick="setOrderFilter('all',this)">All</div>
+      <div class="filter-tab" data-filter="groups" onclick="setOrderFilter('groups',this)">🔗 Groups</div>
       <div class="filter-tab" data-filter="pending" onclick="setOrderFilter('pending',this)">Order Received</div>
       <div class="filter-tab" data-filter="approved" onclick="setOrderFilter('approved',this)">Given to Vendor</div>
       <div class="filter-tab" data-filter="processing" onclick="setOrderFilter('processing',this)">Ready to Collect</div>
@@ -1877,6 +1951,26 @@ html { -webkit-text-size-adjust: 100%; }
   </div>
 </div>
 
+<!-- SELECTION BAR (shown when clubbing orders) -->
+<div class="selection-bar" id="selectionBar">
+  <div>
+    <div style="font-size:13px;font-weight:700" id="selCountLabel">0 selected</div>
+    <div style="font-size:11px;opacity:.75">Tap orders to add to group</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)" onclick="exitGroupSelectionMode()">Cancel</button>
+    <button class="btn btn-sm" id="createGroupBtn" style="background:#fff;color:var(--primary);font-weight:700" onclick="createOrderGroup()">Create Group</button>
+  </div>
+</div>
+
+<!-- GROUP DETAIL MODAL -->
+<div class="modal-overlay" id="groupDetailModal">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div id="groupDetailContent"></div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -2003,7 +2097,8 @@ const defaultState = {
     { id: 'stp7', name: 'Polymer Based',          price: 210 },
     { id: 'stp8', name: 'DTF Normal',             price: 800 },
     { id: 'stp9', name: 'DTF Eco',                price: 850 }
-  ]
+  ],
+  orderGroups: []
 };
 
 let state = JSON.parse(JSON.stringify(defaultState));
@@ -2013,6 +2108,8 @@ let editingOrderId = null;
 let unsubscribeSync = null;
 let reportDateFrom = '';
 let reportDateTo = '';
+let groupSelectionMode = false;
+let selectedForGrouping = new Set();
 
 function save() {
   // Firestore does not support nested arrays, so we serialize the full state as JSON
@@ -2038,6 +2135,7 @@ function startRealtimeSync() {
     state.flexAddons        = state.flexAddons        || defaultState.flexAddons;
     state.stickerPaperTypes = state.stickerPaperTypes || defaultState.stickerPaperTypes;
     state.stickerAddons     = state.stickerAddons     || defaultState.stickerAddons;
+    state.orderGroups       = state.orderGroups       || [];
     renderDashboard();
     renderOrders();
     renderVendors();
@@ -2083,9 +2181,20 @@ function unarchiveOrder(id) {
 
 function renderArchive() {
   const q = (document.getElementById('archiveSearch')?.value || '').toLowerCase();
-  const archived = state.orders.filter(o =>
-    o.archived && (!q || o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q))
-  );
+  const archived = state.orders.filter(o => {
+    if (!o.archived) return false;
+    if (!q) return true;
+    const vendor = state.vendors.find(v => v.id === o.vendorId);
+    const customType = o.productId?.startsWith('custom-')
+      ? (state.customOrderTypes||[]).find(t => t.id === o.productId.replace('custom-',''))
+      : null;
+    return o.id.toLowerCase().includes(q)
+      || getOrderItemName(o).toLowerCase().includes(q)
+      || (o.item||'').toLowerCase().includes(q)
+      || (customType?.name||'').toLowerCase().includes(q)
+      || (o.customer||'').toLowerCase().includes(q)
+      || (vendor?.name||'').toLowerCase().includes(q);
+  });
   const el = document.getElementById('archiveList');
   if (!el) return;
   if (!archived.length) {
@@ -2336,12 +2445,34 @@ function sortOrders(arr) {
 
 function renderOrders() {
   const q = (document.getElementById('orderSearch')?.value || '').toLowerCase();
-  let filtered = state.orders.filter(o =>
-    !o.archived && (!q || o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q))
-  );
+  const el = document.getElementById('orderList');
+
+  // GROUPS VIEW
+  if (currentOrderFilter === 'groups') {
+    _renderGroupsView(q, el);
+    return;
+  }
+
+  // Build lookup: orderId → group
+  const orderGroupMap = {};
+  (state.orderGroups || []).forEach(g => g.orderIds.forEach(oid => { orderGroupMap[oid] = g; }));
+
+  let filtered = state.orders.filter(o => {
+    if (o.archived) return false;
+    if (!q) return true;
+    const vendor = state.vendors.find(v => v.id === o.vendorId);
+    const customType = o.productId?.startsWith('custom-')
+      ? (state.customOrderTypes||[]).find(t => t.id === o.productId.replace('custom-',''))
+      : null;
+    return o.id.toLowerCase().includes(q)
+      || getOrderItemName(o).toLowerCase().includes(q)
+      || (o.item||'').toLowerCase().includes(q)
+      || (customType?.name||'').toLowerCase().includes(q)
+      || (o.customer||'').toLowerCase().includes(q)
+      || (vendor?.name||'').toLowerCase().includes(q);
+  });
   if (currentOrderFilter !== 'all') filtered = filtered.filter(o => o.status === currentOrderFilter);
   filtered = sortOrders(filtered);
-  const el = document.getElementById('orderList');
   if (!filtered.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">No Orders Found</div><div class="empty-sub">${currentOrderFilter !== 'all' ? 'No ' + currentOrderFilter + ' orders' : 'Create your first order'}</div></div>`;
     return;
@@ -2385,6 +2516,7 @@ function renderOrders() {
         actionBtns = `<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
           ${paidBtn}
           <button class="btn btn-primary btn-full btn-sm" onclick="event.stopPropagation();archiveOrder('${o.id}')">📦 Archive Order</button>
+          <button class="btn btn-sm btn-outline" style="color:var(--danger);border-color:var(--danger)" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">❌ Cancel Order</button>
         </div>`;
       }
     }
@@ -2407,14 +2539,23 @@ function renderOrders() {
               <div style="font-size:9px;color:${labelColor};font-weight:${labelWeight};text-align:center;line-height:1.2;white-space:nowrap">${step.label}</div>
             </div>`;
         }).join('') + `</div>`;
-    return `<div class="order-item" onclick="viewOrderDetail('${o.id}')">
+    const grp = orderGroupMap[o.id];
+    const grpChip = grp ? `<span class="grouped-chip">🔗 ${grp.id}</span>` : '';
+    const isSelected = selectedForGrouping.has(o.id);
+    const selClass = groupSelectionMode ? (isSelected ? ' selectable order-selected' : ' selectable') : '';
+    const selCheck = groupSelectionMode ? `<div class="sel-check">${isSelected ? '✓' : ''}</div>` : '';
+    const clickHandler = groupSelectionMode
+      ? `toggleOrderForGrouping('${o.id}', event)`
+      : `viewOrderDetail('${o.id}')`;
+    return `<div class="order-item${selClass}" onclick="${clickHandler}">
+      ${selCheck}
       <div class="order-header">
         <div>
-          <div class="order-id">${escHtml(o.id)} ${priorityBadge}</div>
+          <div class="order-id">${escHtml(o.id)} ${priorityBadge} ${grpChip}</div>
           <div class="order-date">${formatDate(o.date)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          ${deleteBtn}
+          ${groupSelectionMode ? '' : deleteBtn}
         </div>
       </div>
       <div class="order-product">
@@ -2428,11 +2569,9 @@ function renderOrders() {
         <div class="order-vendor">🏢 ${escHtml(vendor?.name || 'No Vendor')}</div>
         <div class="order-amount">₹${Number(o.total).toLocaleString('en-IN')}</div>
       </div>
-      ${miniWf}
-      ${actionBtns}
-      <div style="margin-top:8px">
-        <button class="btn btn-outline btn-full btn-sm" onclick="event.stopPropagation();printOrder('${o.id}')">🖨️ Print / Save PDF</button>
-      </div>
+      ${groupSelectionMode ? '' : miniWf}
+      ${groupSelectionMode ? '' : actionBtns}
+      ${groupSelectionMode ? '' : `<div style="margin-top:8px"><button class="btn btn-outline btn-full btn-sm" onclick="event.stopPropagation();printOrder('${o.id}')">🖨️ Print / Save PDF</button></div>`}
     </div>`;
   }).join('');
 }
@@ -2485,7 +2624,7 @@ function viewOrderDetail(oid) {
       const paidBtn = o.paid
         ? `<button class="btn btn-full" style="background:#dcfce7;color:#15803d;cursor:default" disabled>✅ Paid</button>`
         : `<button class="btn btn-success btn-full" onclick="markOrderPaid('${o.id}')">💰 Mark as Paid</button>`;
-      actionBtns = `<div style="display:flex;flex-direction:column;gap:8px">${paidBtn}<button class="btn btn-primary btn-full" onclick="archiveOrder('${o.id}')">📦 Archive Order</button></div>`;
+      actionBtns = `<div style="display:flex;flex-direction:column;gap:8px">${paidBtn}<button class="btn btn-primary btn-full" onclick="archiveOrder('${o.id}')">📦 Archive Order</button>${cancelFull}</div>`;
     }
   }
 
@@ -3594,12 +3733,11 @@ function escHtml(s) {
 function _fileHref(f) {
   if (!f?.url) return '#';
   if (f.type?.startsWith('image/')) return f.url;
-  // PDFs opened inline in mobile Chrome show "Failed to load PDF document".
-  // fl_attachment tells Cloudinary to serve with Content-Disposition: attachment,
-  // triggering a download instead of inline rendering.
-  return f.url.includes('cloudinary.com')
-    ? f.url.replace('/upload/', '/upload/fl_attachment/')
-    : f.url;
+  if (!f.url.includes('cloudinary.com')) return f.url;
+  // fl_attachment forces Content-Disposition: attachment, preventing mobile Chrome's
+  // PDF viewer from trying (and failing) to render cross-origin PDFs inline.
+  // Works for both /raw/upload/ and /image/upload/ Cloudinary URLs.
+  return f.url.replace('/upload/', '/upload/fl_attachment/');
 }
 
 function isReadOnly() { return currentUser?.role === 'Viewer'; }
@@ -3621,7 +3759,198 @@ const ACCOUNTS = [
 
 let currentUser = null;
 
+// ─── ORDER GROUPING / CLUBBING ────────────────────────────────────────────────
+
+function enterGroupSelectionMode() {
+  groupSelectionMode = true;
+  selectedForGrouping.clear();
+  document.getElementById('clubOrdersBtn').style.display = 'none';
+  document.getElementById('selectionBar').classList.add('visible');
+  document.getElementById('selCountLabel').textContent = '0 selected';
+  renderOrders();
+}
+
+function exitGroupSelectionMode() {
+  groupSelectionMode = false;
+  selectedForGrouping.clear();
+  document.getElementById('clubOrdersBtn').style.display = '';
+  document.getElementById('selectionBar').classList.remove('visible');
+  renderOrders();
+}
+
+function toggleOrderForGrouping(oid, e) {
+  if (e) e.stopPropagation();
+  if (selectedForGrouping.has(oid)) {
+    selectedForGrouping.delete(oid);
+  } else {
+    selectedForGrouping.add(oid);
+  }
+  const n = selectedForGrouping.size;
+  document.getElementById('selCountLabel').textContent = `${n} selected`;
+  document.getElementById('createGroupBtn').style.opacity = n >= 2 ? '1' : '0.5';
+  renderOrders();
+}
+
+function createOrderGroup() {
+  if (selectedForGrouping.size < 2) {
+    showToast('Select at least 2 orders to club', 'error');
+    return;
+  }
+  const groups = state.orderGroups || [];
+  const num = groups.length + 1;
+  const gid = 'GRP-' + String(num).padStart(3, '0');
+  const newGroup = {
+    id: gid,
+    orderIds: [...selectedForGrouping],
+    createdAt: new Date().toISOString(),
+    note: ''
+  };
+  state.orderGroups = [...groups, newGroup];
+  save();
+  exitGroupSelectionMode();
+  showToast(`Group ${gid} created with ${newGroup.orderIds.length} orders`, 'success');
+}
+
+function _renderGroupsView(q, el) {
+  const groups = state.orderGroups || [];
+  if (!groups.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔗</div><div class="empty-title">No Groups Yet</div><div class="empty-sub">Use "Club Orders" to group multiple orders together</div></div>`;
+    return;
+  }
+  el.innerHTML = groups.filter(g => {
+    if (!q) return true;
+    if (g.id.toLowerCase().includes(q)) return true;
+    return g.orderIds.some(oid => {
+      const o = state.orders.find(x => x.id === oid);
+      return o && (o.id.toLowerCase().includes(q) || getOrderItemName(o).toLowerCase().includes(q) || (o.customer||'').toLowerCase().includes(q));
+    });
+  }).map(g => {
+    const members = g.orderIds.map(oid => state.orders.find(x => x.id === oid)).filter(Boolean);
+    const total = members.reduce((s, o) => s + Number(o.total || 0), 0);
+    const memberRows = members.map(o =>
+      `<div class="group-member-row" onclick="event.stopPropagation();viewOrderDetail('${o.id}')">
+        <span>${escHtml(o.id)}</span>
+        <span style="color:var(--text-muted);font-size:12px">${escHtml(getOrderItemName(o))}</span>
+        <span style="margin-left:auto;font-size:12px;font-weight:600">₹${Number(o.total).toLocaleString('en-IN')}</span>
+      </div>`
+    ).join('');
+    return `<div class="group-card" onclick="viewGroupDetail('${g.id}')">
+      <div class="group-card-hdr">
+        <span class="group-id-tag">🔗 ${escHtml(g.id)}</span>
+        <span class="group-pill">${members.length} orders</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">${formatDate(g.createdAt)}</span>
+      </div>
+      ${memberRows}
+      <div class="group-total-strip">
+        <span>Combined Total</span>
+        <span>₹${total.toLocaleString('en-IN')}</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-outline btn-sm" style="flex:1" onclick="event.stopPropagation();printGroupOrder('${g.id}')">🖨️ Print Group</button>
+        <button class="btn btn-sm" style="flex:1;background:#fee2e2;color:#b91c1c;border:none" onclick="event.stopPropagation();dissolveGroup('${g.id}')">💥 Dissolve</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewGroupDetail(gid) {
+  const g = (state.orderGroups || []).find(x => x.id === gid);
+  if (!g) return;
+  const members = g.orderIds.map(oid => state.orders.find(x => x.id === oid)).filter(Boolean);
+  const total = members.reduce((s, o) => s + Number(o.total || 0), 0);
+  const rows = members.map(o =>
+    `<div class="group-member-row">
+      <div>
+        <div style="font-weight:600;font-size:13px">${escHtml(o.id)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${escHtml(getOrderItemName(o))} · Qty ${o.qty}</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-weight:700;font-size:13px">₹${Number(o.total).toLocaleString('en-IN')}</div>
+        <button class="btn btn-ghost btn-sm" style="color:var(--danger);font-size:11px;padding:2px 6px" onclick="removeFromGroup('${gid}','${o.id}')">Remove</button>
+      </div>
+    </div>`
+  ).join('');
+  document.getElementById('groupDetailContent').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:18px;font-weight:800">🔗 ${escHtml(g.id)}</div>
+        <div style="font-size:12px;color:var(--text-muted)">Created ${formatDate(g.createdAt)}</div>
+      </div>
+      <button class="btn btn-ghost btn-icon" onclick="document.getElementById('groupDetailModal').classList.remove('open')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">${rows}</div>
+    <div class="group-total-strip" style="margin-bottom:16px">
+      <span>Combined Total</span>
+      <span>₹${total.toLocaleString('en-IN')}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary btn-full" onclick="printGroupOrder('${g.id}')">🖨️ Print Group Invoice</button>
+      <button class="btn btn-full" style="background:#fee2e2;color:#b91c1c;border:none;font-weight:700" onclick="dissolveGroup('${g.id}')">💥 Dissolve Group</button>
+    </div>
+  `;
+  document.getElementById('groupDetailModal').classList.add('open');
+}
+
+function removeFromGroup(gid, oid) {
+  const groups = state.orderGroups || [];
+  const g = groups.find(x => x.id === gid);
+  if (!g) return;
+  g.orderIds = g.orderIds.filter(id => id !== oid);
+  if (g.orderIds.length < 2) {
+    if (!confirm(`Group ${gid} will have fewer than 2 orders and will be dissolved. Continue?`)) return;
+    state.orderGroups = groups.filter(x => x.id !== gid);
+  }
+  save();
+  document.getElementById('groupDetailModal').classList.remove('open');
+  renderOrders();
+  showToast(`Removed ${oid} from ${gid}`, 'success');
+}
+
+function dissolveGroup(gid) {
+  if (!confirm(`Dissolve group ${gid}? Orders will remain but the group will be deleted.`)) return;
+  state.orderGroups = (state.orderGroups || []).filter(g => g.id !== gid);
+  save();
+  document.getElementById('groupDetailModal').classList.remove('open');
+  renderOrders();
+  showToast(`Group ${gid} dissolved`, 'success');
+}
+
+function printGroupOrder(gid) {
+  const g = (state.orderGroups || []).find(x => x.id === gid);
+  if (!g) return;
+  const members = g.orderIds.map(oid => state.orders.find(x => x.id === oid)).filter(Boolean);
+  const total = members.reduce((s, o) => s + Number(o.total || 0), 0);
+  const rows = members.map(o => {
+    return `<tr>
+      <td>${escHtml(o.id)}</td>
+      <td>${escHtml(getOrderItemName(o))}</td>
+      <td>${escHtml(o.customer || '-')}</td>
+      <td>${o.qty}</td>
+      <td>₹${Number(o.total).toLocaleString('en-IN')}</td>
+    </tr>`;
+  }).join('');
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Group ${escHtml(g.id)} Invoice</title>
+  <style>body{font-family:Arial,sans-serif;padding:20px}h1{font-size:18px}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #ddd;padding:8px;font-size:13px}th{background:#f3f4f6}.total-row td{font-weight:700;background:#f9fafb}</style>
+  </head><body>
+  <h1>🔗 Group Invoice — ${escHtml(g.id)}</h1>
+  <p style="color:#666;font-size:13px">Created: ${formatDate(g.createdAt)} · ${members.length} orders</p>
+  <table><thead><tr><th>Order ID</th><th>Item</th><th>Customer</th><th>Qty</th><th>Total</th></tr></thead>
+  <tbody>${rows}</tbody>
+  <tfoot><tr class="total-row"><td colspan="4">Combined Total</td><td>₹${total.toLocaleString('en-IN')}</td></tr></tfoot>
+  </table></body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function checkSession() {
+  const savedUser = localStorage.getItem('mis_remembered_user');
+  if (savedUser) {
+    document.getElementById('loginUser').value = savedUser;
+    document.getElementById('rememberMe').checked = true;
+  }
   auth.onAuthStateChanged(user => {
     if (user) {
       const username = user.email.split('@')[0];
@@ -3669,6 +3998,7 @@ function showApp() {
 function doLogin() {
   const username = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
+  const remember = document.getElementById('rememberMe').checked;
   const errEl = document.getElementById('loginError');
   const btn = document.getElementById('loginBtn');
   errEl.classList.remove('show');
@@ -3678,12 +4008,18 @@ function doLogin() {
     errEl.classList.add('show'); return;
   }
   btn.disabled = true; btn.textContent = 'Signing in…';
-  const persistence = document.getElementById('rememberMe').checked
+  const persistence = remember
     ? firebase.auth.Auth.Persistence.LOCAL
     : firebase.auth.Auth.Persistence.SESSION;
   auth.setPersistence(persistence).then(() =>
     auth.signInWithEmailAndPassword(username + '@mis.app', password)
-  ).catch(err => {
+  ).then(() => {
+    if (remember) {
+      localStorage.setItem('mis_remembered_user', username);
+    } else {
+      localStorage.removeItem('mis_remembered_user');
+    }
+  }).catch(err => {
     errEl.textContent = 'Invalid username or password. Please try again.';
     errEl.classList.add('show');
     document.getElementById('loginPass').value = '';
@@ -3696,7 +4032,9 @@ function doLogout() {
   auth.signOut().then(() => {
     currentUser = null;
     closeLogoutSheet();
-    document.getElementById('loginUser').value = '';
+    const remembered = localStorage.getItem('mis_remembered_user');
+    document.getElementById('loginUser').value = remembered || '';
+    document.getElementById('rememberMe').checked = !!remembered;
     document.getElementById('loginPass').value = '';
     document.getElementById('loginError').classList.remove('show');
     showLoginScreen();
@@ -3812,10 +4150,11 @@ async function _cloudinarySHA1(message) {
 
 async function uploadVCDesignFiles(orderId) {
   if (!vcDesignFiles.length) return [];
-  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
   const results  = [];
   for (let i = 0; i < vcDesignFiles.length; i++) {
     const file      = vcDesignFiles[i];
+    const isPdf     = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const endpoint  = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${isPdf ? 'raw' : 'auto'}/upload`;
     const saveBtn   = document.getElementById('vcSaveBtn');
     if (saveBtn) saveBtn.textContent = `Uploading ${i + 1} / ${vcDesignFiles.length}…`;
 
@@ -4261,10 +4600,11 @@ function handleVinylDesignFiles(files) {
 
 async function uploadVinylDesignFiles(orderId) {
   if (!vinylDesignFiles.length) return [];
-  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
   const results  = [];
   for (let i = 0; i < vinylDesignFiles.length; i++) {
     const file = vinylDesignFiles[i];
+    const isPdf    = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${isPdf ? 'raw' : 'auto'}/upload`;
     const saveBtn = document.getElementById('vySaveBtn');
     if (saveBtn) saveBtn.textContent = `Uploading ${i+1}/${vinylDesignFiles.length}…`;
     const timestamp = Math.round(Date.now() / 1000);
@@ -4579,10 +4919,11 @@ function handleFlexDesignFiles(files) {
 
 async function uploadFlexDesignFiles(orderId) {
   if (!flexDesignFiles.length) return [];
-  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
   const results  = [];
   for (let i = 0; i < flexDesignFiles.length; i++) {
     const file    = flexDesignFiles[i];
+    const isPdf   = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${isPdf ? 'raw' : 'auto'}/upload`;
     const saveBtn = document.getElementById('fxSaveBtn');
     if (saveBtn) saveBtn.textContent = `Uploading ${i+1}/${flexDesignFiles.length}…`;
     const timestamp = Math.round(Date.now() / 1000);
@@ -4908,10 +5249,11 @@ function handleStickerDesignFiles(files) {
 
 async function uploadStickerDesignFiles(orderId) {
   if (!stickerDesignFiles.length) return [];
-  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
   const results  = [];
   for (let i = 0; i < stickerDesignFiles.length; i++) {
     const file      = stickerDesignFiles[i];
+    const isPdf     = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const endpoint  = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${isPdf ? 'raw' : 'auto'}/upload`;
     const saveBtn   = document.getElementById('stSaveBtn');
     if (saveBtn) saveBtn.textContent = `Uploading ${i+1}/${stickerDesignFiles.length}…`;
     const timestamp = Math.round(Date.now() / 1000);
@@ -5509,10 +5851,11 @@ function handleCOFDesignFiles(files) {
 
 async function uploadCOFDesignFiles(orderId) {
   if (!customDesignFiles.length) return [];
-  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
   const results = [];
   for (let i = 0; i < customDesignFiles.length; i++) {
     const file = customDesignFiles[i];
+    const isPdf   = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${isPdf ? 'raw' : 'auto'}/upload`;
     const saveBtn = document.getElementById('cofSaveBtn');
     if (saveBtn) saveBtn.textContent = `Uploading ${i+1}/${customDesignFiles.length}…`;
     const timestamp = Math.round(Date.now() / 1000);
