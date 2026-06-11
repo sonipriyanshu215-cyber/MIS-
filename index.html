@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MIS — Product & Order Management</title>
+<title>MICE</title>
+<link rel="icon" type="image/jpeg" href="logo.png.jpeg">
 
 <style>
 :root {
@@ -767,8 +768,8 @@ html { -webkit-text-size-adjust: 100%; }
 <!-- LOGIN SCREEN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-brand">
-    <div class="brand-icon">📊</div>
-    <div class="brand-title">MIS Portal</div>
+    <div class="brand-icon"><img src="logo.png.jpeg" alt="MICE" style="width:72px;height:72px;object-fit:contain;border-radius:12px"></div>
+    <div class="brand-title">MICE</div>
     <div class="brand-sub">Product & Order Management System</div>
   </div>
   <div class="login-card">
@@ -792,7 +793,7 @@ html { -webkit-text-size-adjust: 100%; }
     </div>
     <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
   </div>
-  <div class="login-footer">MIS v1.0 · Secure Access Only</div>
+  <div class="login-footer">MICE v1.0 · Secure Access Only</div>
 </div>
 
 <!-- LOGOUT SHEET -->
@@ -812,7 +813,7 @@ html { -webkit-text-size-adjust: 100%; }
 <!-- HEADER -->
 <div class="header" style="display:none">
   <div class="header-logo">
-    MIS Portal
+    <img src="logo.png.jpeg" alt="MICE" style="width:28px;height:28px;object-fit:contain;border-radius:5px;margin-right:6px;vertical-align:middle">MICE
     <span>Product & Order Management</span>
   </div>
   <div class="header-actions">
@@ -3357,7 +3358,7 @@ function printReport() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MIS Report — ${esc(rangeLabel)}</title>
+<title>MICE Report — ${esc(rangeLabel)}</title>
 <style>
   @page { size: A4 portrait; margin: 12mm 14mm; }
   *, *::before, *::after {
@@ -3404,7 +3405,7 @@ function printReport() {
 <!-- HEADER -->
 <div class="rpt-header" style="background:#1a56db;padding:16px 18px;margin-bottom:18px;border-radius:6px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px">
   <div>
-    <div style="font-size:19px;font-weight:800;color:#fff">MIS Portal</div>
+    <div style="font-size:19px;font-weight:800;color:#fff">MICE</div>
     <div style="font-size:10px;color:#bfdbfe;margin-top:2px">Order &amp; Vendor Management &mdash; Report</div>
   </div>
   <div class="rpt-header-right" style="text-align:right">
@@ -3442,7 +3443,7 @@ function printReport() {
 
 <!-- FOOTER -->
 <div style="margin-top:16px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px">
-  <span style="font-size:9px;color:#64748b;font-weight:700">MIS Portal — Official Report</span>
+  <span style="font-size:9px;color:#64748b;font-weight:700">MICE — Official Report</span>
   <span style="font-size:9px;color:#94a3b8">${esc(rangeLabel)} &middot; ${totalOrders} orders &middot; ${new Date().toLocaleDateString('en-IN')}</span>
 </div>
 
@@ -3563,7 +3564,7 @@ function printOrder(oid) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Order ${esc(o.id)} — MIS Portal</title>
+<title>Order ${esc(o.id)} — MICE</title>
 <style>
   @page { margin: 18mm; size: A4; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3640,7 +3641,7 @@ function printOrder(oid) {
   <!-- HEADER -->
   <div class="page-header">
     <div>
-      <div class="brand">📊 MIS Portal <small>Product & Order Management</small></div>
+      <div class="brand">📊 MICE <small>Product & Order Management</small></div>
       <div style="margin-top:8px">
         <span class="badge badge-${o.status}">${o.status.toUpperCase()}</span>
       </div>
@@ -3691,7 +3692,7 @@ function printOrder(oid) {
 
   <!-- FOOTER -->
   <div class="page-footer">
-    <span>MIS Portal — Official Order Receipt</span>
+    <span>MICE — Official Order Receipt</span>
     <span>Generated: ${new Date().toLocaleString('en-IN')}</span>
   </div>
 
