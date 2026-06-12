@@ -2572,7 +2572,7 @@ function renderOrders() {
       </div>
       ${groupSelectionMode ? '' : miniWf}
       ${groupSelectionMode ? '' : actionBtns}
-      ${groupSelectionMode ? '' : `<div style="margin-top:8px"><button class="btn btn-outline btn-full btn-sm" onclick="event.stopPropagation();printOrder('${o.id}')">🖨️ Print / Save PDF</button></div>`}
+      ${groupSelectionMode ? '' : (isAdmin() ? `<div style="margin-top:8px"><button class="btn btn-outline btn-full btn-sm" onclick="event.stopPropagation();printOrder('${o.id}')">🖨️ Print / Save PDF</button></div>` : '')}
     </div>`;
   }).join('');
 }
@@ -2884,7 +2884,7 @@ function viewOrderDetail(oid) {
 
     <div style="margin-top:16px">
       ${actionBtns}
-      <button class="btn btn-outline btn-full" onclick="printOrder('${o.id}')" style="margin-top:8px">🖨️ Print / Save PDF</button>
+      ${isAdmin() ? `<button class="btn btn-outline btn-full" onclick="printOrder('${o.id}')" style="margin-top:8px">🖨️ Print / Save PDF</button>` : ''}
       ${!isReadOnly() ? `<button class="btn btn-ghost btn-full" onclick="openEditOrderModal('${o.id}')" style="margin-top:8px">✏️ Edit Order</button>` : ''}
       <button class="btn btn-ghost btn-full" onclick="closeModal('orderDetailModal')" style="margin-top:8px">Close</button>
       ${!isReadOnly() ? `<button class="btn btn-ghost btn-full" onclick="deleteOrder('${o.id}')" style="margin-top:8px;color:#ef4444">🗑️ Delete Order</button>` : ''}
@@ -3630,6 +3630,10 @@ function printOrder(oid) {
 </style>
 </head>
 <body onload="window.print()">
+<div class="no-print" style="padding:10px 24px 14px;display:flex;justify-content:flex-end;gap:8px;border-bottom:1px solid #e2e8f0;margin-bottom:16px">
+  <button onclick="window.close()" style="padding:8px 16px;background:#f1f5f9;color:#1e293b;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">✕ Close</button>
+  <button onclick="window.print()" style="padding:8px 20px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Save as PDF</button>
+</div>
 <div class="page">
 
   <!-- HEADER -->
@@ -3693,9 +3697,11 @@ function printOrder(oid) {
 </body>
 </html>`;
 
+  const pdfTitle = o.customer ? `${o.customer} - Invoice ${o.id}` : `Invoice ${o.id}`;
   const w = window.open('', '_blank', 'width=820,height=700');
   w.document.write(html);
   w.document.close();
+  w.document.title = pdfTitle;
   w.focus();
 }
 
@@ -3735,6 +3741,7 @@ function _fileHref(f) {
 }
 
 function isReadOnly() { return currentUser?.role === 'Viewer'; }
+function isAdmin() { return currentUser?.role === 'Administrator'; }
 
 function getOrderItemName(o) {
   if (o.productId === 'vc-custom')      return 'Visiting Card';
