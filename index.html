@@ -3564,7 +3564,7 @@ function printOrder(oid) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Order ${esc(o.id)} — MICE</title>
+<title>${o.customer ? esc(o.customer) + ' - Invoice ' + esc(o.id) : 'Invoice ' + esc(o.id)}</title>
 <style>
   @page { margin: 18mm; size: A4; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -6447,10 +6447,3 @@ checkSession();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
