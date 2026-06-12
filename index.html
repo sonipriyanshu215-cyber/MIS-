@@ -3629,14 +3629,8 @@ function printOrder(oid) {
   @media print { .no-print { display: none; } }
 </style>
 </head>
-<body>
+<body onload="window.print()">
 <div class="page">
-
-  <!-- PRINT BUTTON (hidden in print) -->
-  <div class="no-print" style="margin-bottom:16px;display:flex;justify-content:flex-end;gap:8px">
-    <button onclick="window.close()" style="padding:8px 16px;background:#f1f5f9;color:#1e293b;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">✕ Close</button>
-    <button onclick="window.print()" style="padding:8px 20px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Print / Save as PDF</button>
-  </div>
 
   <!-- HEADER -->
   <div class="page-header">
@@ -3658,7 +3652,6 @@ function printOrder(oid) {
     <div class="field"><label>Item / Description</label><div class="val">${esc(getOrderItemName(o))}</div></div>
     <div class="field"><label>${esc(qtyLabel)}</label><div class="val">${o.qty}</div></div>
     ${o.customer ? `<div class="field"><label>Customer</label><div class="val">${esc(o.customer)}</div></div>` : ''}
-    ${vendor     ? `<div class="field"><label>Vendor</label><div class="val">${esc(vendor.name)}</div></div>` : ''}
     ${o.address  ? `<div class="field" style="grid-column:1/-1"><label>Delivery Address</label><div class="val">${esc(o.address)}</div></div>` : ''}
   </div>
 
@@ -6454,3 +6447,10 @@ checkSession();
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
