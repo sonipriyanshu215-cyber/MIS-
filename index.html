@@ -1255,7 +1255,8 @@ html { -webkit-text-size-adjust: 100%; }
     <div id="vcSettingsPaper">
       <div id="vcPaperList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
       <div style="background:#f8f9fa;border-radius:8px;padding:10px">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <div id="vcPaperFormTitle" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <input type="hidden" id="editingVCPaperId" value="">
         <div class="form-row">
           <div class="form-group" style="margin-bottom:0">
             <input type="text" class="form-control" id="newPaperName" placeholder="Name (e.g. Kraft Paper)">
@@ -1264,7 +1265,10 @@ html { -webkit-text-size-adjust: 100%; }
             <input type="number" class="form-control" id="newPaperPrice" placeholder="₹ per sheet" min="1" step="1">
           </div>
         </div>
-        <button class="btn btn-primary btn-full" onclick="saveVCPaperType()" style="margin-top:8px">+ Add Paper Type</button>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-primary btn-full" id="vcPaperFormBtn" onclick="saveVCPaperType()">+ Add Paper Type</button>
+          <button class="btn btn-ghost btn-full" id="vcPaperCancelBtn" onclick="cancelEditVCPaperType()" style="display:none">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -1416,7 +1420,8 @@ html { -webkit-text-size-adjust: 100%; }
     <div id="flexSettingsPaper">
       <div id="fxPaperList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
       <div style="background:#f8f9fa;border-radius:8px;padding:10px">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <div id="flexPaperFormTitle" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <input type="hidden" id="editingFlexPaperId" value="">
         <div class="form-group" style="margin-bottom:8px">
           <input type="text" class="form-control" id="newFlexPaperName" placeholder="Name (e.g. Star Flex)">
         </div>
@@ -1433,7 +1438,10 @@ html { -webkit-text-size-adjust: 100%; }
             <input type="number" class="form-control" id="newFlexPaperPrice" placeholder="e.g. 15" min="0" step="0.5">
           </div>
         </div>
-        <button class="btn btn-primary btn-full" onclick="saveFlexPaperType()" style="margin-top:8px">+ Add Paper Type</button>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-primary btn-full" id="flexPaperFormBtn" onclick="saveFlexPaperType()">+ Add Paper Type</button>
+          <button class="btn btn-ghost btn-full" id="flexPaperCancelBtn" onclick="cancelEditFlexPaperType()" style="display:none">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -1584,7 +1592,8 @@ html { -webkit-text-size-adjust: 100%; }
     <div id="vinylSettingsPaper">
       <div id="vyPaperList" style="max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
       <div style="background:#f8f9fa;border-radius:8px;padding:10px">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <div id="vinylPaperFormTitle" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Add New Paper Type</div>
+        <input type="hidden" id="editingVinylPaperId" value="">
         <div class="form-row">
           <div class="form-group" style="margin-bottom:0">
             <input type="text" class="form-control" id="newVinylPaperName" placeholder="Name (e.g. Gloss Vinyl)">
@@ -1593,7 +1602,10 @@ html { -webkit-text-size-adjust: 100%; }
             <input type="number" class="form-control" id="newVinylPaperPrice" placeholder="₹ per sqft" min="0" step="0.5">
           </div>
         </div>
-        <button class="btn btn-primary btn-full" onclick="saveVinylPaperType()" style="margin-top:8px">+ Add Paper Type</button>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-primary btn-full" id="vinylPaperFormBtn" onclick="saveVinylPaperType()">+ Add Paper Type</button>
+          <button class="btn btn-ghost btn-full" id="vinylPaperCancelBtn" onclick="cancelEditVinylPaperType()" style="display:none">Cancel</button>
+        </div>
       </div>
     </div>
     <div id="vinylSettingsAddon" style="display:none">
@@ -4207,6 +4219,7 @@ function renderVCAddonsContainer() {
 
 function openVCSettingsModal(tab) {
   switchVCSettingsTab(tab || 'paper');
+  cancelEditVCPaperType();
   renderVCPaperList();
   renderVCAddonList();
   openModal('vcSettingsModal');
@@ -4229,7 +4242,10 @@ function renderVCPaperList() {
             <div style="font-size:13px;font-weight:600">📄 ${escHtml(p.name)}</div>
             <div style="font-size:11px;color:var(--text-muted)">₹${p.price} per sheet</div>
           </div>
-          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVCPaperType('${p.id}')">🗑️</button>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-icon btn-sm" onclick="editVCPaperType('${p.id}')" title="Edit">✏️</button>
+            <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVCPaperType('${p.id}')">🗑️</button>
+          </div>
         </div>`).join('')
     : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No paper types added yet.</div>';
 }
@@ -4249,19 +4265,48 @@ function renderVCAddonList() {
     : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No add-ons added yet.</div>';
 }
 
+function editVCPaperType(id) {
+  const p = (state.vcPaperTypes || []).find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('editingVCPaperId').value = id;
+  document.getElementById('newPaperName').value = p.name;
+  document.getElementById('newPaperPrice').value = p.price;
+  document.getElementById('vcPaperFormTitle').textContent = 'Edit Paper Type';
+  document.getElementById('vcPaperFormBtn').textContent = 'Save Changes';
+  document.getElementById('vcPaperCancelBtn').style.display = 'block';
+  document.getElementById('newPaperName').focus();
+}
+
+function cancelEditVCPaperType() {
+  document.getElementById('editingVCPaperId').value = '';
+  document.getElementById('newPaperName').value = '';
+  document.getElementById('newPaperPrice').value = '';
+  document.getElementById('vcPaperFormTitle').textContent = 'Add New Paper Type';
+  document.getElementById('vcPaperFormBtn').textContent = '+ Add Paper Type';
+  document.getElementById('vcPaperCancelBtn').style.display = 'none';
+}
+
 function saveVCPaperType() {
   const name  = document.getElementById('newPaperName').value.trim();
   const price = parseFloat(document.getElementById('newPaperPrice').value) || 0;
   if (!name)  { showToast('Enter a paper type name'); return; }
   if (!price) { showToast('Enter a price per sheet');  return; }
   if (!state.vcPaperTypes) state.vcPaperTypes = [];
-  state.vcPaperTypes.push({ id: 'vcp' + Date.now(), name, price });
-  document.getElementById('newPaperName').value  = '';
-  document.getElementById('newPaperPrice').value = '';
+  const editId = document.getElementById('editingVCPaperId').value;
+  if (editId) {
+    const idx = state.vcPaperTypes.findIndex(p => p.id === editId);
+    if (idx !== -1) state.vcPaperTypes[idx] = { ...state.vcPaperTypes[idx], name, price };
+    cancelEditVCPaperType();
+    showToast('Paper type updated');
+  } else {
+    state.vcPaperTypes.push({ id: 'vcp' + Date.now(), name, price });
+    document.getElementById('newPaperName').value  = '';
+    document.getElementById('newPaperPrice').value = '';
+    showToast('Paper type added');
+  }
   save();
   renderVCPaperList();
   renderVCPaperSelect();
-  showToast('Paper type added');
 }
 
 function deleteVCPaperType(id) {
@@ -4711,8 +4756,9 @@ async function saveVinylOrder() {
 
 function openVinylSettingsModal(tab) {
   switchVinylSettingsTab(tab || 'paper');
+  cancelEditVinylPaperType();
   renderVinylPaperList(); renderVinylAddonList();
-  ['newVinylPaperName','newVinylPaperPrice','newVinylAddonName','newVinylAddonPrice'].forEach(id => document.getElementById(id).value = '');
+  ['newVinylAddonName','newVinylAddonPrice'].forEach(id => document.getElementById(id).value = '');
   openModal('vinylSettingsModal');
 }
 
@@ -4730,7 +4776,10 @@ function renderVinylPaperList() {
     ? types.map(p => `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px">
         <div><div style="font-size:13px;font-weight:600">🎨 ${escHtml(p.name)}</div>
         <div style="font-size:11px;color:var(--text-muted)">₹${p.price}/sqft</div></div>
-        <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVinylPaperType('${p.id}')">🗑️</button>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="editVinylPaperType('${p.id}')" title="Edit">✏️</button>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteVinylPaperType('${p.id}')">🗑️</button>
+        </div>
       </div>`).join('')
     : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No paper types added yet.</div>';
 }
@@ -4747,17 +4796,46 @@ function renderVinylAddonList() {
     : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No add-ons added yet.</div>';
 }
 
+function editVinylPaperType(id) {
+  const p = (state.vinylPaperTypes || []).find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('editingVinylPaperId').value = id;
+  document.getElementById('newVinylPaperName').value = p.name;
+  document.getElementById('newVinylPaperPrice').value = p.price;
+  document.getElementById('vinylPaperFormTitle').textContent = 'Edit Paper Type';
+  document.getElementById('vinylPaperFormBtn').textContent = 'Save Changes';
+  document.getElementById('vinylPaperCancelBtn').style.display = 'block';
+  document.getElementById('newVinylPaperName').focus();
+}
+
+function cancelEditVinylPaperType() {
+  document.getElementById('editingVinylPaperId').value = '';
+  document.getElementById('newVinylPaperName').value = '';
+  document.getElementById('newVinylPaperPrice').value = '';
+  document.getElementById('vinylPaperFormTitle').textContent = 'Add New Paper Type';
+  document.getElementById('vinylPaperFormBtn').textContent = '+ Add Paper Type';
+  document.getElementById('vinylPaperCancelBtn').style.display = 'none';
+}
+
 function saveVinylPaperType() {
   const name  = document.getElementById('newVinylPaperName').value.trim();
   const price = parseFloat(document.getElementById('newVinylPaperPrice').value);
   if (!name)           { showToast('Enter a paper type name'); return; }
   if (isNaN(price) || price < 0) { showToast('Enter a valid price'); return; }
   if (!state.vinylPaperTypes) state.vinylPaperTypes = [];
-  state.vinylPaperTypes.push({ id:'vyp'+Date.now(), name, pricing:'sqft', price });
-  document.getElementById('newVinylPaperName').value = '';
-  document.getElementById('newVinylPaperPrice').value = '';
+  const editId = document.getElementById('editingVinylPaperId').value;
+  if (editId) {
+    const idx = state.vinylPaperTypes.findIndex(p => p.id === editId);
+    if (idx !== -1) state.vinylPaperTypes[idx] = { ...state.vinylPaperTypes[idx], name, price };
+    cancelEditVinylPaperType();
+    showToast('Paper type updated');
+  } else {
+    state.vinylPaperTypes.push({ id:'vyp'+Date.now(), name, pricing:'sqft', price });
+    document.getElementById('newVinylPaperName').value = '';
+    document.getElementById('newVinylPaperPrice').value = '';
+    showToast('Paper type added');
+  }
   save(); renderVinylPaperList(); renderVinylPaperSelect();
-  showToast('Paper type added');
 }
 
 function deleteVinylPaperType(id) {
@@ -5040,10 +5118,9 @@ async function saveFlexOrder() {
 // Flex Settings
 function openFlexSettingsModal(tab) {
   switchFlexSettingsTab(tab || 'paper');
+  cancelEditFlexPaperType();
   renderFlexPaperList();
   renderFlexAddonList();
-  document.getElementById('newFlexPaperName').value    = '';
-  document.getElementById('newFlexPaperPrice').value   = '';
   document.getElementById('newFlexAddonName').value    = '';
   document.getElementById('newFlexAddonPrice').value   = '';
   openModal('flexSettingsModal');
@@ -5067,7 +5144,10 @@ function renderFlexPaperList() {
             <div style="font-size:13px;font-weight:600">🖼️ ${escHtml(p.name)}</div>
             <div style="font-size:11px;color:var(--text-muted)">${priceLabel} · ${p.pricing === 'fixed' ? 'Fixed price' : 'Per sq ft'}</div>
           </div>
-          <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteFlexPaperType('${p.id}')">🗑️</button>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-icon btn-sm" onclick="editFlexPaperType('${p.id}')" title="Edit">✏️</button>
+            <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteFlexPaperType('${p.id}')">🗑️</button>
+          </div>
         </div>`;
       }).join('')
     : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No paper types added yet.</div>';
@@ -5090,6 +5170,29 @@ function renderFlexAddonList() {
     : '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No add-ons added yet.</div>';
 }
 
+function editFlexPaperType(id) {
+  const p = (state.flexPaperTypes || []).find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('editingFlexPaperId').value = id;
+  document.getElementById('newFlexPaperName').value = p.name;
+  document.getElementById('newFlexPaperPricing').value = p.pricing || 'sqft';
+  document.getElementById('newFlexPaperPrice').value = p.price;
+  document.getElementById('flexPaperFormTitle').textContent = 'Edit Paper Type';
+  document.getElementById('flexPaperFormBtn').textContent = 'Save Changes';
+  document.getElementById('flexPaperCancelBtn').style.display = 'block';
+  document.getElementById('newFlexPaperName').focus();
+}
+
+function cancelEditFlexPaperType() {
+  document.getElementById('editingFlexPaperId').value = '';
+  document.getElementById('newFlexPaperName').value = '';
+  document.getElementById('newFlexPaperPrice').value = '';
+  document.getElementById('newFlexPaperPricing').value = 'sqft';
+  document.getElementById('flexPaperFormTitle').textContent = 'Add New Paper Type';
+  document.getElementById('flexPaperFormBtn').textContent = '+ Add Paper Type';
+  document.getElementById('flexPaperCancelBtn').style.display = 'none';
+}
+
 function saveFlexPaperType() {
   const name    = document.getElementById('newFlexPaperName').value.trim();
   const pricing = document.getElementById('newFlexPaperPricing').value;
@@ -5097,11 +5200,19 @@ function saveFlexPaperType() {
   if (!name)           { showToast('Enter a paper type name'); return; }
   if (isNaN(price) || price < 0) { showToast('Enter a valid price'); return; }
   if (!state.flexPaperTypes) state.flexPaperTypes = [];
-  state.flexPaperTypes.push({ id: 'fxp' + Date.now(), name, pricing, price });
-  document.getElementById('newFlexPaperName').value  = '';
-  document.getElementById('newFlexPaperPrice').value = '';
+  const editId = document.getElementById('editingFlexPaperId').value;
+  if (editId) {
+    const idx = state.flexPaperTypes.findIndex(p => p.id === editId);
+    if (idx !== -1) state.flexPaperTypes[idx] = { ...state.flexPaperTypes[idx], name, pricing, price };
+    cancelEditFlexPaperType();
+    showToast('Paper type updated');
+  } else {
+    state.flexPaperTypes.push({ id: 'fxp' + Date.now(), name, pricing, price });
+    document.getElementById('newFlexPaperName').value  = '';
+    document.getElementById('newFlexPaperPrice').value = '';
+    showToast('Paper type added');
+  }
   save(); renderFlexPaperList(); renderFlexPaperSelect();
-  showToast('Paper type added');
 }
 
 function deleteFlexPaperType(id) {
